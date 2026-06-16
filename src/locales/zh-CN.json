@@ -1,0 +1,148 @@
+{
+  "app": {
+    "name": "A7匣",
+    "description": "桌面战术级效率武器",
+    "version": "版本"
+  },
+  "common": {
+    "home": "首页",
+    "settings": "设置",
+    "about": "关于",
+    "quit": "退出",
+    "enable": "启用",
+    "disable": "禁用",
+    "search": "搜索...",
+    "noResults": "没有找到结果",
+    "copied": "已复制",
+    "saved": "已保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "close": "关闭",
+    "open": "打开",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "copy": "复制",
+    "paste": "粘贴",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告"
+  },
+  "categories": {
+    "text": "文本工具",
+    "image": "图片工具",
+    "screen": "屏幕工具",
+    "network": "网络工具",
+    "dev": "开发工具",
+    "misc": "其他"
+  },
+  "nav": {
+    "tools": "工具"
+  },
+  "commandPalette": {
+    "placeholder": "搜索命令或工具...",
+    "recentlyUsed": "最近使用",
+    "allCommands": "所有命令",
+    "noResults": "没有匹配的命令",
+    "pressEnter": "按回车执行",
+    "pressEsc": "按 ESC 关闭"
+  },
+  "settings": {
+    "title": "设置",
+    "general": "通用",
+    "appearance": "外观",
+    "shortcuts": "快捷键",
+    "modules": "模块管理",
+    "language": "语言",
+    "theme": "主题",
+    "autoStart": "开机自启",
+    "autoStartDesc": "系统启动时自动运行 A7匣",
+    "minimizeToTray": "最小化到托盘",
+    "minimizeToTrayDesc": "关闭窗口时最小化到系统托盘",
+    "checkUpdateOnStart": "启动时检查更新",
+    "checkUpdateOnStartDesc": "每次启动时自动检查是否有新版本"
+  },
+  "updater": {
+    "newVersion": "发现新版本 {{version}}",
+    "updateNow": "立即更新",
+    "later": "稍后提醒",
+    "skip": "跳过此版本",
+    "checking": "正在检查更新...",
+    "upToDate": "已是最新版本",
+    "downloadProgress": "下载中 {{progress}}%",
+    "readyToInstall": "更新已就绪，重启安装"
+  },
+  "modules": {
+    "jsonFormatter": {
+      "name": "JSON 格式化",
+      "description": "自动格式化或压缩 JSON 数据",
+      "commands": {
+        "format": "格式化 JSON",
+        "compress": "压缩 JSON"
+      },
+      "settings": {
+        "autoFormat": "自动格式化",
+        "autoFormatDesc": "检测到剪贴板 JSON 时自动格式化",
+        "indentSize": "缩进大小"
+      }
+    },
+    "qrCode": {
+      "name": "二维码",
+      "description": "生成和解析二维码",
+      "commands": {
+        "generate": "生成二维码",
+        "decode": "解析二维码"
+      }
+    },
+    "markdownPreview": {
+      "name": "Markdown 预览",
+      "description": "Markdown 实时预览与语法高亮",
+      "commands": {
+        "open": "Markdown 预览"
+      }
+    },
+    "codeMinify": {
+      "name": "代码压缩/美化",
+      "description": "压缩或美化 JS、CSS、HTML 和 JSON",
+      "commands": {
+        "open": "代码压缩/美化"
+      }
+    },
+    "imageCompress": {
+      "name": "图片压缩",
+      "description": "图片压缩与格式转换，支持画质调节",
+      "commands": {
+        "open": "图片压缩"
+      }
+    },
+    "hashGenerator": {
+      "name": "哈希生成器",
+      "description": "生成 MD5、SHA-1、SHA-256、SHA-512 哈希值",
+      "commands": {
+        "open": "哈希生成器"
+      }
+    },
+    "imageConvert": {
+      "name": "图片转格式",
+      "description": "图片格式互转（PNG、JPG、WebP、BMP）",
+      "commands": {
+        "open": "图片转格式"
+      }
+    },
+    "colorTool": {
+      "name": "颜色工具",
+      "description": "取色器、格式转换与调色板生成",
+      "commands": {
+        "open": "颜色工具"
+      }
+    },
+    "base64Tool": {
+      "name": "Base64 工具",
+      "description": "Base64 编解码，支持文本和文件",
+      "commands": {
+        "open": "Base64 工具"
+      }
+    }
+  }
+}

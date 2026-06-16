@@ -1,0 +1,148 @@
+{
+  "app": {
+    "name": "A7 Box",
+    "description": "Your Tactical Efficiency Weapon on Desktop",
+    "version": "Version"
+  },
+  "common": {
+    "home": "Home",
+    "settings": "Settings",
+    "about": "About",
+    "quit": "Quit",
+    "enable": "Enable",
+    "disable": "Disable",
+    "search": "Search...",
+    "noResults": "No results found",
+    "copied": "Copied",
+    "saved": "Saved",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "open": "Open",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "copy": "Copy",
+    "paste": "Paste",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning"
+  },
+  "categories": {
+    "text": "Text Tools",
+    "image": "Image Tools",
+    "screen": "Screen Tools",
+    "network": "Network Tools",
+    "dev": "Dev Tools",
+    "misc": "Misc"
+  },
+  "nav": {
+    "tools": "Tools"
+  },
+  "commandPalette": {
+    "placeholder": "Search commands or tools...",
+    "recentlyUsed": "Recently Used",
+    "allCommands": "All Commands",
+    "noResults": "No matching commands",
+    "pressEnter": "Press Enter to execute",
+    "pressEsc": "Press ESC to close"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "appearance": "Appearance",
+    "shortcuts": "Shortcuts",
+    "modules": "Modules",
+    "language": "Language",
+    "theme": "Theme",
+    "autoStart": "Start on Boot",
+    "autoStartDesc": "Automatically start A7 Box when system starts",
+    "minimizeToTray": "Minimize to Tray",
+    "minimizeToTrayDesc": "Minimize to system tray when window is closed",
+    "checkUpdateOnStart": "Check Updates on Start",
+    "checkUpdateOnStartDesc": "Automatically check for updates on each launch"
+  },
+  "updater": {
+    "newVersion": "New version {{version}} available",
+    "updateNow": "Update Now",
+    "later": "Later",
+    "skip": "Skip This Version",
+    "checking": "Checking for updates...",
+    "upToDate": "You're up to date",
+    "downloadProgress": "Downloading {{progress}}%",
+    "readyToInstall": "Update ready, restart to install"
+  },
+  "modules": {
+    "jsonFormatter": {
+      "name": "JSON Formatter",
+      "description": "Auto-format or compress JSON data",
+      "commands": {
+        "format": "Format JSON",
+        "compress": "Compress JSON"
+      },
+      "settings": {
+        "autoFormat": "Auto Format",
+        "autoFormatDesc": "Auto-format when JSON detected in clipboard",
+        "indentSize": "Indent Size"
+      }
+    },
+    "qrCode": {
+      "name": "QR Code",
+      "description": "Generate and decode QR codes",
+      "commands": {
+        "generate": "Generate QR Code",
+        "decode": "Decode QR Code"
+      }
+    },
+    "markdownPreview": {
+      "name": "Markdown Preview",
+      "description": "Live markdown preview with syntax highlighting",
+      "commands": {
+        "open": "Markdown Preview"
+      }
+    },
+    "codeMinify": {
+      "name": "Code Minify/Beautify",
+      "description": "Minify or beautify JS, CSS, HTML and JSON",
+      "commands": {
+        "open": "Code Minify/Beautify"
+      }
+    },
+    "imageCompress": {
+      "name": "Image Compress",
+      "description": "Compress and convert images with quality control",
+      "commands": {
+        "open": "Image Compress"
+      }
+    },
+    "hashGenerator": {
+      "name": "Hash Generator",
+      "description": "Generate MD5, SHA-1, SHA-256, SHA-512 hashes",
+      "commands": {
+        "open": "Hash Generator"
+      }
+    },
+    "imageConvert": {
+      "name": "Image Convert",
+      "description": "Convert images between PNG, JPG, WebP and BMP",
+      "commands": {
+        "open": "Image Convert"
+      }
+    },
+    "colorTool": {
+      "name": "Color Tool",
+      "description": "Color picker, format converter and palette generator",
+      "commands": {
+        "open": "Color Tool"
+      }
+    },
+    "base64Tool": {
+      "name": "Base64 Tool",
+      "description": "Encode and decode Base64 text and files",
+      "commands": {
+        "open": "Base64 Tool"
+      }
+    }
+  }
+}

@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Palette, Copy } from 'lucide-react'
 
 interface RGB { r: number; g: number; b: number }
@@ -85,6 +86,7 @@ function generatePalette(hsl: HSL) {
 }
 
 export default function ColorTool() {
+  const { t } = useTranslation()
   const [hexInput, setHexInput] = useState('#FF4D4F')
   const [copied, setCopied] = useState<string | null>(null)
 
@@ -116,7 +118,7 @@ export default function ColorTool() {
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
         <Palette className="h-4 w-4 text-text-muted" />
-        <span className="text-sm font-medium text-text-primary">Color Tool</span>
+        <span className="text-sm font-medium text-text-primary">{t('modules.colorTool.name')}</span>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
@@ -154,10 +156,10 @@ export default function ColorTool() {
           {/* Contrast check */}
           {color && (
             <div className="rounded-lg border border-border-subtle bg-bg-elevated p-4">
-              <h3 className="mb-3 text-sm font-medium text-text-primary">Contrast Check (WCAG)</h3>
+              <h3 className="mb-3 text-sm font-medium text-text-primary">{t('modules.colorTool.ui.contrastTitle')}</h3>
               <div className="grid grid-cols-2 gap-3">
-                <ContrastCard label="On White" color={color.hex} bgColor="#FFFFFF" ratio={color.contrastWhite} />
-                <ContrastCard label="On Black" color={color.hex} bgColor="#000000" ratio={color.contrastBlack} />
+                <ContrastCard label={t('modules.colorTool.ui.contrastOnWhite')} color={color.hex} bgColor="#FFFFFF" ratio={color.contrastWhite} failLabel={t('modules.colorTool.ui.wcagFail')} />
+                <ContrastCard label={t('modules.colorTool.ui.contrastOnBlack')} color={color.hex} bgColor="#000000" ratio={color.contrastBlack} failLabel={t('modules.colorTool.ui.wcagFail')} />
               </div>
             </div>
           )}
@@ -165,10 +167,12 @@ export default function ColorTool() {
           {/* Palette */}
           {color && (
             <div className="rounded-lg border border-border-subtle bg-bg-elevated p-4">
-              <h3 className="mb-3 text-sm font-medium text-text-primary">Color Palettes</h3>
-              {(['complementary', 'analogous', 'triadic'] as const).map((name) => (
+              <h3 className="mb-3 text-sm font-medium text-text-primary">{t('modules.colorTool.ui.palettesTitle')}</h3>
+              {(['complementary', 'analogous', 'triadic'] as const).map((name) => {
+                const nameKey = `palette${name.charAt(0).toUpperCase() + name.slice(1)}` as 'paletteComplementary' | 'paletteAnalogous' | 'paletteTriadic'
+                return (
                 <div key={name} className="mb-3">
-                  <p className="mb-1.5 text-xs capitalize text-text-muted">{name}</p>
+                  <p className="mb-1.5 text-xs capitalize text-text-muted">{t(`modules.colorTool.ui.${nameKey}`)}</p>
                   <div className="flex gap-2">
                     {color.palette[name].map((c, i) => {
                       const rgb = hslToRgb(c)
@@ -189,7 +193,8 @@ export default function ColorTool() {
                     })}
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -212,7 +217,7 @@ function FormatRow({ label, value, onCopy, copied }: { label: string; value: str
   )
 }
 
-function ContrastCard({ label, color, bgColor, ratio }: { label: string; color: string; bgColor: string; ratio: number }) {
+function ContrastCard({ label, color, bgColor, ratio, failLabel }: { label: string; color: string; bgColor: string; ratio: number; failLabel: string }) {
   const pass = ratio >= 4.5
   const passAA = ratio >= 3
   return (
@@ -221,7 +226,7 @@ function ContrastCard({ label, color, bgColor, ratio }: { label: string; color: 
       <div className="mt-2 flex items-center gap-2">
         <span className="text-xs font-mono" style={{ color: bgColor === '#FFFFFF' ? '#666' : '#aaa' }}>{ratio.toFixed(2)}:1</span>
         <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${pass ? 'bg-green-500/20 text-green-400' : passAA ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}`}>
-          {pass ? 'AAA' : passAA ? 'AA' : 'Fail'}
+          {pass ? 'AAA' : passAA ? 'AA' : failLabel}
         </span>
         <span className="text-[10px]" style={{ color: bgColor === '#FFFFFF' ? '#999' : '#888' }}>{label}</span>
       </div>

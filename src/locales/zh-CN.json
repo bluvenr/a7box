@@ -14,6 +14,7 @@
     "search": "搜索...",
     "noResults": "没有找到结果",
     "copied": "已复制",
+    "copiedToClipboard": "已复制到剪贴板",
     "saved": "已保存",
     "cancel": "取消",
     "confirm": "确认",
@@ -24,10 +25,28 @@
     "edit": "编辑",
     "copy": "复制",
     "paste": "粘贴",
+    "clear": "清空",
+    "download": "下载",
+    "upload": "上传",
     "loading": "加载中...",
     "error": "错误",
     "success": "成功",
-    "warning": "警告"
+    "warning": "警告",
+    "cleared": "已清空",
+    "dropFileOrClick": "拖放文件到此处或点击上传",
+    "text": "文本",
+    "file": "文件",
+    "input": "输入",
+    "output": "输出",
+    "preview": "预览",
+    "encode": "编码",
+    "decode": "解码",
+    "format": "格式化",
+    "compress": "压缩",
+    "generate": "生成",
+    "options": "选项",
+    "quality": "质量",
+    "restore": "恢复"
   },
   "categories": {
     "text": "文本工具",
@@ -55,7 +74,16 @@
     "shortcuts": "快捷键",
     "modules": "模块管理",
     "language": "语言",
+    "languageDesc": "选择界面显示语言",
     "theme": "主题",
+    "themeDesc": "选择应用主题",
+    "darkMode": "深色模式",
+    "lightMode": "浅色模式",
+    "followSystem": "跟随系统",
+    "fontSize": "字体大小",
+    "fontSizeDesc": "调整界面字体大小",
+    "noModules": "暂无可用模块",
+    "githubRepo": "GitHub 仓库",
     "autoStart": "开机自启",
     "autoStartDesc": "系统启动时自动运行 A7匣",
     "minimizeToTray": "最小化到托盘",
@@ -77,71 +105,187 @@
     "jsonFormatter": {
       "name": "JSON 格式化",
       "description": "自动格式化或压缩 JSON 数据",
-      "commands": {
-        "format": "格式化 JSON",
-        "compress": "压缩 JSON"
-      },
-      "settings": {
-        "autoFormat": "自动格式化",
-        "autoFormatDesc": "检测到剪贴板 JSON 时自动格式化",
-        "indentSize": "缩进大小"
+      "commands": { "format": "格式化 JSON", "compress": "压缩 JSON" },
+      "settings": { "autoFormat": "自动格式化", "autoFormatDesc": "检测到剪贴板 JSON 时自动格式化", "indentSize": "缩进大小" },
+      "ui": {
+        "loadingEditor": "编辑器加载中...",
+        "toastFormatted": "格式化成功",
+        "toastFormatFailed": "格式化失败",
+        "toastCompressed": "压缩成功",
+        "toastCompressFailed": "压缩失败",
+        "toastCopied": "已复制到剪贴板",
+        "toastExported": "导出成功",
+        "toastCleared": "已清空",
+        "toastRestored": "已恢复",
+        "indent2Spaces": "2 空格",
+        "indent4Spaces": "4 空格",
+        "indentTab": "Tab",
+        "copyTooltip": "复制到剪贴板",
+        "exportTooltip": "导出为文件",
+        "historyTooltip": "历史记录",
+        "clearTooltip": "清空",
+        "statusValid": "JSON 有效",
+        "statusAwaiting": "等待输入",
+        "statsSize": "大小:",
+        "statsLines": "行数:",
+        "statsDepth": "深度:",
+        "statsKeys": "键数:",
+        "historyTitle": "历史记录",
+        "historyClear": "清空",
+        "historyEmpty": "暂无历史记录",
+        "historyActionFormat": "格式化",
+        "historyActionCompress": "压缩",
+        "timeJustNow": "刚刚",
+        "timeMinutesAgo": "{{m}} 分钟前",
+        "timeHoursAgo": "{{h}} 小时前",
+        "errorPosition": "第 {{line}} 行, 第 {{col}} 列"
       }
     },
     "qrCode": {
       "name": "二维码",
       "description": "生成和解析二维码",
-      "commands": {
-        "generate": "生成二维码",
-        "decode": "解析二维码"
+      "commands": { "generate": "生成二维码", "decode": "解析二维码" },
+      "ui": {
+        "tabGenerate": "生成",
+        "tabDecode": "解析",
+        "modeText": "文本",
+        "modeWifi": "WiFi",
+        "wifiSsidLabel": "SSID（网络名称）",
+        "wifiSsidPlaceholder": "输入 WiFi 名称",
+        "wifiPasswordLabel": "密码",
+        "wifiPasswordPlaceholder": "输入密码",
+        "wifiEncryptionLabel": "加密方式",
+        "wifiApplyBtn": "应用 WiFi 设置",
+        "labelUrl": "URL",
+        "labelContent": "内容",
+        "contentPlaceholder": "输入文本或 URL...",
+        "optionSize": "尺寸",
+        "optionErrorCorrection": "容错级别",
+        "optionForeground": "前景色",
+        "optionBackground": "背景色",
+        "generateBtn": "生成二维码",
+        "previewPlaceholder": "二维码预览",
+        "downloadPng": "PNG",
+        "downloadSvg": "SVG",
+        "decodeDropText": "拖放图片到此处或点击上传",
+        "decodeSupportedFormats": "支持 PNG、JPG、GIF、BMP",
+        "decodeSuccess": "解析成功",
+        "toastGenerated": "二维码已生成",
+        "toastCopied": "已复制到剪贴板",
+        "toastCleared": "已清空"
       }
     },
     "markdownPreview": {
       "name": "Markdown 预览",
       "description": "Markdown 实时预览与语法高亮",
-      "commands": {
-        "open": "Markdown 预览"
+      "commands": { "open": "Markdown 预览" },
+      "ui": {
+        "previewToggle": "预览",
+        "copyTooltip": "复制渲染后的 HTML",
+        "downloadTooltip": "下载为 HTML",
+        "editorPlaceholder": "在此输入 Markdown...",
+        "statusLines": "行数:",
+        "statusWords": "词数:",
+        "statusChars": "字符:",
+        "toastCopied": "HTML 已复制到剪贴板",
+        "toastDownloaded": "HTML 文件已下载",
+        "toastCleared": "已清空"
       }
     },
     "codeMinify": {
       "name": "代码压缩/美化",
       "description": "压缩或美化 JS、CSS、HTML 和 JSON",
-      "commands": {
-        "open": "代码压缩/美化"
+      "commands": { "open": "代码压缩/美化" },
+      "ui": {
+        "loadingEditor": "编辑器加载中...",
+        "minifyBtn": "压缩",
+        "beautifyBtn": "美化",
+        "inputLabel": "输入",
+        "outputLabel": "输出",
+        "copyTooltip": "复制输出",
+        "downloadTooltip": "下载",
+        "toastMinified": "压缩成功",
+        "toastBeautified": "美化成功",
+        "toastFormatHint": "在编辑器中使用 Ctrl+Shift+I 格式化",
+        "toastCopied": "已复制到剪贴板"
       }
     },
     "imageCompress": {
       "name": "图片压缩",
       "description": "图片压缩与格式转换，支持画质调节",
-      "commands": {
-        "open": "图片压缩"
+      "commands": { "open": "图片压缩" },
+      "ui": {
+        "qualityLabel": "质量",
+        "maxWidthLabel": "最大宽度",
+        "widthOriginal": "原始",
+        "formatLabel": "格式",
+        "formatOriginal": "原始",
+        "savedLabel": "节省:",
+        "recompressBtn": "重新压缩",
+        "downloadAllBtn": "全部下载",
+        "dropText": "拖放图片到此处或点击上传",
+        "dropHint": "支持 PNG、JPG、WebP、GIF、BMP",
+        "statusCompressing": "压缩中...",
+        "compressFailed": "压缩失败",
+        "toastCompressed": "已压缩 {{success}}/{{total}} 张图片",
+        "toastDownloading": "正在下载所有压缩图片",
+        "toastRecompressed": "已重新压缩所有图片"
       }
     },
     "hashGenerator": {
       "name": "哈希生成器",
       "description": "生成 MD5、SHA-1、SHA-256、SHA-512 哈希值",
-      "commands": {
-        "open": "哈希生成器"
+      "commands": { "open": "哈希生成器" },
+      "ui": {
+        "textPlaceholder": "输入要计算哈希的文本...",
+        "generateBtn": "生成哈希",
+        "toastGenerated": "哈希已生成",
+        "toastGeneratedForFile": "已生成 {{name}} 的哈希"
       }
     },
     "imageConvert": {
       "name": "图片转格式",
       "description": "图片格式互转（PNG、JPG、WebP、BMP）",
-      "commands": {
-        "open": "图片转格式"
+      "commands": { "open": "图片转格式" },
+      "ui": {
+        "outputLabel": "输出格式",
+        "qualityLabel": "质量",
+        "clearAllBtn": "全部清空",
+        "dropText": "拖放图片到此处或点击上传",
+        "toastConverted": "已转换 {{count}} 张图片为 {{format}}"
       }
     },
     "colorTool": {
       "name": "颜色工具",
       "description": "取色器、格式转换与调色板生成",
-      "commands": {
-        "open": "颜色工具"
+      "commands": { "open": "颜色工具" },
+      "ui": {
+        "contrastTitle": "对比度检查 (WCAG)",
+        "contrastOnWhite": "白底",
+        "contrastOnBlack": "黑底",
+        "palettesTitle": "调色板",
+        "paletteComplementary": "互补色",
+        "paletteAnalogous": "类似色",
+        "paletteTriadic": "三色组",
+        "textSample": "Aa 文本示例",
+        "wcagFail": "不通过"
       }
     },
     "base64Tool": {
       "name": "Base64 工具",
       "description": "Base64 编解码，支持文本和文件",
-      "commands": {
-        "open": "Base64 工具"
+      "commands": { "open": "Base64 工具" },
+      "ui": {
+        "swapTooltip": "交换",
+        "copyTooltip": "复制输出",
+        "downloadTooltip": "下载为文件",
+        "inputPlaceholder": "输入文本或 Base64 字符串...",
+        "outputPlaceholder": "结果将显示在此...",
+        "fileDropHint": "将任意文件转换为 Base64 字符串",
+        "outputTitle": "Base64 输出",
+        "invalidBase64": "无效的 Base64: {{msg}}",
+        "toastDownloaded": "文件已下载",
+        "toastDecodeFailed": "无法解码为文件 - 无效的 Base64 二进制数据"
       }
     }
   }

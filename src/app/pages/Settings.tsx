@@ -12,9 +12,22 @@ export default function Settings() {
   const { t } = useTranslation()
   const settings = useSettingsStore()
   const modulesMap = useModuleRegistry((state) => state.modules)
+  const enabledModuleIds = useModuleRegistry((state) => state.enabledModuleIds)
+  const registryEnable = useModuleRegistry((state) => state.enable)
+  const registryDisable = useModuleRegistry((state) => state.disable)
 
   // Stable selector: derive array from Map reference
   const allModules = Array.from(modulesMap.values())
+
+  // Toggle module: sync both settings store (persistence) and registry (runtime)
+  const handleModuleToggle = (moduleId: string, enabled: boolean) => {
+    settings.setModuleEnabled(moduleId, enabled)
+    if (enabled) {
+      registryEnable(moduleId)
+    } else {
+      registryDisable(moduleId)
+    }
+  }
 
   return (
     <div className="h-full overflow-auto p-8">
@@ -28,7 +41,7 @@ export default function Settings() {
           {/* Language selection */}
           <SettingRow
             label={t('settings.language')}
-            description="Select interface display language"
+            description={t('settings.languageDesc')}
           >
             <select
               value={settings.language}
@@ -83,7 +96,7 @@ export default function Settings() {
 
         {/* Appearance settings */}
         <SettingSection title={t('settings.appearance')} icon={Palette}>
-          <SettingRow label={t('settings.theme')} description="Select app theme">
+          <SettingRow label={t('settings.theme')} description={t('settings.themeDesc')}>
             <select
               value={settings.theme}
               onChange={(e) =>
@@ -91,13 +104,13 @@ export default function Settings() {
               }
               className="rounded-md border border-border-base bg-bg-elevated px-3 py-1.5 text-sm text-text-primary focus:border-border-focus focus:outline-none"
             >
-              <option value="dark">Dark Mode</option>
-              <option value="light">Light Mode</option>
-              <option value="system">Follow System</option>
+              <option value="dark">{t('settings.darkMode')}</option>
+              <option value="light">{t('settings.lightMode')}</option>
+              <option value="system">{t('settings.followSystem')}</option>
             </select>
           </SettingRow>
 
-          <SettingRow label="Font Size" description="Adjust interface font size">
+          <SettingRow label={t('settings.fontSize')} description={t('settings.fontSizeDesc')}>
             <input
               type="range"
               min="12"
@@ -114,20 +127,24 @@ export default function Settings() {
 
         {/* Module management */}
         <SettingSection title={t('settings.modules')} icon={Box}>
-          {allModules.map((mod) => (
-            <SettingRow
-              key={mod.meta.id}
-              label={mod.meta.name}
-              description={mod.meta.description}
-            >
-              <Toggle
-                checked={settings.isModuleEnabled(mod.meta.id)}
-                onChange={(v) => settings.setModuleEnabled(mod.meta.id, v)}
-              />
-            </SettingRow>
-          ))}
+          {allModules.map((mod) => {
+            const displayName = mod.meta.nameI18n ? t(mod.meta.nameI18n) : mod.meta.name
+            const displayDesc = mod.meta.descriptionI18n ? t(mod.meta.descriptionI18n) : mod.meta.description
+            return (
+              <SettingRow
+                key={mod.meta.id}
+                label={displayName}
+                description={displayDesc}
+              >
+                <Toggle
+                  checked={enabledModuleIds.has(mod.meta.id)}
+                  onChange={(v) => handleModuleToggle(mod.meta.id, v)}
+                />
+              </SettingRow>
+            )
+          })}
           {allModules.length === 0 && (
-            <p className="py-4 text-center text-sm text-text-muted">No available modules</p>
+            <p className="py-4 text-center text-sm text-text-muted">{t('settings.noModules')}</p>
           )}
         </SettingSection>
 
@@ -144,7 +161,7 @@ export default function Settings() {
               rel="noopener noreferrer"
               className="inline-block text-primary hover:text-primary-hover"
             >
-              GitHub Repository
+              {t('settings.githubRepo')}
             </a>
           </div>
         </SettingSection>

@@ -3,6 +3,7 @@
  */
 
 import { useState, useCallback, useMemo, lazy, Suspense } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useJsonFormat } from './hooks/useJsonFormat'
 import { Toolbar } from './components/Toolbar'
 import { StatusBar } from './components/StatusBar'
@@ -21,14 +22,16 @@ const Editor = lazy(() =>
 
 // Editor loading skeleton
 function EditorSkeleton() {
+  const { t } = useTranslation()
   return (
     <div className="flex h-full items-center justify-center bg-[#1e1e1e]">
-      <div className="animate-pulse text-text-muted text-sm">Loading editor...</div>
+      <div className="animate-pulse text-text-muted text-sm">{t('modules.jsonFormatter.ui.loadingEditor')}</div>
     </div>
   )
 }
 
 export default function JsonFormatter() {
+  const { t } = useTranslation()
   const {
     input,
     setInput,
@@ -70,9 +73,9 @@ export default function JsonFormatter() {
     if (result.success) {
       const items = addHistory({ input, action: 'format' })
       setHistoryItems(items)
-      showToast('Formatted successfully')
+      showToast(t('modules.jsonFormatter.ui.toastFormatted'))
     } else {
-      showToast(result.error ?? 'Format failed', 'error')
+      showToast(result.error ?? t('modules.jsonFormatter.ui.toastFormatFailed'), 'error')
     }
   }, [format, input, showToast])
 
@@ -82,9 +85,9 @@ export default function JsonFormatter() {
     if (result.success) {
       const items = addHistory({ input, action: 'compress' })
       setHistoryItems(items)
-      showToast('Compressed successfully')
+      showToast(t('modules.jsonFormatter.ui.toastCompressed'))
     } else {
-      showToast(result.error ?? 'Compress failed', 'error')
+      showToast(result.error ?? t('modules.jsonFormatter.ui.toastCompressFailed'), 'error')
     }
   }, [compress, input, showToast])
 
@@ -92,7 +95,7 @@ export default function JsonFormatter() {
   const handleCopy = useCallback(async () => {
     if (input) {
       await navigator.clipboard.writeText(input)
-      showToast('Copied to clipboard')
+      showToast(t('modules.jsonFormatter.ui.toastCopied'))
     }
   }, [input, showToast])
 
@@ -106,13 +109,13 @@ export default function JsonFormatter() {
     a.download = `formatted-${Date.now()}.json`
     a.click()
     URL.revokeObjectURL(url)
-    showToast('Exported successfully')
+    showToast(t('modules.jsonFormatter.ui.toastExported'))
   }, [input, showToast])
 
   // Clear handler
   const handleClear = useCallback(() => {
     setInput('')
-    showToast('Cleared')
+    showToast(t('modules.jsonFormatter.ui.toastCleared'))
   }, [setInput, showToast])
 
   // History restore handler
@@ -120,7 +123,7 @@ export default function JsonFormatter() {
     (item: HistoryItem) => {
       setInput(item.input)
       setShowHistory(false)
-      showToast('Restored')
+      showToast(t('modules.jsonFormatter.ui.toastRestored'))
     },
     [setInput, showToast]
   )
@@ -133,7 +136,8 @@ export default function JsonFormatter() {
 
   // Statistics
   const stats = useMemo(() => getStats(), [input, getStats])
-  const isValid = validate().valid
+  // Derive isValid from state instead of calling validate() during render (causes infinite loop)
+  const isValid = !!input.trim() && lastError === null
 
   return (
     <div className="relative flex h-full flex-col">

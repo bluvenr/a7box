@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { Home, Settings, Box } from 'lucide-react'
 import { useModuleRegistry } from '../../core/registry'
 import { CommandPalette } from '../../core/command-palette'
+import { Logo } from '../../components/Logo'
 import type { LucideIcon } from 'lucide-react'
 
 // Sidebar navigation items
@@ -30,8 +31,8 @@ export function MainLayout() {
       {/* Sidebar */}
       <aside className="flex w-56 flex-col border-r border-border-base bg-bg-elevated">
         {/* Logo area */}
-        <div className="flex h-14 items-center gap-2 px-4">
-          <Box className="h-6 w-6 text-primary" />
+        <div className="flex h-14 items-center gap-2.5 px-4">
+          <Logo size={28} />
           <span className="text-lg font-semibold text-text-primary">
             {t('app.name')}
           </span>

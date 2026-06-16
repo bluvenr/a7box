@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Upload, X, Copy } from 'lucide-react'
 
 interface DecodePanelProps {
@@ -21,6 +22,7 @@ export function DecodePanel({
   onDecode,
   onClear,
 }: DecodePanelProps) {
+  const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -89,10 +91,10 @@ export function DecodePanel({
           <>
             <Upload className="mb-3 h-10 w-10 text-text-disabled" />
             <p className="text-sm text-text-secondary">
-              Drop image here or click to upload
+              {t('modules.qrCode.ui.decodeDropText')}
             </p>
             <p className="mt-1 text-xs text-text-muted">
-              PNG, JPG, GIF, BMP supported
+              {t('modules.qrCode.ui.decodeSupportedFormats')}
             </p>
           </>
         )}
@@ -109,13 +111,13 @@ export function DecodePanel({
       {decodedText !== null && (
         <div className="rounded-lg border border-success/30 bg-success/5 p-4">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-medium text-success">Decoded Successfully</span>
+            <span className="text-xs font-medium text-success">{t('modules.qrCode.ui.decodeSuccess')}</span>
             <button
               onClick={handleCopyResult}
               className="flex items-center gap-1 rounded px-2 py-1 text-xs text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
             >
               <Copy className="h-3 w-3" />
-              {copied ? 'Copied!' : 'Copy'}
+              {copied ? t('common.copied') : t('common.copy')}
             </button>
           </div>
           <p className="break-all font-mono text-sm text-text-primary leading-relaxed">

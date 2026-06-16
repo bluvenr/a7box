@@ -5,6 +5,7 @@
 
 import { Type, Wifi } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { QrOptions, QrErrorLevel } from '../hooks/useQrCode'
 import { buildWifiQrContent } from '../hooks/useQrCode'
 
@@ -25,6 +26,7 @@ export function GeneratePanel({
   onOptionsChange,
   onGenerate,
 }: GeneratePanelProps) {
+  const { t } = useTranslation()
   const [mode, setMode] = useState<InputMode>('text')
 
   // WiFi state
@@ -43,7 +45,7 @@ export function GeneratePanel({
     <div className="flex flex-col gap-4">
       {/* Mode tabs */}
       <div className="flex gap-1 rounded-lg bg-bg-base p-1">
-        <ModeTab icon={Type} label="Text" active={mode === 'text'} onClick={() => setMode('text')} />
+        <ModeTab icon={Type} label={t('common.text')} active={mode === 'text'} onClick={() => setMode('text')} />
         <ModeTab icon={Wifi} label="WiFi" active={mode === 'wifi'} onClick={() => setMode('wifi')} />
       </div>
 
@@ -51,21 +53,21 @@ export function GeneratePanel({
       {mode === 'wifi' ? (
         <div className="flex flex-col gap-3">
           <InputField
-            label="SSID (Network Name)"
+            label={t('modules.qrCode.ui.wifiSsidLabel')}
             value={ssid}
             onChange={(v) => { setSsid(v); }}
-            placeholder="Enter WiFi name"
+            placeholder={t('modules.qrCode.ui.wifiSsidPlaceholder')}
           />
           <InputField
-            label="Password"
+            label={t('modules.qrCode.ui.wifiPasswordLabel')}
             value={password}
             onChange={(v) => { setPassword(v); }}
-            placeholder="Enter password"
+            placeholder={t('modules.qrCode.ui.wifiPasswordPlaceholder')}
             type="password"
           />
           <div>
             <label className="mb-1 block text-xs font-medium text-text-secondary">
-              Encryption
+              {t('modules.qrCode.ui.wifiEncryptionLabel')}
             </label>
             <select
               value={encryption}
@@ -81,18 +83,18 @@ export function GeneratePanel({
             onClick={handleWifiChange}
             className="rounded-md bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
           >
-            Apply WiFi Settings
+            {t('modules.qrCode.ui.wifiApplyBtn')}
           </button>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
           <label className="text-xs font-medium text-text-secondary">
-            {mode === 'url' ? 'URL' : 'Content'}
+            {mode === 'url' ? t('modules.qrCode.ui.labelUrl') : t('modules.qrCode.ui.labelContent')}
           </label>
           <textarea
             value={content}
             onChange={(e) => onContentChange(e.target.value)}
-            placeholder={mode === 'url' ? 'https://example.com' : 'Enter text or URL...'}
+            placeholder={mode === 'url' ? 'https://example.com' : t('modules.qrCode.ui.contentPlaceholder')}
             rows={4}
             className="w-full resize-none rounded-md border border-border-base bg-bg-base px-3 py-2 text-sm text-text-primary placeholder:text-text-disabled focus:border-border-focus focus:outline-none"
           />
@@ -101,11 +103,11 @@ export function GeneratePanel({
 
       {/* Options */}
       <div className="flex flex-col gap-3 border-t border-border-subtle pt-4">
-        <span className="text-xs font-medium text-text-muted">Options</span>
+        <span className="text-xs font-medium text-text-muted">{t('common.options')}</span>
 
         {/* Size */}
         <div className="flex items-center justify-between">
-          <label className="text-xs text-text-secondary">Size</label>
+          <label className="text-xs text-text-secondary">{t('modules.qrCode.ui.optionSize')}</label>
           <div className="flex items-center gap-2">
             <input
               type="range"
@@ -122,7 +124,7 @@ export function GeneratePanel({
 
         {/* Error correction */}
         <div className="flex items-center justify-between">
-          <label className="text-xs text-text-secondary">Error Correction</label>
+          <label className="text-xs text-text-secondary">{t('modules.qrCode.ui.optionErrorCorrection')}</label>
           <select
             value={options.errorCorrection}
             onChange={(e) => onOptionsChange({ ...options, errorCorrection: e.target.value as QrErrorLevel })}
@@ -137,7 +139,7 @@ export function GeneratePanel({
 
         {/* Colors */}
         <div className="flex items-center justify-between">
-          <label className="text-xs text-text-secondary">Foreground</label>
+          <label className="text-xs text-text-secondary">{t('modules.qrCode.ui.optionForeground')}</label>
           <input
             type="color"
             value={options.foreground}
@@ -146,7 +148,7 @@ export function GeneratePanel({
           />
         </div>
         <div className="flex items-center justify-between">
-          <label className="text-xs text-text-secondary">Background</label>
+          <label className="text-xs text-text-secondary">{t('modules.qrCode.ui.optionBackground')}</label>
           <input
             type="color"
             value={options.background}
@@ -162,7 +164,7 @@ export function GeneratePanel({
         disabled={!content.trim()}
         className="mt-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
       >
-        Generate QR Code
+        {t('modules.qrCode.ui.generateBtn')}
       </button>
     </div>
   )

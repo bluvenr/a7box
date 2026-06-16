@@ -4,10 +4,12 @@
  */
 
 import { useState, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Eye, EyeOff, Copy, Download, Trash2, FileText } from 'lucide-react'
 import { useMarkdown } from './hooks/useMarkdown'
 
 export default function MarkdownPreview() {
+  const { t } = useTranslation()
   const { content, setContent, html, downloadHtml, copyHtml, clear } = useMarkdown()
   const [showPreview, setShowPreview] = useState(true)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -19,17 +21,17 @@ export default function MarkdownPreview() {
 
   const handleCopy = async () => {
     await copyHtml()
-    showToast('HTML copied to clipboard')
+    showToast(t('modules.markdownPreview.ui.toastCopied'))
   }
 
   const handleDownload = () => {
     downloadHtml()
-    showToast('HTML file downloaded')
+    showToast(t('modules.markdownPreview.ui.toastDownloaded'))
   }
 
   const handleClear = () => {
     clear()
-    showToast('Cleared')
+    showToast(t('modules.markdownPreview.ui.toastCleared'))
   }
 
   // Word count stats
@@ -45,7 +47,7 @@ export default function MarkdownPreview() {
       {/* Toolbar */}
       <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
         <FileText className="h-4 w-4 text-text-muted" />
-        <span className="text-sm font-medium text-text-primary">Markdown Preview</span>
+        <span className="text-sm font-medium text-text-primary">{t('modules.markdownPreview.name')}</span>
 
         <div className="mx-2 h-5 w-px bg-border-base" />
 
@@ -59,7 +61,7 @@ export default function MarkdownPreview() {
           }`}
         >
           {showPreview ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-          Preview
+          {t('modules.markdownPreview.ui.previewToggle')}
         </button>
 
         {/* Copy HTML */}
@@ -67,7 +69,7 @@ export default function MarkdownPreview() {
           onClick={handleCopy}
           disabled={!content}
           className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
-          title="Copy rendered HTML"
+          title={t('modules.markdownPreview.ui.copyTooltip')}
         >
           <Copy className="h-4 w-4" />
         </button>
@@ -77,7 +79,7 @@ export default function MarkdownPreview() {
           onClick={handleDownload}
           disabled={!content}
           className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
-          title="Download as HTML"
+          title={t('modules.markdownPreview.ui.downloadTooltip')}
         >
           <Download className="h-4 w-4" />
         </button>
@@ -89,7 +91,7 @@ export default function MarkdownPreview() {
           onClick={handleClear}
           disabled={!content}
           className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-text-muted transition-colors hover:bg-bg-hover hover:text-error disabled:opacity-40 disabled:cursor-not-allowed"
-          title="Clear"
+          title={t('common.clear')}
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -102,7 +104,7 @@ export default function MarkdownPreview() {
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Type your markdown here..."
+            placeholder={t('modules.markdownPreview.ui.editorPlaceholder')}
             className="h-full w-full resize-none bg-bg-base p-4 font-mono text-sm text-text-primary outline-none placeholder:text-text-disabled"
             spellCheck={false}
           />
@@ -121,9 +123,9 @@ export default function MarkdownPreview() {
 
       {/* Status bar */}
       <div className="flex items-center gap-4 border-t border-border-subtle bg-bg-elevated px-4 py-1.5 text-xs text-text-muted">
-        <span>Lines: <span className="text-text-secondary">{stats.lines}</span></span>
-        <span>Words: <span className="text-text-secondary">{stats.words}</span></span>
-        <span>Chars: <span className="text-text-secondary">{stats.chars}</span></span>
+        <span>{t('modules.markdownPreview.ui.statusLines')} <span className="text-text-secondary">{stats.lines}</span></span>
+        <span>{t('modules.markdownPreview.ui.statusWords')} <span className="text-text-secondary">{stats.words}</span></span>
+        <span>{t('modules.markdownPreview.ui.statusChars')} <span className="text-text-secondary">{stats.chars}</span></span>
       </div>
 
       {/* Toast */}

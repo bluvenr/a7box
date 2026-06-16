@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Image, Upload, Download, X } from 'lucide-react'
 
 type OutputFormat = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/bmp'
@@ -69,6 +70,7 @@ async function convertImage(file: File, format: OutputFormat, quality: number): 
 }
 
 export default function ImageConvert() {
+  const { t } = useTranslation()
   const [results, setResults] = useState<ConvertResult[]>([])
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('image/png')
   const [quality, setQuality] = useState(92)
@@ -109,7 +111,7 @@ export default function ImageConvert() {
       }
     }
 
-    showToast(`Converted ${newItems.length} image(s) to ${FORMATS.find(f => f.value === outputFormat)?.label}`)
+    showToast(t('modules.imageConvert.ui.toastConverted', { count: newItems.length, format: FORMATS.find(f => f.value === outputFormat)?.label }))
   }, [outputFormat, quality, showToast])
 
   const removeItem = (id: string) => {
@@ -146,7 +148,7 @@ export default function ImageConvert() {
       <div className="flex items-center gap-4 border-b border-border-subtle bg-bg-elevated px-4 py-3">
         <Image className="h-5 w-5 text-text-muted" />
         <div className="flex items-center gap-2">
-          <label className="text-xs text-text-secondary">Output</label>
+          <label className="text-xs text-text-secondary">{t('modules.imageConvert.ui.outputLabel')}</label>
           <select
             value={outputFormat}
             onChange={(e) => setOutputFormat(e.target.value as OutputFormat)}
@@ -157,7 +159,7 @@ export default function ImageConvert() {
         </div>
         {(outputFormat === 'image/jpeg' || outputFormat === 'image/webp') && (
           <div className="flex items-center gap-2">
-            <label className="text-xs text-text-secondary">Quality</label>
+            <label className="text-xs text-text-secondary">{t('modules.imageConvert.ui.qualityLabel')}</label>
             <input type="range" min="10" max="100" value={quality} onChange={(e) => setQuality(parseInt(e.target.value))} className="w-24" />
             <span className="w-8 text-right text-xs text-text-muted">{quality}%</span>
           </div>
@@ -165,7 +167,7 @@ export default function ImageConvert() {
         <div className="flex-1" />
         {doneItems.length > 0 && (
           <button onClick={clearAll} className="flex items-center gap-1 rounded px-2 py-1 text-xs text-text-muted hover:text-error">
-            <X className="h-3.5 w-3.5" /> Clear All
+            <X className="h-3.5 w-3.5" /> {t('modules.imageConvert.ui.clearAllBtn')}
           </button>
         )}
       </div>
@@ -180,7 +182,7 @@ export default function ImageConvert() {
           onClick={() => fileInputRef.current?.click()}
         >
           <Upload className="mb-3 h-10 w-10 text-text-disabled" />
-          <p className="text-sm text-text-secondary">Drop images here or click to upload</p>
+          <p className="text-sm text-text-secondary">{t('modules.imageConvert.ui.dropText')}</p>
           <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = '' }} />
         </div>
 

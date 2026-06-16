@@ -3,6 +3,7 @@
  */
 
 import { CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { JsonStats } from '../hooks/useJsonFormat'
 
 interface StatusBarProps {
@@ -20,13 +21,14 @@ function formatBytes(bytes: number): string {
 }
 
 export function StatusBar({ stats, error, errorPosition }: StatusBarProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center gap-4 border-t border-border-subtle bg-bg-elevated px-4 py-1.5 text-xs">
       {/* Status indicator */}
       {stats.valid ? (
         <div className="flex items-center gap-1.5 text-success">
           <CheckCircle2 className="h-3.5 w-3.5" />
-          <span>Valid JSON</span>
+          <span>{t('modules.jsonFormatter.ui.statusValid')}</span>
         </div>
       ) : error ? (
         <div className="flex items-center gap-1.5 text-error">
@@ -36,14 +38,14 @@ export function StatusBar({ stats, error, errorPosition }: StatusBarProps) {
           </span>
           {errorPosition && (
             <span className="text-text-muted">
-              (Ln {errorPosition.line}, Col {errorPosition.column})
+              ({t('modules.jsonFormatter.ui.errorPosition', { line: errorPosition.line, col: errorPosition.column })})
             </span>
           )}
         </div>
       ) : (
         <div className="flex items-center gap-1.5 text-text-muted">
           <AlertTriangle className="h-3.5 w-3.5" />
-          <span>Awaiting input</span>
+          <span>{t('modules.jsonFormatter.ui.statusAwaiting')}</span>
         </div>
       )}
 
@@ -53,16 +55,16 @@ export function StatusBar({ stats, error, errorPosition }: StatusBarProps) {
       {stats.valid && (
         <>
           <span className="text-text-muted">
-            Size: <span className="text-text-secondary">{formatBytes(stats.size)}</span>
+            {t('modules.jsonFormatter.ui.statsSize')} <span className="text-text-secondary">{formatBytes(stats.size)}</span>
           </span>
           <span className="text-text-muted">
-            Lines: <span className="text-text-secondary">{stats.lines}</span>
+            {t('modules.jsonFormatter.ui.statsLines')} <span className="text-text-secondary">{stats.lines}</span>
           </span>
           <span className="text-text-muted">
-            Depth: <span className="text-text-secondary">{stats.depth}</span>
+            {t('modules.jsonFormatter.ui.statsDepth')} <span className="text-text-secondary">{stats.depth}</span>
           </span>
           <span className="text-text-muted">
-            Keys: <span className="text-text-secondary">{stats.keys}</span>
+            {t('modules.jsonFormatter.ui.statsKeys')} <span className="text-text-secondary">{stats.keys}</span>
           </span>
         </>
       )}

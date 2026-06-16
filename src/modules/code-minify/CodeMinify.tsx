@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, lazy, Suspense, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Minimize2, Maximize2, Copy, Trash2, Download } from 'lucide-react'
 import { minifyCode, formatBytes, calcSavings, type Language } from './utils/minifier'
 
@@ -20,14 +21,16 @@ const LANGUAGES: { value: Language; label: string; monacoLang: string }[] = [
 ]
 
 function EditorSkeleton() {
+  const { t } = useTranslation()
   return (
     <div className="flex h-full items-center justify-center bg-[#1e1e1e]">
-      <div className="animate-pulse text-text-muted text-sm">Loading editor...</div>
+      <div className="animate-pulse text-text-muted text-sm">{t('modules.codeMinify.ui.loadingEditor')}</div>
     </div>
   )
 }
 
 export default function CodeMinify() {
+  const { t } = useTranslation()
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
   const [language, setLanguage] = useState<Language>('javascript')
@@ -45,7 +48,7 @@ export default function CodeMinify() {
     try {
       const result = minifyCode(input, language)
       setOutput(result)
-      showToast('Minified successfully')
+      showToast(t('modules.codeMinify.ui.toastMinified'))
     } catch (e) {
       showToast((e as Error).message, 'error')
     }
@@ -59,13 +62,13 @@ export default function CodeMinify() {
         const parsed = JSON.parse(input)
         const result = JSON.stringify(parsed, null, 2)
         setOutput(result)
-        showToast('Beautified successfully')
+        showToast(t('modules.codeMinify.ui.toastBeautified'))
         return
       }
       // For other languages, just format with basic indentation logic
       // Monaco's built-in formatter can be triggered via the editor action
       setOutput(input)
-      showToast('Use Ctrl+Shift+I in editor to format')
+      showToast(t('modules.codeMinify.ui.toastFormatHint'))
     } catch (e) {
       showToast((e as Error).message, 'error')
     }
@@ -74,7 +77,7 @@ export default function CodeMinify() {
   const handleCopy = useCallback(async () => {
     if (!output) return
     await navigator.clipboard.writeText(output)
-    showToast('Copied to clipboard')
+    showToast(t('modules.codeMinify.ui.toastCopied'))
   }, [output, showToast])
 
   const handleClear = useCallback(() => {
@@ -127,7 +130,7 @@ export default function CodeMinify() {
           className="flex items-center gap-1.5 rounded-md bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Minimize2 className="h-4 w-4" />
-          Minify
+          {t('modules.codeMinify.ui.minifyBtn')}
         </button>
 
         <button
@@ -136,7 +139,7 @@ export default function CodeMinify() {
           className="flex items-center gap-1.5 rounded-md bg-bg-hover px-3 py-1.5 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Maximize2 className="h-4 w-4" />
-          Beautify
+          {t('modules.codeMinify.ui.beautifyBtn')}
         </button>
 
         <div className="h-5 w-px bg-border-base" />
@@ -145,7 +148,7 @@ export default function CodeMinify() {
           onClick={handleCopy}
           disabled={!output}
           className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
-          title="Copy output"
+          title={t('modules.codeMinify.ui.copyTooltip')}
         >
           <Copy className="h-4 w-4" />
         </button>
@@ -154,7 +157,7 @@ export default function CodeMinify() {
           onClick={handleDownload}
           disabled={!output}
           className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
-          title="Download"
+          title={t('modules.codeMinify.ui.downloadTooltip')}
         >
           <Download className="h-4 w-4" />
         </button>
@@ -175,7 +178,7 @@ export default function CodeMinify() {
           onClick={handleClear}
           disabled={!input && !output}
           className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-text-muted transition-colors hover:bg-bg-hover hover:text-error disabled:opacity-40 disabled:cursor-not-allowed"
-          title="Clear"
+          title={t('common.clear')}
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -186,7 +189,7 @@ export default function CodeMinify() {
         {/* Input */}
         <div className="flex flex-1 flex-col border-r border-border-subtle">
           <div className="px-4 py-1.5 text-xs text-text-muted font-medium bg-bg-elevated border-b border-border-subtle">
-            Input
+            {t('modules.codeMinify.ui.inputLabel')}
           </div>
           <div className="flex-1 overflow-hidden">
             <Suspense fallback={<EditorSkeleton />}>
@@ -214,7 +217,7 @@ export default function CodeMinify() {
         {/* Output */}
         <div className="flex flex-1 flex-col">
           <div className="px-4 py-1.5 text-xs text-text-muted font-medium bg-bg-elevated border-b border-border-subtle">
-            Output
+            {t('modules.codeMinify.ui.outputLabel')}
           </div>
           <div className="flex-1 overflow-hidden">
             <Suspense fallback={<EditorSkeleton />}>

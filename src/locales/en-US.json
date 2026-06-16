@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "A7 Box",
+    "name": "A7Box",
     "description": "Your Tactical Efficiency Weapon on Desktop",
     "version": "Version"
   },
@@ -14,6 +14,7 @@
     "search": "Search...",
     "noResults": "No results found",
     "copied": "Copied",
+    "copiedToClipboard": "Copied to clipboard",
     "saved": "Saved",
     "cancel": "Cancel",
     "confirm": "Confirm",
@@ -24,10 +25,28 @@
     "edit": "Edit",
     "copy": "Copy",
     "paste": "Paste",
+    "clear": "Clear",
+    "download": "Download",
+    "upload": "Upload",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
-    "warning": "Warning"
+    "warning": "Warning",
+    "cleared": "Cleared",
+    "dropFileOrClick": "Drop file here or click to upload",
+    "text": "Text",
+    "file": "File",
+    "input": "Input",
+    "output": "Output",
+    "preview": "Preview",
+    "encode": "Encode",
+    "decode": "Decode",
+    "format": "Format",
+    "compress": "Compress",
+    "generate": "Generate",
+    "options": "Options",
+    "quality": "Quality",
+    "restore": "Restore"
   },
   "categories": {
     "text": "Text Tools",
@@ -55,9 +74,18 @@
     "shortcuts": "Shortcuts",
     "modules": "Modules",
     "language": "Language",
+    "languageDesc": "Select interface display language",
     "theme": "Theme",
+    "themeDesc": "Select app theme",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "followSystem": "Follow System",
+    "fontSize": "Font Size",
+    "fontSizeDesc": "Adjust interface font size",
+    "noModules": "No available modules",
+    "githubRepo": "GitHub Repository",
     "autoStart": "Start on Boot",
-    "autoStartDesc": "Automatically start A7 Box when system starts",
+    "autoStartDesc": "Automatically start A7Box when system starts",
     "minimizeToTray": "Minimize to Tray",
     "minimizeToTrayDesc": "Minimize to system tray when window is closed",
     "checkUpdateOnStart": "Check Updates on Start",
@@ -77,71 +105,187 @@
     "jsonFormatter": {
       "name": "JSON Formatter",
       "description": "Auto-format or compress JSON data",
-      "commands": {
-        "format": "Format JSON",
-        "compress": "Compress JSON"
-      },
-      "settings": {
-        "autoFormat": "Auto Format",
-        "autoFormatDesc": "Auto-format when JSON detected in clipboard",
-        "indentSize": "Indent Size"
+      "commands": { "format": "Format JSON", "compress": "Compress JSON" },
+      "settings": { "autoFormat": "Auto Format", "autoFormatDesc": "Auto-format when JSON detected in clipboard", "indentSize": "Indent Size" },
+      "ui": {
+        "loadingEditor": "Loading editor...",
+        "toastFormatted": "Formatted successfully",
+        "toastFormatFailed": "Format failed",
+        "toastCompressed": "Compressed successfully",
+        "toastCompressFailed": "Compress failed",
+        "toastCopied": "Copied to clipboard",
+        "toastExported": "Exported successfully",
+        "toastCleared": "Cleared",
+        "toastRestored": "Restored",
+        "indent2Spaces": "2 Spaces",
+        "indent4Spaces": "4 Spaces",
+        "indentTab": "Tab",
+        "copyTooltip": "Copy to clipboard",
+        "exportTooltip": "Export as file",
+        "historyTooltip": "History",
+        "clearTooltip": "Clear",
+        "statusValid": "Valid JSON",
+        "statusAwaiting": "Awaiting input",
+        "statsSize": "Size:",
+        "statsLines": "Lines:",
+        "statsDepth": "Depth:",
+        "statsKeys": "Keys:",
+        "historyTitle": "History",
+        "historyClear": "Clear",
+        "historyEmpty": "No history yet",
+        "historyActionFormat": "Format",
+        "historyActionCompress": "Compress",
+        "timeJustNow": "Just now",
+        "timeMinutesAgo": "{{m}}m ago",
+        "timeHoursAgo": "{{h}}h ago",
+        "errorPosition": "Ln {{line}}, Col {{col}}"
       }
     },
     "qrCode": {
       "name": "QR Code",
       "description": "Generate and decode QR codes",
-      "commands": {
-        "generate": "Generate QR Code",
-        "decode": "Decode QR Code"
+      "commands": { "generate": "Generate QR Code", "decode": "Decode QR Code" },
+      "ui": {
+        "tabGenerate": "Generate",
+        "tabDecode": "Decode",
+        "modeText": "Text",
+        "modeWifi": "WiFi",
+        "wifiSsidLabel": "SSID (Network Name)",
+        "wifiSsidPlaceholder": "Enter WiFi name",
+        "wifiPasswordLabel": "Password",
+        "wifiPasswordPlaceholder": "Enter password",
+        "wifiEncryptionLabel": "Encryption",
+        "wifiApplyBtn": "Apply WiFi Settings",
+        "labelUrl": "URL",
+        "labelContent": "Content",
+        "contentPlaceholder": "Enter text or URL...",
+        "optionSize": "Size",
+        "optionErrorCorrection": "Error Correction",
+        "optionForeground": "Foreground",
+        "optionBackground": "Background",
+        "generateBtn": "Generate QR Code",
+        "previewPlaceholder": "QR Preview",
+        "downloadPng": "PNG",
+        "downloadSvg": "SVG",
+        "decodeDropText": "Drop image here or click to upload",
+        "decodeSupportedFormats": "PNG, JPG, GIF, BMP supported",
+        "decodeSuccess": "Decoded Successfully",
+        "toastGenerated": "QR code generated",
+        "toastCopied": "Copied to clipboard",
+        "toastCleared": "Cleared"
       }
     },
     "markdownPreview": {
       "name": "Markdown Preview",
       "description": "Live markdown preview with syntax highlighting",
-      "commands": {
-        "open": "Markdown Preview"
+      "commands": { "open": "Markdown Preview" },
+      "ui": {
+        "previewToggle": "Preview",
+        "copyTooltip": "Copy rendered HTML",
+        "downloadTooltip": "Download as HTML",
+        "editorPlaceholder": "Type your markdown here...",
+        "statusLines": "Lines:",
+        "statusWords": "Words:",
+        "statusChars": "Chars:",
+        "toastCopied": "HTML copied to clipboard",
+        "toastDownloaded": "HTML file downloaded",
+        "toastCleared": "Cleared"
       }
     },
     "codeMinify": {
       "name": "Code Minify/Beautify",
       "description": "Minify or beautify JS, CSS, HTML and JSON",
-      "commands": {
-        "open": "Code Minify/Beautify"
+      "commands": { "open": "Code Minify/Beautify" },
+      "ui": {
+        "loadingEditor": "Loading editor...",
+        "minifyBtn": "Minify",
+        "beautifyBtn": "Beautify",
+        "inputLabel": "Input",
+        "outputLabel": "Output",
+        "copyTooltip": "Copy output",
+        "downloadTooltip": "Download",
+        "toastMinified": "Minified successfully",
+        "toastBeautified": "Beautified successfully",
+        "toastFormatHint": "Use Ctrl+Shift+I in editor to format",
+        "toastCopied": "Copied to clipboard"
       }
     },
     "imageCompress": {
       "name": "Image Compress",
       "description": "Compress and convert images with quality control",
-      "commands": {
-        "open": "Image Compress"
+      "commands": { "open": "Image Compress" },
+      "ui": {
+        "qualityLabel": "Quality",
+        "maxWidthLabel": "Max Width",
+        "widthOriginal": "Original",
+        "formatLabel": "Format",
+        "formatOriginal": "Original",
+        "savedLabel": "Saved:",
+        "recompressBtn": "Re-compress",
+        "downloadAllBtn": "Download All",
+        "dropText": "Drop images here or click to upload",
+        "dropHint": "PNG, JPG, WebP, GIF, BMP supported",
+        "statusCompressing": "Compressing...",
+        "compressFailed": "Compression failed",
+        "toastCompressed": "Compressed {{success}}/{{total}} images",
+        "toastDownloading": "Downloading all compressed images",
+        "toastRecompressed": "Recompressed all images"
       }
     },
     "hashGenerator": {
       "name": "Hash Generator",
       "description": "Generate MD5, SHA-1, SHA-256, SHA-512 hashes",
-      "commands": {
-        "open": "Hash Generator"
+      "commands": { "open": "Hash Generator" },
+      "ui": {
+        "textPlaceholder": "Enter text to hash...",
+        "generateBtn": "Generate Hashes",
+        "toastGenerated": "Hashes generated",
+        "toastGeneratedForFile": "Hashes generated for {{name}}"
       }
     },
     "imageConvert": {
       "name": "Image Convert",
       "description": "Convert images between PNG, JPG, WebP and BMP",
-      "commands": {
-        "open": "Image Convert"
+      "commands": { "open": "Image Convert" },
+      "ui": {
+        "outputLabel": "Output",
+        "qualityLabel": "Quality",
+        "clearAllBtn": "Clear All",
+        "dropText": "Drop images here or click to upload",
+        "toastConverted": "Converted {{count}} image(s) to {{format}}"
       }
     },
     "colorTool": {
       "name": "Color Tool",
       "description": "Color picker, format converter and palette generator",
-      "commands": {
-        "open": "Color Tool"
+      "commands": { "open": "Color Tool" },
+      "ui": {
+        "contrastTitle": "Contrast Check (WCAG)",
+        "contrastOnWhite": "On White",
+        "contrastOnBlack": "On Black",
+        "palettesTitle": "Color Palettes",
+        "paletteComplementary": "Complementary",
+        "paletteAnalogous": "Analogous",
+        "paletteTriadic": "Triadic",
+        "textSample": "Aa Text Sample",
+        "wcagFail": "Fail"
       }
     },
     "base64Tool": {
       "name": "Base64 Tool",
       "description": "Encode and decode Base64 text and files",
-      "commands": {
-        "open": "Base64 Tool"
+      "commands": { "open": "Base64 Tool" },
+      "ui": {
+        "swapTooltip": "Swap",
+        "copyTooltip": "Copy output",
+        "downloadTooltip": "Download as file",
+        "inputPlaceholder": "Enter text or Base64 string...",
+        "outputPlaceholder": "Result will appear here...",
+        "fileDropHint": "Convert any file to Base64 string",
+        "outputTitle": "Base64 Output",
+        "invalidBase64": "Invalid Base64: {{msg}}",
+        "toastDownloaded": "File downloaded",
+        "toastDecodeFailed": "Cannot decode as file - invalid Base64 binary data"
       }
     }
   }

@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Fingerprint, FileText, Upload, Copy } from 'lucide-react'
 
 type HashAlgo = 'MD5' | 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512'
@@ -81,6 +82,7 @@ async function hashAll(input: string | ArrayBuffer): Promise<Record<HashAlgo, st
 }
 
 export default function HashGenerator() {
+  const { t } = useTranslation()
   const [mode, setMode] = useState<InputMode>('text')
   const [inputText, setInputText] = useState('')
   const [fileName, setFileName] = useState('')
@@ -99,7 +101,7 @@ export default function HashGenerator() {
       if (mode === 'text') {
         const result = await hashAll(inputText)
         setHashes(result)
-        showToast('Hashes generated')
+        showToast(t('modules.hashGenerator.ui.toastGenerated'))
       }
     } catch (e) {
       showToast(`Error: ${(e as Error).message}`)
@@ -112,7 +114,7 @@ export default function HashGenerator() {
       const buf = await file.arrayBuffer()
       const result = await hashAll(buf)
       setHashes(result)
-      showToast(`Hashes generated for ${file.name}`)
+      showToast(t('modules.hashGenerator.ui.toastGeneratedForFile', { name: file.name }))
     } catch (e) {
       showToast(`Error: ${(e as Error).message}`)
     }
@@ -129,13 +131,13 @@ export default function HashGenerator() {
       {/* Toolbar */}
       <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
         <Fingerprint className="h-4 w-4 text-text-muted" />
-        <span className="text-sm font-medium text-text-primary">Hash Generator</span>
+        <span className="text-sm font-medium text-text-primary">{t('modules.hashGenerator.name')}</span>
         <div className="mx-2 h-5 w-px bg-border-base" />
         <button onClick={() => setMode('text')} className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${mode === 'text' ? 'bg-primary/10 text-primary' : 'text-text-muted hover:text-text-secondary'}`}>
-          <span className="flex items-center gap-1"><FileText className="h-3.5 w-3.5" /> Text</span>
+          <span className="flex items-center gap-1"><FileText className="h-3.5 w-3.5" /> {t('common.text')}</span>
         </button>
         <button onClick={() => setMode('file')} className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${mode === 'file' ? 'bg-primary/10 text-primary' : 'text-text-muted hover:text-text-secondary'}`}>
-          <span className="flex items-center gap-1"><Upload className="h-3.5 w-3.5" /> File</span>
+          <span className="flex items-center gap-1"><Upload className="h-3.5 w-3.5" /> {t('common.file')}</span>
         </button>
       </div>
 
@@ -146,7 +148,7 @@ export default function HashGenerator() {
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Enter text to hash..."
+              placeholder={t('modules.hashGenerator.ui.textPlaceholder')}
               rows={6}
               className="w-full resize-none rounded-lg border border-border-base bg-bg-elevated p-4 font-mono text-sm text-text-primary placeholder:text-text-disabled focus:border-border-focus focus:outline-none"
             />
@@ -155,7 +157,7 @@ export default function HashGenerator() {
               disabled={!inputText}
               className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Generate Hashes
+              {t('modules.hashGenerator.ui.generateBtn')}
             </button>
           </div>
         ) : (
@@ -172,7 +174,7 @@ export default function HashGenerator() {
             }}
           >
             <Upload className="mb-3 h-10 w-10 text-text-disabled" />
-            <p className="text-sm text-text-secondary">Drop file here or click to upload</p>
+            <p className="text-sm text-text-secondary">{t('common.dropFileOrClick')}</p>
             {fileName && <p className="mt-2 text-xs text-primary">{fileName}</p>}
           </div>
         )}
@@ -190,7 +192,7 @@ export default function HashGenerator() {
                   title="Copy"
                 >
                   {copied === algo ? (
-                    <span className="text-xs text-success">Copied!</span>
+                    <span className="text-xs text-success">{t('common.copied')}</span>
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}

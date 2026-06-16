@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Binary, ArrowLeftRight, Copy, Upload, Download, FileText } from 'lucide-react'
 
 type Mode = 'text' | 'file'
@@ -27,6 +28,7 @@ function formatBytes(bytes: number): string {
 }
 
 export default function Base64Tool() {
+  const { t } = useTranslation()
   const [mode, setMode] = useState<Mode>('text')
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
@@ -54,7 +56,7 @@ export default function Base64Tool() {
       const result = decodeText(input)
       setOutput(result)
     } catch (e) {
-      setError(`Invalid Base64: ${(e as Error).message}`)
+      setError(t('modules.base64Tool.ui.invalidBase64', { msg: (e as Error).message }))
     }
   }, [input])
 
@@ -67,7 +69,7 @@ export default function Base64Tool() {
   const handleCopy = async () => {
     if (!output) return
     await navigator.clipboard.writeText(output)
-    showToast('Copied to clipboard')
+    showToast(t('common.copiedToClipboard'))
   }
 
   const handleFileToBase64 = useCallback(async (file: File) => {
@@ -94,9 +96,9 @@ export default function Base64Tool() {
       a.download = `decoded-${Date.now()}`
       a.click()
       URL.revokeObjectURL(url)
-      showToast('File downloaded')
+      showToast(t('modules.base64Tool.ui.toastDownloaded'))
     } catch {
-      showToast('Cannot decode as file - invalid Base64 binary data')
+      showToast(t('modules.base64Tool.ui.toastDecodeFailed'))
     }
   }
 
@@ -112,13 +114,13 @@ export default function Base64Tool() {
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
         <Binary className="h-4 w-4 text-text-muted" />
-        <span className="text-sm font-medium text-text-primary">Base64 Tool</span>
+        <span className="text-sm font-medium text-text-primary">{t('modules.base64Tool.name')}</span>
         <div className="mx-2 h-5 w-px bg-border-base" />
         <button onClick={() => setMode('text')} className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${mode === 'text' ? 'bg-primary/10 text-primary' : 'text-text-muted hover:text-text-secondary'}`}>
-          <span className="flex items-center gap-1"><FileText className="h-3.5 w-3.5" /> Text</span>
+          <span className="flex items-center gap-1"><FileText className="h-3.5 w-3.5" /> {t('common.text')}</span>
         </button>
         <button onClick={() => setMode('file')} className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${mode === 'file' ? 'bg-primary/10 text-primary' : 'text-text-muted hover:text-text-secondary'}`}>
-          <span className="flex items-center gap-1"><Upload className="h-3.5 w-3.5" /> File</span>
+          <span className="flex items-center gap-1"><Upload className="h-3.5 w-3.5" /> {t('common.file')}</span>
         </button>
       </div>
 
@@ -128,19 +130,19 @@ export default function Base64Tool() {
             {/* Action buttons */}
             <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated/50 px-4 py-2">
               <button onClick={handleEncode} disabled={!input} className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed">
-                Encode
+                {t('common.encode')}
               </button>
               <button onClick={handleDecode} disabled={!input} className="rounded-md border border-border-base px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-40 disabled:cursor-not-allowed">
-                Decode
+                {t('common.decode')}
               </button>
-              <button onClick={handleSwap} disabled={!output} className="rounded-md border border-border-base p-1.5 text-text-muted hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed" title="Swap">
+              <button onClick={handleSwap} disabled={!output} className="rounded-md border border-border-base p-1.5 text-text-muted hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed" title={t('modules.base64Tool.ui.swapTooltip')}>
                 <ArrowLeftRight className="h-3.5 w-3.5" />
               </button>
               <div className="flex-1" />
-              <button onClick={handleCopy} disabled={!output} className="rounded-md border border-border-base p-1.5 text-text-muted hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed" title="Copy output">
+              <button onClick={handleCopy} disabled={!output} className="rounded-md border border-border-base p-1.5 text-text-muted hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed" title={t('modules.base64Tool.ui.copyTooltip')}>
                 <Copy className="h-3.5 w-3.5" />
               </button>
-              <button onClick={handleDownload} disabled={!output} className="rounded-md border border-border-base p-1.5 text-text-muted hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed" title="Download as file">
+              <button onClick={handleDownload} disabled={!output} className="rounded-md border border-border-base p-1.5 text-text-muted hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed" title={t('modules.base64Tool.ui.downloadTooltip')}>
                 <Download className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -148,20 +150,20 @@ export default function Base64Tool() {
             {/* Input/Output */}
             <div className="grid flex-1 grid-cols-2 gap-px overflow-hidden bg-border-subtle">
               <div className="flex flex-col overflow-hidden">
-                <label className="border-b border-border-subtle bg-bg-elevated px-3 py-1.5 text-xs font-medium text-text-muted">Input</label>
+                <label className="border-b border-border-subtle bg-bg-elevated px-3 py-1.5 text-xs font-medium text-text-muted">{t('common.input')}</label>
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Enter text or Base64 string..."
+                  placeholder={t('modules.base64Tool.ui.inputPlaceholder')}
                   className="flex-1 resize-none bg-bg-base p-4 font-mono text-sm text-text-primary placeholder:text-text-disabled focus:outline-none"
                 />
               </div>
               <div className="flex flex-col overflow-hidden">
-                <label className="border-b border-border-subtle bg-bg-elevated px-3 py-1.5 text-xs font-medium text-text-muted">Output</label>
+                <label className="border-b border-border-subtle bg-bg-elevated px-3 py-1.5 text-xs font-medium text-text-muted">{t('common.output')}</label>
                 <textarea
                   value={output}
                   readOnly
-                  placeholder="Result will appear here..."
+                  placeholder={t('modules.base64Tool.ui.outputPlaceholder')}
                   className="flex-1 resize-none bg-bg-base p-4 font-mono text-sm text-text-primary placeholder:text-text-disabled focus:outline-none"
                 />
               </div>
@@ -179,15 +181,15 @@ export default function Base64Tool() {
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="mb-3 h-10 w-10 text-text-disabled" />
-              <p className="text-sm text-text-secondary">Drop file here or click to upload</p>
-              <p className="mt-1 text-xs text-text-muted">Convert any file to Base64 string</p>
+              <p className="text-sm text-text-secondary">{t('common.dropFileOrClick')}</p>
+              <p className="mt-1 text-xs text-text-muted">{t('modules.base64Tool.ui.fileDropHint')}</p>
               <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileToBase64(f); e.target.value = '' }} />
             </div>
 
             {output && (
               <div className="mt-4">
                 <div className="mb-2 flex items-center justify-between">
-                  <label className="text-xs font-medium text-text-muted">Base64 Output</label>
+                  <label className="text-xs font-medium text-text-muted">{t('modules.base64Tool.ui.outputTitle')}</label>
                   <div className="flex gap-2">
                     <button onClick={handleCopy} className="rounded p-1 text-text-muted hover:text-text-primary"><Copy className="h-3.5 w-3.5" /></button>
                     <button onClick={handleDownload} className="rounded p-1 text-text-muted hover:text-text-primary"><Download className="h-3.5 w-3.5" /></button>

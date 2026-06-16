@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Upload, Download, X, ImageDown, RotateCcw } from 'lucide-react'
 import imageCompression from 'browser-image-compression'
 
@@ -21,8 +22,8 @@ interface CompressedImage {
   error?: string
 }
 
-const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
-  { value: 'original', label: 'Original' },
+const FORMAT_OPTIONS: { value: OutputFormat; label: string; labelKey?: string }[] = [
+  { value: 'original', label: 'Original', labelKey: 'modules.imageCompress.ui.formatOriginal' },
   { value: 'jpeg', label: 'JPEG' },
   { value: 'png', label: 'PNG' },
   { value: 'webp', label: 'WebP' },
@@ -42,6 +43,7 @@ function savingsPercent(orig: number, comp: number): string {
 }
 
 export default function ImageCompress() {
+  const { t } = useTranslation()
   const [images, setImages] = useState<CompressedImage[]>([])
   const [quality, setQuality] = useState(70)
   const [maxWidth, setMaxWidth] = useState(1920)
@@ -125,7 +127,7 @@ export default function ImageCompress() {
       )
 
       const successCount = compressed.filter((c) => c.status === 'done').length
-      showToast(`Compressed ${successCount}/${compressed.length} images`)
+      showToast(t('modules.imageCompress.ui.toastCompressed', { success: successCount, total: compressed.length }))
     },
     [compressImage, showToast]
   )
@@ -169,7 +171,7 @@ export default function ImageCompress() {
 
   const downloadAll = useCallback(() => {
     images.filter((i) => i.status === 'done').forEach((img) => downloadImage(img))
-    showToast('Downloading all compressed images')
+    showToast(t('modules.imageCompress.ui.toastDownloading'))
   }, [images, downloadImage, showToast])
 
   const clearAll = useCallback(() => {
@@ -198,7 +200,7 @@ export default function ImageCompress() {
         setImages((prev) => prev.map((p) => (p.id === img.id ? result : p)))
       })
     )
-    showToast('Recompressed all images')
+    showToast(t('modules.imageCompress.ui.toastRecompressed'))
   }, [images, compressImage, showToast])
 
   const doneImages = images.filter((i) => i.status === 'done')
@@ -212,7 +214,7 @@ export default function ImageCompress() {
 
         {/* Quality slider */}
         <div className="flex items-center gap-2">
-          <label className="text-xs text-text-secondary">Quality</label>
+          <label className="text-xs text-text-secondary">{t('modules.imageCompress.ui.qualityLabel')}</label>
           <input
             type="range" min="10" max="100" value={quality}
             onChange={(e) => setQuality(parseInt(e.target.value))}
@@ -223,13 +225,13 @@ export default function ImageCompress() {
 
         {/* Max width */}
         <div className="flex items-center gap-2">
-          <label className="text-xs text-text-secondary">Max Width</label>
+          <label className="text-xs text-text-secondary">{t('modules.imageCompress.ui.maxWidthLabel')}</label>
           <select
             value={maxWidth}
             onChange={(e) => setMaxWidth(parseInt(e.target.value))}
             className="rounded border border-border-base bg-bg-base px-2 py-1 text-xs text-text-primary focus:border-border-focus focus:outline-none"
           >
-            <option value={9999}>Original</option>
+            <option value={9999}>{t('modules.imageCompress.ui.widthOriginal')}</option>
             <option value={3840}>3840px</option>
             <option value={1920}>1920px</option>
             <option value={1280}>1280px</option>
@@ -240,14 +242,14 @@ export default function ImageCompress() {
 
         {/* Output format */}
         <div className="flex items-center gap-2">
-          <label className="text-xs text-text-secondary">Format</label>
+          <label className="text-xs text-text-secondary">{t('modules.imageCompress.ui.formatLabel')}</label>
           <select
             value={outputFormat}
             onChange={(e) => setOutputFormat(e.target.value as OutputFormat)}
             className="rounded border border-border-base bg-bg-base px-2 py-1 text-xs text-text-primary focus:border-border-focus focus:outline-none"
           >
             {FORMAT_OPTIONS.map((f) => (
-              <option key={f.value} value={f.value}>{f.label}</option>
+              <option key={f.value} value={f.value}>{f.labelKey ? t(f.labelKey) : f.label}</option>
             ))}
           </select>
         </div>
@@ -258,16 +260,16 @@ export default function ImageCompress() {
         {doneImages.length > 0 && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-text-muted">
-              Saved: <span className="text-success">{formatBytes(totalSaved)}</span>
+              {t('modules.imageCompress.ui.savedLabel')} <span className="text-success">{formatBytes(totalSaved)}</span>
             </span>
-            <button onClick={recompressAll} className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-text-secondary hover:bg-bg-hover hover:text-text-primary" title="Recompress with new settings">
-              <RotateCcw className="h-3.5 w-3.5" /> Re-compress
+            <button onClick={recompressAll} className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-text-secondary hover:bg-bg-hover hover:text-text-primary" title={t('modules.imageCompress.ui.recompressBtn')}>
+              <RotateCcw className="h-3.5 w-3.5" /> {t('modules.imageCompress.ui.recompressBtn')}
             </button>
             <button onClick={downloadAll} className="flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20">
-              <Download className="h-3.5 w-3.5" /> Download All
+              <Download className="h-3.5 w-3.5" /> {t('modules.imageCompress.ui.downloadAllBtn')}
             </button>
             <button onClick={clearAll} className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-text-muted hover:text-error">
-              <X className="h-3.5 w-3.5" /> Clear
+              <X className="h-3.5 w-3.5" /> {t('common.clear')}
             </button>
           </div>
         )}
@@ -287,10 +289,10 @@ export default function ImageCompress() {
         >
           <Upload className="mb-3 h-10 w-10 text-text-disabled" />
           <p className="text-sm text-text-secondary">
-            Drop images here or click to upload
+            {t('modules.imageCompress.ui.dropText')}
           </p>
           <p className="mt-1 text-xs text-text-muted">
-            PNG, JPG, WebP, GIF, BMP supported
+            {t('modules.imageCompress.ui.dropHint')}
           </p>
           <input
             ref={fileInputRef}
@@ -331,6 +333,7 @@ function ImageCard({
   onRemove: (id: string) => void
   onDownload: (img: CompressedImage) => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="rounded-lg border border-border-subtle bg-bg-elevated overflow-hidden">
       {/* Thumbnail */}
@@ -351,7 +354,7 @@ function ImageCard({
         </p>
 
         {img.status === 'compressing' && (
-          <p className="mt-1 text-xs text-text-muted animate-pulse">Compressing...</p>
+          <p className="mt-1 text-xs text-text-muted animate-pulse">{t('modules.imageCompress.ui.statusCompressing')}</p>
         )}
 
         {img.status === 'done' && img.compressedSize !== null && (
@@ -377,7 +380,7 @@ function ImageCard({
         )}
 
         {img.status === 'error' && (
-          <p className="mt-1 text-xs text-error">{img.error ?? 'Compression failed'}</p>
+          <p className="mt-1 text-xs text-error">{img.error ?? t('modules.imageCompress.ui.compressFailed')}</p>
         )}
       </div>
     </div>

@@ -61,6 +61,16 @@
   box-sizing: border-box;
 }
 
+/* Interactive elements should show pointer cursor */
+button:not(:disabled),
+select,
+a[href],
+[role="button"],
+[type="file"],
+.cursor-pointer {
+  cursor: pointer;
+}
+
 html, body, #root {
   height: 100%;
   margin: 0;

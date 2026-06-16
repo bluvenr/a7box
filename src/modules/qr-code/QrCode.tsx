@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { QrCode as QrCodeIcon, ScanLine } from 'lucide-react'
 import { useQrCode } from './hooks/useQrCode'
 import { GeneratePanel } from './components/GeneratePanel'
@@ -12,6 +13,7 @@ import { DecodePanel } from './components/DecodePanel'
 type Tab = 'generate' | 'decode'
 
 export default function QrCode() {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<Tab>('generate')
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
@@ -41,17 +43,17 @@ export default function QrCode() {
 
   const handleGenerate = async () => {
     const ok = await generate()
-    if (ok) showToast('QR code generated')
+    if (ok) showToast(t('modules.qrCode.ui.toastGenerated'))
   }
 
   const handleCopy = async () => {
     await copyToClipboard()
-    showToast('Copied to clipboard')
+    showToast(t('modules.qrCode.ui.toastCopied'))
   }
 
   const handleClear = () => {
     clear()
-    showToast('Cleared')
+    showToast(t('modules.qrCode.ui.toastCleared'))
   }
 
   return (
@@ -67,7 +69,7 @@ export default function QrCode() {
           }`}
         >
           <QrCodeIcon className="h-4 w-4" />
-          Generate
+          {t('modules.qrCode.ui.tabGenerate')}
         </button>
         <button
           onClick={() => setActiveTab('decode')}
@@ -78,7 +80,7 @@ export default function QrCode() {
           }`}
         >
           <ScanLine className="h-4 w-4" />
-          Decode
+          {t('modules.qrCode.ui.tabDecode')}
         </button>
       </div>
 

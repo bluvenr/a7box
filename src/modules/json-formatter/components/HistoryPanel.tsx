@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Clock, Trash2, X, RotateCcw } from 'lucide-react'
 
 export interface HistoryItem {
@@ -38,6 +39,7 @@ function truncate(str: string, maxLen = 60): string {
 }
 
 export function HistoryPanel({ items, onRestore, onClear, onClose }: HistoryPanelProps) {
+  const { t } = useTranslation()
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   return (
@@ -46,7 +48,7 @@ export function HistoryPanel({ items, onRestore, onClear, onClose }: HistoryPane
       <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-text-muted" />
-          <span className="text-sm font-medium text-text-primary">History</span>
+          <span className="text-sm font-medium text-text-primary">{t('modules.jsonFormatter.ui.historyTitle')}</span>
           <span className="rounded-full bg-bg-hover px-2 py-0.5 text-xs text-text-muted">
             {items.length}
           </span>
@@ -58,7 +60,7 @@ export function HistoryPanel({ items, onRestore, onClear, onClose }: HistoryPane
               className="flex items-center gap-1 rounded px-2 py-1 text-xs text-text-muted transition-colors hover:text-error"
             >
               <Trash2 className="h-3 w-3" />
-              Clear
+              {t('modules.jsonFormatter.ui.historyClear')}
             </button>
           )}
           <button
@@ -75,7 +77,7 @@ export function HistoryPanel({ items, onRestore, onClear, onClose }: HistoryPane
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-text-muted">
             <Clock className="mb-2 h-8 w-8 opacity-30" />
-            <p className="text-sm">No history yet</p>
+            <p className="text-sm">{t('modules.jsonFormatter.ui.historyEmpty')}</p>
           </div>
         ) : (
           items.map((item) => (
@@ -95,7 +97,7 @@ export function HistoryPanel({ items, onRestore, onClear, onClose }: HistoryPane
                           : 'bg-info/10 text-info'
                       }`}
                     >
-                      {item.action === 'format' ? 'Format' : 'Compress'}
+                      {item.action === 'format' ? t('modules.jsonFormatter.ui.historyActionFormat') : t('modules.jsonFormatter.ui.historyActionCompress')}
                     </span>
                     <span className="text-xs text-text-muted">{formatTime(item.timestamp)}</span>
                   </div>
@@ -109,7 +111,7 @@ export function HistoryPanel({ items, onRestore, onClear, onClose }: HistoryPane
                     className="ml-2 flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs text-primary transition-colors hover:bg-primary/20"
                   >
                     <RotateCcw className="h-3 w-3" />
-                    Restore
+                    {t('common.restore')}
                   </button>
                 )}
               </div>

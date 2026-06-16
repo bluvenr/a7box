@@ -3,6 +3,7 @@
  */
 
 import { Sparkles, Minimize2, Copy, Trash2, FileDown, History } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { IndentType } from '../hooks/useJsonFormat'
 
 interface ToolbarProps {
@@ -30,6 +31,7 @@ export function Toolbar({
   hasContent,
   isValid,
 }: ToolbarProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
       {/* Format button */}
@@ -39,7 +41,7 @@ export function Toolbar({
         className="flex items-center gap-1.5 rounded-md bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <Sparkles className="h-4 w-4" />
-        <span>Format</span>
+        <span>{t('common.format')}</span>
       </button>
 
       {/* Compress button */}
@@ -49,7 +51,7 @@ export function Toolbar({
         className="flex items-center gap-1.5 rounded-md bg-bg-hover px-3 py-1.5 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-hover/80 hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <Minimize2 className="h-4 w-4" />
-        <span>Compress</span>
+        <span>{t('common.compress')}</span>
       </button>
 
       {/* Indent selector */}
@@ -58,9 +60,9 @@ export function Toolbar({
         onChange={(e) => onIndentChange(e.target.value as IndentType)}
         className="rounded-md border border-border-base bg-bg-base px-2 py-1.5 text-xs text-text-secondary focus:border-border-focus focus:outline-none"
       >
-        <option value="2spaces">2 Spaces</option>
-        <option value="4spaces">4 Spaces</option>
-        <option value="tab">Tab</option>
+        <option value="2spaces">{t('modules.jsonFormatter.ui.indent2Spaces')}</option>
+        <option value="4spaces">{t('modules.jsonFormatter.ui.indent4Spaces')}</option>
+        <option value="tab">{t('modules.jsonFormatter.ui.indentTab')}</option>
       </select>
 
       <div className="h-5 w-px bg-border-base" />
@@ -70,7 +72,7 @@ export function Toolbar({
         onClick={onCopy}
         disabled={!hasContent || !isValid}
         className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
-        title="Copy to clipboard"
+        title={t('modules.jsonFormatter.ui.copyTooltip')}
       >
         <Copy className="h-4 w-4" />
       </button>
@@ -80,7 +82,7 @@ export function Toolbar({
         onClick={onExport}
         disabled={!hasContent || !isValid}
         className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
-        title="Export as file"
+        title={t('modules.jsonFormatter.ui.exportTooltip')}
       >
         <FileDown className="h-4 w-4" />
       </button>
@@ -89,7 +91,7 @@ export function Toolbar({
       <button
         onClick={onHistory}
         className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
-        title="History"
+        title={t('modules.jsonFormatter.ui.historyTooltip')}
       >
         <History className="h-4 w-4" />
       </button>
@@ -101,7 +103,7 @@ export function Toolbar({
         onClick={onClear}
         disabled={!hasContent}
         className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-text-muted transition-colors hover:bg-bg-hover hover:text-error disabled:opacity-40 disabled:cursor-not-allowed"
-        title="Clear"
+        title={t('modules.jsonFormatter.ui.clearTooltip')}
       >
         <Trash2 className="h-4 w-4" />
       </button>

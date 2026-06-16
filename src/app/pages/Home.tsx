@@ -6,12 +6,14 @@
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useModuleRegistry } from '../../core/registry'
+import { useCommandPalette } from '../../core/command-palette'
 import { Box, Search } from 'lucide-react'
 import type { A7Module } from '../../core/types'
 
 export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const togglePalette = useCommandPalette((state) => state.toggle)
   const modules = useModuleRegistry((state) => state.modules)
   const enabledModuleIds = useModuleRegistry((state) => state.enabledModuleIds)
 
@@ -41,10 +43,7 @@ export default function Home() {
 
       {/* Quick search entry */}
       <button
-        onClick={() => {
-          // TODO: Open command palette
-          console.log('Open command palette')
-        }}
+        onClick={togglePalette}
         className="mb-8 flex w-full cursor-pointer items-center gap-3 rounded-lg border border-border-base bg-bg-elevated px-4 py-3 text-left transition-colors hover:border-border-focus"
       >
         <Search className="h-5 w-5 text-text-muted" />

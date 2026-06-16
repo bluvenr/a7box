@@ -3,6 +3,7 @@
  */
 
 import { Copy, Download, FileDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface QrPreviewProps {
   qrDataUrl: string | null
@@ -19,6 +20,7 @@ export function QrPreview({
   onDownloadPng,
   onDownloadSvg,
 }: QrPreviewProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex h-full flex-col items-center justify-center gap-6">
       {/* QR preview area */}
@@ -41,7 +43,7 @@ export function QrPreview({
                 />
               ))}
             </div>
-            <p className="mt-4 text-xs text-text-disabled">QR Preview</p>
+            <p className="mt-4 text-xs text-text-disabled">{t('modules.qrCode.ui.previewPlaceholder')}</p>
           </div>
         )}
       </div>
@@ -59,21 +61,21 @@ export function QrPreview({
             className="flex items-center gap-1.5 rounded-md bg-bg-hover px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-hover/80 hover:text-text-primary"
           >
             <Copy className="h-4 w-4" />
-            Copy
+            {t('common.copy')}
           </button>
           <button
             onClick={onDownloadPng}
             className="flex items-center gap-1.5 rounded-md bg-bg-hover px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-hover/80 hover:text-text-primary"
           >
             <Download className="h-4 w-4" />
-            PNG
+            {t('modules.qrCode.ui.downloadPng')}
           </button>
           <button
             onClick={onDownloadSvg}
             className="flex items-center gap-1.5 rounded-md bg-bg-hover px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-hover/80 hover:text-text-primary"
           >
             <FileDown className="h-4 w-4" />
-            SVG
+            {t('modules.qrCode.ui.downloadSvg')}
           </button>
         </div>
       )}

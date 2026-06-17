@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { Home, Settings, Box } from 'lucide-react'
 import { useModuleRegistry } from '../../core/registry'
 import { CommandPalette } from '../../core/command-palette'
+import { useGlobalShortcuts } from '../../core/shortcuts'
 import { Logo } from '../../components/Logo'
 import type { LucideIcon } from 'lucide-react'
 
@@ -22,6 +23,9 @@ export function MainLayout() {
   const navigate = useNavigate()
   const modules = useModuleRegistry((state) => state.modules)
   const enabledModuleIds = useModuleRegistry((state) => state.enabledModuleIds)
+
+  // Register global shortcuts (Tauri + keyboard fallback)
+  useGlobalShortcuts()
 
   // Stable selector: derive enabled modules from raw state to avoid getSnapshot infinite loop
   const enabledModules = Array.from(modules.values()).filter((m) => enabledModuleIds.has(m.meta.id))

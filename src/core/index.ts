@@ -28,3 +28,10 @@ export type { AppSettings } from './settings'
 // i18n
 export { i18n, changeLanguage, getCurrentLanguage, SUPPORTED_LANGUAGES } from './i18n'
 export type { LanguageCode } from './i18n'
+
+// Command palette
+export { useCommandPalette, CommandSearchEngine } from './command-palette'
+
+// Updater
+export { useUpdater } from './updater'
+export type { UpdateInfo, UpdateState } from './updater'

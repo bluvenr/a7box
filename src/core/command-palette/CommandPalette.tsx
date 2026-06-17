@@ -1,11 +1,11 @@
 /**
- * A7Box Command Palette UI Component
+ * A7Box Command Palette UI Component (v2 - enhanced)
  */
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Search, Box } from 'lucide-react'
+import { Search, Box, Keyboard } from 'lucide-react'
 import { useCommandPalette } from './useCommandPalette'
 import type { CommandSearchItem } from '../types'
 import type { LucideIcon } from 'lucide-react'
@@ -27,12 +27,29 @@ export function CommandPalette() {
     execute,
   } = useCommandPalette()
 
+  // Category filter state
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
+
   // Auto-focus input on open
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50)
+      setActiveCategory(null)
     }
   }, [isOpen])
+
+  // Extract unique module names from results for category filtering
+  const moduleNames = useMemo(() => {
+    const names = new Set<string>()
+    results.forEach((item) => names.add(item.moduleName))
+    return Array.from(names)
+  }, [results])
+
+  // Filter by active category
+  const filteredResults = useMemo(() => {
+    if (!activeCategory) return results
+    return results.filter((item) => item.moduleName === activeCategory)
+  }, [results, activeCategory])
 
   // Keyboard navigation
   const handleKeyDown = useCallback(
@@ -54,9 +71,18 @@ export function CommandPalette() {
           e.preventDefault()
           close()
           break
+        case 'Tab':
+          e.preventDefault()
+          // Cycle through categories
+          if (!query) {
+            const idx = activeCategory ? moduleNames.indexOf(activeCategory) : -1
+            const nextIdx = (idx + 1) % (moduleNames.length + 1)
+            setActiveCategory(nextIdx === moduleNames.length ? null : moduleNames[nextIdx])
+          }
+          break
       }
     },
-    [moveUp, moveDown, execute, close, navigate]
+    [moveUp, moveDown, execute, close, navigate, query, activeCategory, moduleNames]
   )
 
   // Close on backdrop click
@@ -70,7 +96,7 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-[15vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-[12vh]"
       onClick={handleBackdropClick}
     >
       <div
@@ -84,7 +110,7 @@ export function CommandPalette() {
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setActiveCategory(null) }}
             placeholder={t('commandPalette.placeholder')}
             className="flex-1 bg-transparent py-4 text-sm text-text-primary outline-none placeholder:text-text-muted"
           />
@@ -93,17 +119,49 @@ export function CommandPalette() {
           </kbd>
         </div>
 
+        {/* Category filter pills (only when no query) */}
+        {!query && moduleNames.length > 1 && (
+          <div className="flex flex-wrap gap-1.5 border-b border-border-subtle px-4 py-2">
+            <button
+              onClick={() => setActiveCategory(null)}
+              className={`rounded-full px-2.5 py-0.5 text-xs transition-colors ${
+                !activeCategory
+                  ? 'bg-primary/15 text-primary font-medium'
+                  : 'bg-bg-hover text-text-muted hover:text-text-secondary'
+              }`}
+            >
+              {t('commandPalette.allCommands')}
+            </button>
+            {moduleNames.slice(0, 8).map((name) => (
+              <button
+                key={name}
+                onClick={() => setActiveCategory(name === activeCategory ? null : name)}
+                className={`rounded-full px-2.5 py-0.5 text-xs transition-colors ${
+                  name === activeCategory
+                    ? 'bg-primary/15 text-primary font-medium'
+                    : 'bg-bg-hover text-text-muted hover:text-text-secondary'
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Results list */}
-        <div className="max-h-80 overflow-y-auto p-2">
-          {results.length > 0 ? (
+        <div className="max-h-72 overflow-y-auto p-2">
+          {filteredResults.length > 0 ? (
             <>
               <div className="px-2 py-1">
                 <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
-                  {query ? t('commandPalette.allCommands') : t('commandPalette.recentlyUsed')}
+                  {activeCategory || (query ? t('commandPalette.allCommands') : t('commandPalette.recentlyUsed'))}
+                </span>
+                <span className="ml-2 text-xs text-text-muted">
+                  {filteredResults.length}
                 </span>
               </div>
 
-              {results.map((item, index) => (
+              {filteredResults.map((item, index) => (
                 <CommandItem
                   key={item.id}
                   item={item}
@@ -130,6 +188,10 @@ export function CommandPalette() {
             <span>Navigate</span>
             <kbd className="ml-2 rounded bg-bg-hover px-1.5 py-0.5">↵</kbd>
             <span>{t('commandPalette.pressEnter')}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-text-muted">
+            <Keyboard className="h-3 w-3" />
+            <kbd className="rounded bg-bg-hover px-1.5 py-0.5">Ctrl+K</kbd>
           </div>
         </div>
       </div>
@@ -162,7 +224,7 @@ function CommandItem({
       onMouseEnter={onMouseEnter}
     >
       <div
-        className={`flex h-8 w-8 items-center justify-center rounded-md ${
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
           isSelected ? 'bg-primary/10 text-primary' : 'bg-bg-base text-text-muted'
         }`}
       >
@@ -174,7 +236,7 @@ function CommandItem({
           <p className="truncate text-xs text-text-muted">{item.description}</p>
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <span className="text-xs text-text-muted">{item.moduleName}</span>
         {item.shortcut && (
           <kbd className="rounded bg-bg-base px-1.5 py-0.5 text-xs text-text-muted">

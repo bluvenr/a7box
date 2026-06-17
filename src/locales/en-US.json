@@ -94,7 +94,13 @@
     "minimizeToTray": "Minimize to Tray",
     "minimizeToTrayDesc": "Minimize to system tray when window is closed",
     "checkUpdateOnStart": "Check Updates on Start",
-    "checkUpdateOnStartDesc": "Automatically check for updates on each launch"
+    "checkUpdateOnStartDesc": "Automatically check for updates on each launch",
+    "checkUpdate": "Check for Updates",
+    "checkingUpdate": "Checking...",
+    "downloadUpdate": "Download Update",
+    "upToDate": "You're up to date",
+    "updateAvailable": "New version available",
+    "downloading": "Downloading"
   },
   "updater": {
     "newVersion": "New version {{version}} available",

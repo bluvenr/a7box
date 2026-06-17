@@ -94,7 +94,13 @@
     "minimizeToTray": "最小化到托盘",
     "minimizeToTrayDesc": "关闭窗口时最小化到系统托盘",
     "checkUpdateOnStart": "启动时检查更新",
-    "checkUpdateOnStartDesc": "每次启动时自动检查是否有新版本"
+    "checkUpdateOnStartDesc": "每次启动时自动检查是否有新版本",
+    "checkUpdate": "检查更新",
+    "checkingUpdate": "检查中...",
+    "downloadUpdate": "下载更新",
+    "upToDate": "已是最新版本",
+    "updateAvailable": "发现新版本",
+    "downloading": "下载中"
   },
   "updater": {
     "newVersion": "发现新版本 {{version}}",

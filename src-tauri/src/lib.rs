@@ -11,6 +11,8 @@ use clipboard::ClipboardState;
 use http_server::HttpServerState;
 use std::sync::Arc;
 use tauri::Manager;
+use tauri::Emitter;
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -23,6 +25,12 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         // State
         .manage(clipboard_state)
         .manage(http_server_state)
@@ -42,10 +50,28 @@ pub fn run() {
             commands::stop_http_server,
             commands::get_http_server_info,
         ])
-        // Setup: tray + window close behavior
+        // Setup: tray + global shortcuts + window close behavior
         .setup(|app| {
             // Setup system tray
             tray::setup_tray(app)?;
+
+            // Register global shortcuts
+            let handle = app.handle().clone();
+            let shortcut_handle = handle.clone();
+            app.global_shortcut().on_shortcut("CommandOrControl+Shift+A", move |_app, _shortcut, event| {
+                if event.state == ShortcutState::Pressed {
+                    // Emit event to frontend to toggle command palette
+                    let _ = shortcut_handle.emit("global-shortcut", "toggle-command-palette");
+                }
+            })?;
+
+            let screenshot_handle = handle.clone();
+            app.global_shortcut().on_shortcut("CommandOrControl+Shift+S", move |_app, _shortcut, event| {
+                if event.state == ShortcutState::Pressed {
+                    // Emit event to frontend to open screenshot tool
+                    let _ = screenshot_handle.emit("global-shortcut", "open-screenshot");
+                }
+            })?;
 
             // Handle window close: hide to tray instead of exiting
             let window = app.get_webview_window("main").unwrap();

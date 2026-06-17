@@ -1,12 +1,20 @@
 /**
- * A7Box Settings Page
+ * A7Box Settings Page (v2 - with Tauri integration)
  */
 
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSettingsStore, SUPPORTED_LANGUAGES, changeLanguage } from '../../core'
+import { useSettingsStore, SUPPORTED_LANGUAGES, changeLanguage, useUpdater } from '../../core'
 import { useModuleRegistry } from '../../core/registry'
-import { Globe, Palette, Box, Info } from 'lucide-react'
+import {
+  Globe, Palette, Box, Info, RefreshCw, Download,
+  CheckCircle, AlertCircle, Loader2
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+
+function isTauri(): boolean {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+}
 
 export default function Settings() {
   const { t } = useTranslation()
@@ -16,10 +24,39 @@ export default function Settings() {
   const registryEnable = useModuleRegistry((state) => state.enable)
   const registryDisable = useModuleRegistry((state) => state.disable)
 
-  // Stable selector: derive array from Map reference
+  const updater = useUpdater()
+
+  // Auto-start toggle: sync with Tauri autostart plugin
+  const handleAutoStartToggle = async (v: boolean) => {
+    settings.updateSetting('autoStart', v)
+    if (!isTauri()) return
+    try {
+      const { isEnabled, enable, disable } = await import('@tauri-apps/plugin-autostart')
+      const currentlyEnabled = await isEnabled()
+      if (v && !currentlyEnabled) await enable()
+      else if (!v && currentlyEnabled) await disable()
+    } catch {
+      // Plugin may not be available
+    }
+  }
+
+  // Sync auto-start state from Tauri on mount
+  useEffect(() => {
+    if (!isTauri()) return
+    (async () => {
+      try {
+        const { isEnabled } = await import('@tauri-apps/plugin-autostart')
+        const enabled = await isEnabled()
+        if (enabled !== settings.autoStart) {
+          settings.updateSetting('autoStart', enabled)
+        }
+      } catch { /* ignore */ }
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const allModules = Array.from(modulesMap.values())
 
-  // Toggle module: sync both settings store (persistence) and registry (runtime)
   const handleModuleToggle = (moduleId: string, enabled: boolean) => {
     settings.setModuleEnabled(moduleId, enabled)
     if (enabled) {
@@ -67,7 +104,7 @@ export default function Settings() {
           >
             <Toggle
               checked={settings.autoStart}
-              onChange={(v) => settings.updateSetting('autoStart', v)}
+              onChange={handleAutoStartToggle}
             />
           </SettingRow>
 
@@ -148,9 +185,9 @@ export default function Settings() {
           )}
         </SettingSection>
 
-        {/* About */}
+        {/* About & Updates */}
         <SettingSection title={t('common.about')} icon={Info}>
-          <div className="space-y-2 text-sm">
+          <div className="space-y-3 text-sm">
             <p className="text-text-secondary">
               <span className="text-text-muted">{t('app.name')}</span> v0.1.0
             </p>
@@ -163,9 +200,96 @@ export default function Settings() {
             >
               {t('settings.githubRepo')}
             </a>
+
+            {/* Update section */}
+            <div className="mt-4 border-t border-border-subtle pt-4">
+              <UpdateSection updater={updater} t={t} />
+            </div>
           </div>
         </SettingSection>
       </div>
+    </div>
+  )
+}
+
+// Update section component
+function UpdateSection({
+  updater,
+  t,
+}: {
+  updater: ReturnType<typeof useUpdater>
+  t: (key: string) => string
+}) {
+  const { checking, available, downloading, progress, info, error, checkForUpdates, downloadAndInstall } = updater
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={checkForUpdates}
+          disabled={checking || downloading}
+          className="inline-flex items-center gap-2 rounded-md bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
+        >
+          {checking ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          {checking ? t('settings.checkingUpdate') : t('settings.checkUpdate')}
+        </button>
+
+        {available && !downloading && (
+          <button
+            onClick={downloadAndInstall}
+            className="inline-flex items-center gap-2 rounded-md bg-green-500/10 px-3 py-1.5 text-sm font-medium text-green-500 transition-colors hover:bg-green-500/20"
+          >
+            <Download className="h-4 w-4" />
+            {t('settings.downloadUpdate')}
+          </button>
+        )}
+      </div>
+
+      {/* Status messages */}
+      {!checking && !available && !error && (
+        <p className="flex items-center gap-1.5 text-xs text-text-muted">
+          <CheckCircle className="h-3.5 w-3.5" />
+          {t('settings.upToDate')}
+        </p>
+      )}
+
+      {available && info && (
+        <div className="rounded-md border border-green-500/20 bg-green-500/5 p-3">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-green-500">
+            <CheckCircle className="h-4 w-4" />
+            {t('settings.updateAvailable')}: v{info.version}
+          </p>
+          {info.body && (
+            <p className="mt-1 text-xs text-text-muted whitespace-pre-line">{info.body}</p>
+          )}
+        </div>
+      )}
+
+      {downloading && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-xs text-text-secondary">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            {t('settings.downloading')} {progress}%
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-hover">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <p className="flex items-center gap-1.5 text-xs text-red-400">
+          <AlertCircle className="h-3.5 w-3.5" />
+          {error}
+        </p>
+      )}
     </div>
   )
 }

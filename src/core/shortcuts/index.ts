@@ -1,0 +1,1 @@
+export { useGlobalShortcuts } from './useGlobalShortcuts'

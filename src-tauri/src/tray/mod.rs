@@ -3,18 +3,17 @@
 
 use tauri::{
     menu::{Menu, MenuItem},
-    tray::TrayIconBuilder,
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, Runtime,
 };
 
-/// Detect system locale, returns true if likely Chinese
+/// Detect system locale using sys-locale (works on Windows + macOS)
 fn is_chinese_locale() -> bool {
-    // Windows: check LANG env or USERPROFILE region hints
-    if let Ok(lang) = std::env::var("LANG") {
-        return lang.starts_with("zh") || lang.contains("CN") || lang.contains("TW");
+    if let Some(locale) = sys_locale::get_locale() {
+        return locale.starts_with("zh") || locale.starts_with("ZH");
     }
-    // Fallback: check LC_ALL
-    if let Ok(lang) = std::env::var("LC_ALL") {
+    // Fallback: check env vars (Linux/container)
+    if let Ok(lang) = std::env::var("LANG") {
         return lang.starts_with("zh");
     }
     false
@@ -52,8 +51,13 @@ pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::er
             _ => {}
         })
         .on_tray_icon_event(|tray, event| {
-            // Click tray icon to show/hide window
-            if let tauri::tray::TrayIconEvent::Click { .. } = event {
+            // Only toggle window on LEFT click (right click shows context menu)
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
                 let app = tray.app_handle();
                 if let Some(window) = app.get_webview_window("main") {
                     if window.is_visible().unwrap_or(false) {

@@ -26,6 +26,9 @@ const UuidGenerator = lazy(() => import('../modules/uuid-generator/UuidGenerator
 const JwtDecoder = lazy(() => import('../modules/jwt-decoder/JwtDecoder'))
 const RegexTester = lazy(() => import('../modules/regex-tester/RegexTester'))
 const TextDiff = lazy(() => import('../modules/text-diff/TextDiff'))
+const Screenshot = lazy(() => import('../modules/screenshot/Screenshot'))
+const HttpServer = lazy(() => import('../modules/http-server/HttpServer'))
+const CodeShare = lazy(() => import('../modules/code-share/CodeShare'))
 
 // Wrap a module component with ErrorBoundary + Suspense
 function ModuleRoute({ moduleId, children }: { moduleId: string; children: React.ReactNode }) {
@@ -116,6 +119,18 @@ export const router = createBrowserRouter([
       {
         path: 'text-diff',
         element: <ModuleRoute moduleId="text-diff"><TextDiff /></ModuleRoute>,
+      },
+      {
+        path: 'screenshot',
+        element: <ModuleRoute moduleId="screenshot"><Screenshot /></ModuleRoute>,
+      },
+      {
+        path: 'http-server',
+        element: <ModuleRoute moduleId="http-server"><HttpServer /></ModuleRoute>,
+      },
+      {
+        path: 'code-share',
+        element: <ModuleRoute moduleId="code-share"><CodeShare /></ModuleRoute>,
       },
     ],
   },

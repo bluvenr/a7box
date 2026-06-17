@@ -3,15 +3,19 @@
 
 mod clipboard;
 mod commands;
+mod http_server;
+mod screenshot;
 mod tray;
 
 use clipboard::ClipboardState;
+use http_server::HttpServerState;
 use std::sync::Arc;
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let clipboard_state = Arc::new(ClipboardState::new());
+    let http_server_state = Arc::new(HttpServerState::new());
 
     tauri::Builder::default()
         // Plugins
@@ -21,11 +25,22 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         // State
         .manage(clipboard_state)
+        .manage(http_server_state)
         // Commands
         .invoke_handler(tauri::generate_handler![
+            // Clipboard
             commands::start_clipboard_watcher,
             commands::stop_clipboard_watcher,
             commands::get_clipboard_text,
+            // Screenshot
+            commands::capture_full_screen,
+            commands::capture_region,
+            commands::capture_to_base64,
+            commands::get_monitors,
+            // HTTP Server
+            commands::start_http_server,
+            commands::stop_http_server,
+            commands::get_http_server_info,
         ])
         // Setup: tray + window close behavior
         .setup(|app| {

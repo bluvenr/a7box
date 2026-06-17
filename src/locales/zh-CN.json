@@ -355,6 +355,66 @@
       "linesRemoved": "行删除",
       "identical": "两段文本完全相同",
       "diffResult": "对比结果"
+    },
+    "screenshot": {
+      "name": "截图工具",
+      "description": "全屏或区域截图",
+      "commands": { "open": "截图工具" },
+      "ui": {
+        "mode": "模式",
+        "fullscreen": "全屏",
+        "region": "区域",
+        "delay": "延迟",
+        "noDelay": "无",
+        "capture": "截图",
+        "capturing": "截图中...",
+        "previewCapture": "预览",
+        "detectMonitors": "检测显示器",
+        "monitors": "显示器",
+        "lastCapture": "最近截图",
+        "fileName": "文件名",
+        "resolution": "分辨率",
+        "filePath": "路径",
+        "copyPath": "复制路径",
+        "history": "历史记录",
+        "preview": "预览",
+        "webOnly": "截图功能需要桌面应用 (Tauri)",
+        "captureFailed": "截图失败"
+      }
+    },
+    "httpServer": {
+      "name": "HTTP 服务",
+      "description": "启动本地 HTTP 服务器用于局域网文件共享",
+      "commands": { "open": "HTTP 服务" },
+      "ui": {
+        "directory": "目录",
+        "port": "端口",
+        "start": "启动服务",
+        "stop": "停止",
+        "serverRunning": "服务运行中",
+        "serving": "服务目录",
+        "accessUrls": "访问地址",
+        "copyUrls": "复制地址",
+        "notRunning": "服务未启动",
+        "notRunningHint": "选择目录后点击启动",
+        "desktopOnly": "HTTP 服务需要桌面应用 (Tauri)",
+        "selectDir": "请输入目录路径",
+        "startFailed": "启动服务失败"
+      }
+    },
+    "codeShare": {
+      "name": "代码分享",
+      "description": "通过粘贴服务分享代码片段",
+      "commands": { "open": "代码分享" },
+      "ui": {
+        "language": "语言",
+        "expiry": "过期时间",
+        "share": "分享",
+        "shared": "分享成功",
+        "enterCode": "请输入要分享的代码",
+        "codePlaceholder": "在此粘贴代码...",
+        "history": "分享历史"
+      }
     }
   }
 }

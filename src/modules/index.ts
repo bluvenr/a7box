@@ -16,6 +16,9 @@ import { uuidGeneratorModule } from './uuid-generator'
 import { jwtDecoderModule } from './jwt-decoder'
 import { regexTesterModule } from './regex-tester'
 import { textDiffModule } from './text-diff'
+import { screenshotModule } from './screenshot'
+import { httpServerModule } from './http-server'
+import { codeShareModule } from './code-share'
 import type { A7Module } from '../core/types'
 
 /** All available modules */
@@ -34,6 +37,9 @@ export const allModules: A7Module[] = [
   jwtDecoderModule,
   regexTesterModule,
   textDiffModule,
+  screenshotModule,
+  httpServerModule,
+  codeShareModule,
 ]
 
 /** Export modules for registry */
@@ -52,4 +58,7 @@ export {
   jwtDecoderModule,
   regexTesterModule,
   textDiffModule,
+  screenshotModule,
+  httpServerModule,
+  codeShareModule,
 }

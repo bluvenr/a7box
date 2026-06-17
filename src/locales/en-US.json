@@ -355,6 +355,66 @@
       "linesRemoved": "removed",
       "identical": "Texts are identical",
       "diffResult": "Diff Result"
+    },
+    "screenshot": {
+      "name": "Screenshot",
+      "description": "Capture full screen or region screenshots",
+      "commands": { "open": "Screenshot" },
+      "ui": {
+        "mode": "Mode",
+        "fullscreen": "Full Screen",
+        "region": "Region",
+        "delay": "Delay",
+        "noDelay": "None",
+        "capture": "Capture",
+        "capturing": "Capturing...",
+        "previewCapture": "Preview",
+        "detectMonitors": "Detect Monitors",
+        "monitors": "Monitors",
+        "lastCapture": "Last Capture",
+        "fileName": "File",
+        "resolution": "Resolution",
+        "filePath": "Path",
+        "copyPath": "Copy Path",
+        "history": "History",
+        "preview": "Preview",
+        "webOnly": "Screenshot requires the desktop app (Tauri)",
+        "captureFailed": "Capture failed"
+      }
+    },
+    "httpServer": {
+      "name": "HTTP Server",
+      "description": "Start a local HTTP server for LAN file sharing",
+      "commands": { "open": "HTTP Server" },
+      "ui": {
+        "directory": "Directory",
+        "port": "Port",
+        "start": "Start Server",
+        "stop": "Stop",
+        "serverRunning": "Server Running",
+        "serving": "Serving",
+        "accessUrls": "Access URLs",
+        "copyUrls": "Copy URLs",
+        "notRunning": "Server is not running",
+        "notRunningHint": "Select a directory and click Start",
+        "desktopOnly": "HTTP server requires the desktop app (Tauri)",
+        "selectDir": "Please enter a directory path",
+        "startFailed": "Failed to start server"
+      }
+    },
+    "codeShare": {
+      "name": "Code Share",
+      "description": "Share code snippets via paste service",
+      "commands": { "open": "Code Share" },
+      "ui": {
+        "language": "Language",
+        "expiry": "Expires",
+        "share": "Share",
+        "shared": "Shared Successfully",
+        "enterCode": "Please enter some code to share",
+        "codePlaceholder": "Paste your code here...",
+        "history": "Share History"
+      }
     }
   }
 }

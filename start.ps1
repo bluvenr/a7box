@@ -26,11 +26,11 @@ switch ($Mode) {
         Write-Host "  [INFO] This will compile Rust backend (~30s first time)" -ForegroundColor DarkGray
         Write-Host ""
 
-        # Kill any stale node processes first
-        $nodeProcs = Get-Process -Name "node" -ErrorAction SilentlyContinue
-        if ($nodeProcs) {
-            Write-Host "  [WARN] Killing stale node processes..." -ForegroundColor DarkYellow
-            $nodeProcs | Stop-Process -Force -ErrorAction SilentlyContinue
+        # Kill any stale node and a7box processes first
+        $staleProcs = Get-Process -Name "node","a7box" -ErrorAction SilentlyContinue
+        if ($staleProcs) {
+            Write-Host "  [WARN] Killing stale processes (node/a7box)..." -ForegroundColor DarkYellow
+            $staleProcs | Stop-Process -Force -ErrorAction SilentlyContinue
             Start-Sleep -Seconds 1
         }
 

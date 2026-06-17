@@ -19,6 +19,7 @@ import { textDiffModule } from './text-diff'
 import { screenshotModule } from './screenshot'
 import { httpServerModule } from './http-server'
 import { codeShareModule } from './code-share'
+import { p2pTransferModule } from './p2p-transfer'
 import type { A7Module } from '../core/types'
 
 /** All available modules */
@@ -40,6 +41,7 @@ export const allModules: A7Module[] = [
   screenshotModule,
   httpServerModule,
   codeShareModule,
+  p2pTransferModule,
 ]
 
 /** Export modules for registry */
@@ -61,4 +63,5 @@ export {
   screenshotModule,
   httpServerModule,
   codeShareModule,
+  p2pTransferModule,
 }

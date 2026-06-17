@@ -29,6 +29,7 @@ const TextDiff = lazy(() => import('../modules/text-diff/TextDiff'))
 const Screenshot = lazy(() => import('../modules/screenshot/Screenshot'))
 const HttpServer = lazy(() => import('../modules/http-server/HttpServer'))
 const CodeShare = lazy(() => import('../modules/code-share/CodeShare'))
+const P2PTransfer = lazy(() => import('../modules/p2p-transfer/P2PTransfer'))
 
 // Wrap a module component with ErrorBoundary + Suspense
 function ModuleRoute({ moduleId, children }: { moduleId: string; children: React.ReactNode }) {
@@ -131,6 +132,10 @@ export const router = createBrowserRouter([
       {
         path: 'code-share',
         element: <ModuleRoute moduleId="code-share"><CodeShare /></ModuleRoute>,
+      },
+      {
+        path: 'p2p-transfer',
+        element: <ModuleRoute moduleId="p2p-transfer"><P2PTransfer /></ModuleRoute>,
       },
     ],
   },

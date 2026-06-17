@@ -12,6 +12,8 @@ import { CommandPalette } from '../../core/command-palette'
 import { useGlobalShortcuts } from '../../core/shortcuts'
 import { Logo } from '../../components/Logo'
 import { TitleBar } from '../../components/TitleBar'
+import { ToastContainer } from '../../components/Toast'
+import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
 import type { LucideIcon } from 'lucide-react'
 
 // LocalStorage key for sidebar state
@@ -96,6 +98,7 @@ export function MainLayout() {
                     nameI18n={mod.meta.nameI18n}
                     fallbackName={mod.meta.name}
                     collapsed={collapsed}
+                    moduleId={mod.meta.id}
                     onClick={() => navigate(`/${mod.meta.id}`)}
                   />
                 ))}
@@ -131,6 +134,9 @@ export function MainLayout() {
 
       {/* Command palette overlay (inside Router context) */}
       <CommandPalette />
+
+      {/* Global toast notifications */}
+      <ToastContainer />
     </div>
   )
 }
@@ -175,27 +181,34 @@ function ModuleNavItem({
   fallbackName,
   collapsed,
   onClick,
+  moduleId,
 }: {
   icon: LucideIcon | string
   nameI18n?: string
   fallbackName: string
   collapsed: boolean
   onClick: () => void
+  moduleId: string
 }) {
   const { t } = useTranslation()
   const IconComponent = typeof Icon === 'string' ? Box : Icon
   const displayName = nameI18n ? t(nameI18n) : fallbackName
+  const p2pRunning = useP2PStatus((s) => s.running)
+  const showDot = moduleId === 'p2p-transfer' && p2pRunning
 
   return (
     <button
       onClick={onClick}
       title={collapsed ? displayName : undefined}
-      className={`flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary ${
+      className={`relative flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary ${
         collapsed ? 'justify-center' : ''
       }`}
     >
       <IconComponent className="h-4 w-4 shrink-0" />
       {!collapsed && <span className="truncate">{displayName}</span>}
+      {showDot && (
+        <span className={`h-2 w-2 rounded-full bg-green-400 ${collapsed ? 'absolute -top-0.5 -right-0.5' : 'ml-auto'}`} />
+      )}
     </button>
   )
 }

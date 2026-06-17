@@ -2,13 +2,13 @@
  * A7Box Settings Page (v2 - with Tauri integration)
  */
 
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSettingsStore, SUPPORTED_LANGUAGES, changeLanguage, useUpdater } from '../../core'
 import { useModuleRegistry } from '../../core/registry'
 import {
   Globe, Palette, Box, Info, RefreshCw, Download,
-  CheckCircle, AlertCircle, Loader2
+  CheckCircle, AlertCircle, Loader2, GripVertical
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -23,6 +23,21 @@ export default function Settings() {
   const enabledModuleIds = useModuleRegistry((state) => state.enabledModuleIds)
   const registryEnable = useModuleRegistry((state) => state.enable)
   const registryDisable = useModuleRegistry((state) => state.disable)
+
+  const moduleOrder = useSettingsStore((s) => s.moduleOrder)
+  const reorderModule = useSettingsStore((s) => s.reorderModule)
+  const syncModuleOrder = useSettingsStore((s) => s.syncModuleOrder)
+
+  // Pointer-based drag-and-drop (more reliable in Tauri WebView than HTML5 DnD)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const [dragState, setDragState] = useState<{
+    fromIdx: number; startY: number; currentY: number
+  } | null>(null)
+  const [dropPos, setDropPos] = useState<number | null>(null)
+  const [lineY, setLineY] = useState<number>(0)
+  const autoScrollRef = useRef<number | null>(null)
+  const scrollDeltaRef = useRef<number>(0)
 
   const updater = useUpdater()
 
@@ -57,6 +72,22 @@ export default function Settings() {
 
   const allModules = Array.from(modulesMap.values())
 
+  // Sync module order with registered modules on mount
+  useEffect(() => {
+    syncModuleOrder(allModules.map((m) => m.meta.id))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allModules.length])
+
+  // Sort modules by persisted order
+  const orderedModules = [...allModules].sort((a, b) => {
+    const idxA = moduleOrder.indexOf(a.meta.id)
+    const idxB = moduleOrder.indexOf(b.meta.id)
+    if (idxA === -1 && idxB === -1) return 0
+    if (idxA === -1) return 1
+    if (idxB === -1) return -1
+    return idxA - idxB
+  })
+
   const handleModuleToggle = (moduleId: string, enabled: boolean) => {
     settings.setModuleEnabled(moduleId, enabled)
     if (enabled) {
@@ -67,7 +98,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="h-full overflow-auto p-8">
+    <div ref={scrollRef} className="h-full overflow-auto p-8">
       <h1 className="mb-8 text-2xl font-bold text-text-primary">
         {t('settings.title')}
       </h1>
@@ -164,22 +195,149 @@ export default function Settings() {
 
         {/* Module management */}
         <SettingSection title={t('settings.modules')} icon={Box}>
-          {allModules.map((mod) => {
-            const displayName = mod.meta.nameI18n ? t(mod.meta.nameI18n) : mod.meta.name
-            const displayDesc = mod.meta.descriptionI18n ? t(mod.meta.descriptionI18n) : mod.meta.description
-            return (
-              <SettingRow
-                key={mod.meta.id}
-                label={displayName}
-                description={displayDesc}
+          <p className="mb-2 flex items-center gap-1.5 text-xs text-text-muted">
+            <GripVertical size={12} className="shrink-0" />
+            {t('settings.modulesDragHint')}
+          </p>
+          <div ref={listRef} className="relative">
+            {/* Insertion line indicator */}
+            {dragState && dropPos !== null && (
+              <div
+                data-insertion-line
+                className="absolute left-0 right-0 z-20 pointer-events-none"
+                style={{ top: `${lineY}px` }}
               >
-                <Toggle
-                  checked={enabledModuleIds.has(mod.meta.id)}
-                  onChange={(v) => handleModuleToggle(mod.meta.id, v)}
-                />
-              </SettingRow>
-            )
-          })}
+                <div className="flex items-center">
+                  <div className="w-2 h-2 rounded-full bg-primary shadow-sm" />
+                  <div className="flex-1 h-[2px] bg-primary rounded-full" />
+                </div>
+              </div>
+            )}
+            {orderedModules.map((mod, index) => {
+              const displayName = mod.meta.nameI18n ? t(mod.meta.nameI18n) : mod.meta.name
+              const displayDesc = mod.meta.descriptionI18n ? t(mod.meta.descriptionI18n) : mod.meta.description
+              const isDragging = dragState?.fromIdx === index
+              return (
+                <div
+                  key={mod.meta.id}
+                  className={`flex items-center justify-between py-3 gap-3 rounded-lg select-none transition-colors ${
+                    isDragging ? 'bg-primary/10 ring-1 ring-primary/30 shadow-lg' : ''
+                  }`}
+                  style={isDragging && dragState ? {
+                    position: 'relative',
+                    zIndex: 10,
+                    transform: `translateY(${dragState.currentY - dragState.startY}px)`,
+                    transition: 'none',
+                  } : undefined}
+                  onPointerDown={(e) => {
+                    // Only start drag from the grip handle
+                    if (!(e.target as HTMLElement).closest('[data-drag-handle]')) return
+                    e.preventDefault()
+                    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+                    setDragState({ fromIdx: index, startY: e.clientY, currentY: e.clientY })
+                    setDropPos(index)
+                    // Set initial insertion line at the item's own position
+                    const row = e.currentTarget as HTMLElement
+                    setLineY(row.offsetTop + 2)
+                  }}
+                  onPointerMove={(e) => {
+                    if (!dragState || dragState.fromIdx !== index) return
+                    const currentY = e.clientY
+                    setDragState((s) => s ? { ...s, currentY } : null)
+
+                    // Auto-scroll when near edges (use ref to avoid stale closure)
+                    const scroller = scrollRef.current
+                    if (scroller) {
+                      const scrollRect = scroller.getBoundingClientRect()
+                      const edgeThreshold = 80
+                      const maxSpeed = 8
+                      let delta = 0
+                      if (currentY < scrollRect.top + edgeThreshold) {
+                        delta = -(scrollRect.top + edgeThreshold - currentY) * maxSpeed / edgeThreshold
+                      } else if (currentY > scrollRect.bottom - edgeThreshold) {
+                        delta = (currentY - scrollRect.bottom + edgeThreshold) * maxSpeed / edgeThreshold
+                      }
+                      scrollDeltaRef.current = delta
+                      if (delta !== 0 && autoScrollRef.current === null) {
+                        const tick = () => {
+                          if (autoScrollRef.current !== null) {
+                            scroller.scrollBy({ top: scrollDeltaRef.current })
+                            autoScrollRef.current = requestAnimationFrame(tick)
+                          }
+                        }
+                        autoScrollRef.current = requestAnimationFrame(tick)
+                      } else if (delta === 0 && autoScrollRef.current !== null) {
+                        cancelAnimationFrame(autoScrollRef.current)
+                        autoScrollRef.current = null
+                      }
+                    }
+
+                    // Compute drop position and insertion line Y using offsetTop
+                    // (getBoundingClientRect includes transform, which shifts the dragged item)
+                    const container = listRef.current
+                    if (!container) return
+                    const items = Array.from(container.children).filter(
+                      (c): c is HTMLElement => c instanceof HTMLElement && !c.hasAttribute('data-insertion-line')
+                    )
+                    const containerRect = container.getBoundingClientRect()
+                    const localPointerY = currentY - containerRect.top
+                    let pos = 0
+                    let y = 0
+                    for (let i = 0; i < items.length; i++) {
+                      const itemTop = items[i].offsetTop
+                      const itemH = items[i].offsetHeight
+                      const mid = itemTop + itemH / 2
+                      if (localPointerY > mid) {
+                        pos = i + 1
+                        y = itemTop + itemH
+                      } else {
+                        pos = i
+                        y = itemTop
+                        break
+                      }
+                    }
+                    if (pos > dragState.fromIdx) pos -= 1
+                    setDropPos(pos)
+                    setLineY(y + 2)
+                  }}
+                  onPointerUp={() => {
+                    // Stop auto-scroll
+                    scrollDeltaRef.current = 0
+                    if (autoScrollRef.current !== null) {
+                      cancelAnimationFrame(autoScrollRef.current)
+                      autoScrollRef.current = null
+                    }
+                    if (!dragState || dragState.fromIdx !== index) return
+                    if (dropPos !== null && dropPos !== dragState.fromIdx) {
+                      reorderModule(dragState.fromIdx, dropPos)
+                    }
+                    setDragState(null)
+                    setDropPos(null)
+                  }}
+                >
+                  {/* Drag handle — only this area initiates drag */}
+                  <div
+                    data-drag-handle
+                    className="flex items-center shrink-0 cursor-grab active:cursor-grabbing touch-none py-1"
+                  >
+                    <GripVertical size={14} className={`${dragState?.fromIdx === index ? 'text-primary' : 'text-text-disabled'}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-text-primary">{displayName}</p>
+                    {displayDesc && (
+                      <p className="mt-0.5 text-xs text-text-muted">{displayDesc}</p>
+                    )}
+                  </div>
+                  <div className="ml-2 shrink-0">
+                    <Toggle
+                      checked={enabledModuleIds.has(mod.meta.id)}
+                      onChange={(v) => handleModuleToggle(mod.meta.id, v)}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
           {allModules.length === 0 && (
             <p className="py-4 text-center text-sm text-text-muted">{t('settings.noModules')}</p>
           )}

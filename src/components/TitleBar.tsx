@@ -93,7 +93,7 @@ export function TitleBar() {
 
       {/* Windows/Linux: window control buttons on the right */}
       {!isMac && (
-        <div className="flex h-full shrink-0 items-center">
+        <div className="flex h-full shrink-0 items-center" onMouseDown={(e) => e.stopPropagation()}>
           <TitleBarButton onClick={handleMinimize} title="Minimize">
             <Minus className="h-3.5 w-3.5" />
           </TitleBarButton>

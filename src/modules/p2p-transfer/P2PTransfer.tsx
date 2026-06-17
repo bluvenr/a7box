@@ -598,11 +598,15 @@ export default function P2PTransfer() {
               <div className="flex items-center gap-2">
                 <Users size={15} className="text-primary" />
                 <h2 className="text-sm font-semibold text-text-primary">{t('modules.p2p.ui.peers')}</h2>
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">{peers.length}</span>
+                {peers.length > 0 && (
+                  <>
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">{peers.length}</span>
+                    <button onClick={async () => setPeers(await p2pGetPeers())} className="text-text-muted hover:text-primary cursor-pointer ml-1">
+                      <RefreshCw size={13} />
+                    </button>
+                  </>
+                )}
               </div>
-              <button onClick={async () => setPeers(await p2pGetPeers())} className="text-text-muted hover:text-primary cursor-pointer">
-                <RefreshCw size={13} />
-              </button>
             </div>
 
             {running && peers.length === 0 && !scanTimedOut ? (

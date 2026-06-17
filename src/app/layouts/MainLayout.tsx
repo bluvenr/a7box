@@ -14,6 +14,7 @@ import { Logo } from '../../components/Logo'
 import { TitleBar } from '../../components/TitleBar'
 import { ToastContainer } from '../../components/Toast'
 import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
+import { useSettingsStore } from '../../core/settings'
 import type { LucideIcon } from 'lucide-react'
 
 // LocalStorage key for sidebar state
@@ -30,6 +31,7 @@ export function MainLayout() {
   const navigate = useNavigate()
   const modules = useModuleRegistry((state) => state.modules)
   const enabledModuleIds = useModuleRegistry((state) => state.enabledModuleIds)
+  const moduleOrder = useSettingsStore((s) => s.moduleOrder)
 
   // Register global shortcuts (Tauri + keyboard fallback)
   useGlobalShortcuts()
@@ -43,8 +45,17 @@ export function MainLayout() {
     try { localStorage.setItem(SIDEBAR_KEY, String(collapsed)) } catch { /* ignore */ }
   }, [collapsed])
 
-  // Derive enabled modules
-  const enabledModules = Array.from(modules.values()).filter((m) => enabledModuleIds.has(m.meta.id))
+  // Derive enabled modules, sorted by persisted order
+  const enabledModules = Array.from(modules.values())
+    .filter((m) => enabledModuleIds.has(m.meta.id))
+    .sort((a, b) => {
+      const idxA = moduleOrder.indexOf(a.meta.id)
+      const idxB = moduleOrder.indexOf(b.meta.id)
+      if (idxA === -1 && idxB === -1) return 0
+      if (idxA === -1) return 1
+      if (idxB === -1) return -1
+      return idxA - idxB
+    })
 
   const sidebarWidth = collapsed ? 'w-16' : 'w-56'
 

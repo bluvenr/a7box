@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useModuleRegistry } from '../../core/registry'
 import { useCommandPalette } from '../../core/command-palette'
+import { useSettingsStore } from '../../core/settings'
 import { getRecentModuleIds, recordUsage } from '../../shared/utils'
 import { Box, Search, Clock } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -18,10 +19,20 @@ export default function Home() {
   const togglePalette = useCommandPalette((state) => state.toggle)
   const modules = useModuleRegistry((state) => state.modules)
   const enabledModuleIds = useModuleRegistry((state) => state.enabledModuleIds)
+  const moduleOrder = useSettingsStore((s) => s.moduleOrder)
   const [recentIds, setRecentIds] = useState<string[]>([])
 
-  // Stable selector: derive enabled modules without creating new array in selector
-  const enabledModules = Array.from(modules.values()).filter((m) => enabledModuleIds.has(m.meta.id))
+  // Stable selector: derive enabled modules sorted by persisted order
+  const enabledModules = Array.from(modules.values())
+    .filter((m) => enabledModuleIds.has(m.meta.id))
+    .sort((a, b) => {
+      const idxA = moduleOrder.indexOf(a.meta.id)
+      const idxB = moduleOrder.indexOf(b.meta.id)
+      if (idxA === -1 && idxB === -1) return 0
+      if (idxA === -1) return 1
+      if (idxB === -1) return -1
+      return idxA - idxB
+    })
 
   // Load recent history
   useEffect(() => {
@@ -33,10 +44,8 @@ export default function Home() {
     .map((id) => modules.get(id))
     .filter((m): m is A7Module => !!m && enabledModuleIds.has(m.meta.id))
 
-  // Group by category (excluding recently used to avoid duplication)
-  const recentIdSet = new Set(recentIds)
+  // Group by category (show all modules in their category, recent also shown above)
   const modulesByCategory = enabledModules
-    .filter((m) => !recentIdSet.has(m.meta.id))
     .reduce((acc, mod) => {
       if (!acc[mod.meta.category]) {
         acc[mod.meta.category] = []

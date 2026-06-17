@@ -23,8 +23,9 @@ export interface AppSettings {
   commandPaletteShortcut: string
   customShortcuts: Record<string, string>
 
-  // Module enabled status
+  // Module management
   enabledModules: Record<string, boolean>
+  moduleOrder: string[]
 }
 
 /** Default settings */
@@ -38,6 +39,7 @@ const defaultSettings: AppSettings = {
   commandPaletteShortcut: 'CommandOrControl+Shift+A',
   customShortcuts: {},
   enabledModules: {},
+  moduleOrder: [],
 }
 
 interface SettingsState extends AppSettings {
@@ -51,6 +53,14 @@ interface SettingsState extends AppSettings {
   isModuleEnabled: (moduleId: string) => boolean
   /** Set module enabled status */
   setModuleEnabled: (moduleId: string, enabled: boolean) => void
+  /** Get ordered module IDs (for sidebar/home sorting) */
+  getModuleOrder: () => string[]
+  /** Move a module up or down in the order */
+  moveModule: (moduleId: string, direction: 'up' | 'down') => void
+  /** Reorder module from one index to another (for drag-and-drop) */
+  reorderModule: (fromIndex: number, toIndex: number) => void
+  /** Sync module order with registered modules (add new, remove deleted) */
+  syncModuleOrder: (registeredIds: string[]) => void
   /** Get custom shortcut for a command */
   getCustomShortcut: (commandId: string) => string | undefined
   /** Set custom shortcut for a command */
@@ -86,6 +96,42 @@ export const useSettingsStore = create<SettingsState>()(
             [moduleId]: enabled,
           },
         }))
+      },
+
+      getModuleOrder: () => {
+        return get().moduleOrder
+      },
+
+      moveModule: (moduleId, direction) => {
+        set((state) => {
+          const order = [...state.moduleOrder]
+          const idx = order.indexOf(moduleId)
+          if (idx < 0) return state
+          const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+          if (swapIdx < 0 || swapIdx >= order.length) return state
+          ;[order[idx], order[swapIdx]] = [order[swapIdx], order[idx]]
+          return { moduleOrder: order }
+        })
+      },
+
+      reorderModule: (fromIndex, toIndex) => {
+        set((state) => {
+          const order = [...state.moduleOrder]
+          if (fromIndex < 0 || fromIndex >= order.length) return state
+          if (toIndex < 0 || toIndex >= order.length) return state
+          if (fromIndex === toIndex) return state
+          const [item] = order.splice(fromIndex, 1)
+          order.splice(toIndex, 0, item)
+          return { moduleOrder: order }
+        })
+      },
+
+      syncModuleOrder: (registeredIds) => {
+        set((state) => {
+          const existing = state.moduleOrder.filter((id) => registeredIds.includes(id))
+          const newIds = registeredIds.filter((id) => !existing.includes(id))
+          return { moduleOrder: [...existing, ...newIds] }
+        })
       },
 
       getCustomShortcut: (commandId) => {

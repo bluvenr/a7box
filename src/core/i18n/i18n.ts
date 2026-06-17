@@ -16,12 +16,21 @@ export const SUPPORTED_LANGUAGES = [
 export type LanguageCode = typeof SUPPORTED_LANGUAGES[number]['code']
 
 // Detect system language
-function detectLanguage(): LanguageCode {
+export function detectLanguage(): LanguageCode {
   const browserLang = navigator.language
   if (browserLang.startsWith('zh')) {
     return 'zh-CN'
   }
   return 'en-US'
+}
+
+// Get initial language: saved > detected, and persist to localStorage
+function getInitialLanguage(): LanguageCode {
+  const saved = localStorage.getItem('a7box-language') as LanguageCode | null
+  if (saved) return saved
+  const detected = detectLanguage()
+  localStorage.setItem('a7box-language', detected)
+  return detected
 }
 
 // Initialize i18next
@@ -32,7 +41,7 @@ i18n.use(initReactI18next).init({
     'zh-CN': { translation: zhCN },
     'en-US': { translation: enUS },
   },
-  lng: detectLanguage(),
+  lng: getInitialLanguage(),
   fallbackLng: 'en-US',
   interpolation: {
     escapeValue: false, // React handles XSS

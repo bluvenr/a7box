@@ -5,6 +5,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { detectLanguage } from '../i18n/i18n'
 
 /** App settings type */
 export interface AppSettings {
@@ -28,7 +29,7 @@ export interface AppSettings {
 
 /** Default settings */
 const defaultSettings: AppSettings = {
-  language: 'en-US',
+  language: detectLanguage(),
   autoStart: false,
   minimizeToTray: true,
   checkUpdateOnStart: true,

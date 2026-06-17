@@ -55,23 +55,25 @@ pub fn run() {
             // Setup system tray
             tray::setup_tray(app)?;
 
-            // Register global shortcuts
+            // Register global shortcuts (graceful: warn on failure, don't crash)
             let handle = app.handle().clone();
             let shortcut_handle = handle.clone();
-            app.global_shortcut().on_shortcut("CommandOrControl+Shift+A", move |_app, _shortcut, event| {
+            if let Err(e) = app.global_shortcut().on_shortcut("CommandOrControl+Shift+A", move |_app, _shortcut, event| {
                 if event.state == ShortcutState::Pressed {
-                    // Emit event to frontend to toggle command palette
                     let _ = shortcut_handle.emit("global-shortcut", "toggle-command-palette");
                 }
-            })?;
+            }) {
+                eprintln!("[WARN] Failed to register Ctrl+Shift+A shortcut: {}", e);
+            }
 
             let screenshot_handle = handle.clone();
-            app.global_shortcut().on_shortcut("CommandOrControl+Shift+S", move |_app, _shortcut, event| {
+            if let Err(e) = app.global_shortcut().on_shortcut("CommandOrControl+Shift+S", move |_app, _shortcut, event| {
                 if event.state == ShortcutState::Pressed {
-                    // Emit event to frontend to open screenshot tool
                     let _ = screenshot_handle.emit("global-shortcut", "open-screenshot");
                 }
-            })?;
+            }) {
+                eprintln!("[WARN] Failed to register Ctrl+Shift+S shortcut: {}", e);
+            }
 
             // Handle window close: hide to tray instead of exiting
             let window = app.get_webview_window("main").unwrap();

@@ -21,6 +21,11 @@ const HashGenerator = lazy(() => import('../modules/hash-generator/HashGenerator
 const ImageConvert = lazy(() => import('../modules/image-convert/ImageConvert'))
 const ColorTool = lazy(() => import('../modules/color-tool/ColorTool'))
 const Base64Tool = lazy(() => import('../modules/base64-tool/Base64Tool'))
+const TimestampConverter = lazy(() => import('../modules/timestamp-converter/TimestampConverter'))
+const UuidGenerator = lazy(() => import('../modules/uuid-generator/UuidGenerator'))
+const JwtDecoder = lazy(() => import('../modules/jwt-decoder/JwtDecoder'))
+const RegexTester = lazy(() => import('../modules/regex-tester/RegexTester'))
+const TextDiff = lazy(() => import('../modules/text-diff/TextDiff'))
 
 // Wrap a module component with ErrorBoundary + Suspense
 function ModuleRoute({ moduleId, children }: { moduleId: string; children: React.ReactNode }) {
@@ -91,6 +96,26 @@ export const router = createBrowserRouter([
       {
         path: 'base64-tool',
         element: <ModuleRoute moduleId="base64-tool"><Base64Tool /></ModuleRoute>,
+      },
+      {
+        path: 'timestamp-converter',
+        element: <ModuleRoute moduleId="timestamp-converter"><TimestampConverter /></ModuleRoute>,
+      },
+      {
+        path: 'uuid-generator',
+        element: <ModuleRoute moduleId="uuid-generator"><UuidGenerator /></ModuleRoute>,
+      },
+      {
+        path: 'jwt-decoder',
+        element: <ModuleRoute moduleId="jwt-decoder"><JwtDecoder /></ModuleRoute>,
+      },
+      {
+        path: 'regex-tester',
+        element: <ModuleRoute moduleId="regex-tester"><RegexTester /></ModuleRoute>,
+      },
+      {
+        path: 'text-diff',
+        element: <ModuleRoute moduleId="text-diff"><TextDiff /></ModuleRoute>,
       },
     ],
   },

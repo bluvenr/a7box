@@ -11,6 +11,11 @@ import { hashGeneratorModule } from './hash-generator'
 import { imageConvertModule } from './image-convert'
 import { colorToolModule } from './color-tool'
 import { base64ToolModule } from './base64-tool'
+import { timestampConverterModule } from './timestamp-converter'
+import { uuidGeneratorModule } from './uuid-generator'
+import { jwtDecoderModule } from './jwt-decoder'
+import { regexTesterModule } from './regex-tester'
+import { textDiffModule } from './text-diff'
 import type { A7Module } from '../core/types'
 
 /** All available modules */
@@ -24,8 +29,27 @@ export const allModules: A7Module[] = [
   imageConvertModule,
   colorToolModule,
   base64ToolModule,
-  // Add more modules here...
+  timestampConverterModule,
+  uuidGeneratorModule,
+  jwtDecoderModule,
+  regexTesterModule,
+  textDiffModule,
 ]
 
 /** Export modules for registry */
-export { jsonFormatterModule, qrCodeModule, markdownPreviewModule, codeMinifyModule, imageCompressModule, hashGeneratorModule, imageConvertModule, colorToolModule, base64ToolModule }
+export {
+  jsonFormatterModule,
+  qrCodeModule,
+  markdownPreviewModule,
+  codeMinifyModule,
+  imageCompressModule,
+  hashGeneratorModule,
+  imageConvertModule,
+  colorToolModule,
+  base64ToolModule,
+  timestampConverterModule,
+  uuidGeneratorModule,
+  jwtDecoderModule,
+  regexTesterModule,
+  textDiffModule,
+}

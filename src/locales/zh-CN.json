@@ -292,6 +292,69 @@
         "toastDownloaded": "文件已下载",
         "toastDecodeFailed": "无法解码为文件 - 无效的 Base64 二进制数据"
       }
+    },
+    "timestampConverter": {
+      "name": "时间戳转换器",
+      "description": "Unix 时间戳与可读日期互转",
+      "commands": { "open": "时间戳转换器" },
+      "now": "当前时间",
+      "timestamp": "Unix 时间戳",
+      "dateString": "日期字符串",
+      "allFormats": "所有格式",
+      "details": "日期详情",
+      "year": "年",
+      "month": "月",
+      "day": "日",
+      "dayOfWeek": "星期"
+    },
+    "uuidGenerator": {
+      "name": "UUID 生成器",
+      "description": "生成 UUID v4、NanoID 等唯一标识",
+      "commands": { "open": "UUID 生成器" },
+      "type": "类型",
+      "count": "数量",
+      "length": "长度",
+      "numeric": "纯数字",
+      "generate": "生成",
+      "generated": "条 ID 已生成",
+      "copyAll": "复制全部"
+    },
+    "jwtDecoder": {
+      "name": "JWT 解码器",
+      "description": "解码并检查 JWT 令牌",
+      "commands": { "open": "JWT 解码器" },
+      "expired": "令牌已过期",
+      "valid": "令牌有效",
+      "expiresIn": "剩余时间",
+      "standardClaims": "标准声明"
+    },
+    "regexTester": {
+      "name": "正则测试器",
+      "description": "实时匹配测试和调试正则表达式",
+      "commands": { "open": "正则测试器" },
+      "patternPlaceholder": "输入正则表达式...",
+      "testText": "测试文本",
+      "textPlaceholder": "输入要测试的文本...",
+      "highlighted": "匹配高亮",
+      "matches": "个匹配",
+      "matchDetails": "匹配详情"
+    },
+    "textDiff": {
+      "name": "文本对比",
+      "description": "比较两段文本并高亮差异",
+      "commands": { "open": "文本对比" },
+      "swap": "交换",
+      "clear": "清空",
+      "original": "原始文本",
+      "modified": "修改文本",
+      "paste": "粘贴",
+      "pasteOriginal": "粘贴原始文本...",
+      "pasteModified": "粘贴修改后的文本...",
+      "stats": "变更",
+      "linesAdded": "行新增",
+      "linesRemoved": "行删除",
+      "identical": "两段文本完全相同",
+      "diffResult": "对比结果"
     }
   }
 }

@@ -292,6 +292,69 @@
         "toastDownloaded": "File downloaded",
         "toastDecodeFailed": "Cannot decode as file - invalid Base64 binary data"
       }
+    },
+    "timestampConverter": {
+      "name": "Timestamp Converter",
+      "description": "Convert between Unix timestamps and human-readable dates",
+      "commands": { "open": "Timestamp Converter" },
+      "now": "Now",
+      "timestamp": "Unix Timestamp",
+      "dateString": "Date String",
+      "allFormats": "All Formats",
+      "details": "Date Details",
+      "year": "Year",
+      "month": "Month",
+      "day": "Day",
+      "dayOfWeek": "Day of Week"
+    },
+    "uuidGenerator": {
+      "name": "UUID Generator",
+      "description": "Generate UUID v4, NanoID, and unique identifiers",
+      "commands": { "open": "UUID Generator" },
+      "type": "Type",
+      "count": "Count",
+      "length": "Length",
+      "numeric": "Numeric",
+      "generate": "Generate",
+      "generated": "IDs Generated",
+      "copyAll": "Copy All"
+    },
+    "jwtDecoder": {
+      "name": "JWT Decoder",
+      "description": "Decode and inspect JWT tokens",
+      "commands": { "open": "JWT Decoder" },
+      "expired": "Token Expired",
+      "valid": "Token Valid",
+      "expiresIn": "Remaining",
+      "standardClaims": "Standard Claims"
+    },
+    "regexTester": {
+      "name": "Regex Tester",
+      "description": "Test and debug regular expressions with live matching",
+      "commands": { "open": "Regex Tester" },
+      "patternPlaceholder": "Enter regex pattern...",
+      "testText": "Test Text",
+      "textPlaceholder": "Enter text to test against...",
+      "highlighted": "Highlighted Matches",
+      "matches": "matches",
+      "matchDetails": "Match Details"
+    },
+    "textDiff": {
+      "name": "Text Diff",
+      "description": "Compare two texts and highlight differences",
+      "commands": { "open": "Text Diff" },
+      "swap": "Swap",
+      "clear": "Clear",
+      "original": "Original",
+      "modified": "Modified",
+      "paste": "Paste",
+      "pasteOriginal": "Paste original text...",
+      "pasteModified": "Paste modified text...",
+      "stats": "Changes",
+      "linesAdded": "added",
+      "linesRemoved": "removed",
+      "identical": "Texts are identical",
+      "diffResult": "Diff Result"
     }
   }
 }

@@ -7,16 +7,38 @@ use tauri::{
     Manager, Runtime,
 };
 
+/// Detect system locale, returns true if likely Chinese
+fn is_chinese_locale() -> bool {
+    // Windows: check LANG env or USERPROFILE region hints
+    if let Ok(lang) = std::env::var("LANG") {
+        return lang.starts_with("zh") || lang.contains("CN") || lang.contains("TW");
+    }
+    // Fallback: check LC_ALL
+    if let Ok(lang) = std::env::var("LC_ALL") {
+        return lang.starts_with("zh");
+    }
+    false
+}
+
 /// Setup system tray with context menu
 pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::error::Error>> {
-    let show = MenuItem::with_id(app, "show", "Show A7Box", true, None::<&str>)?;
-    let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+    let is_zh = is_chinese_locale();
+    let show_label = if is_zh { "\u{663e}\u{793a} A7\u{5319}" } else { "Show A7Box" };
+    let quit_label = if is_zh { "\u{9000}\u{51fa}" } else { "Quit" };
+    let tooltip = if is_zh {
+        "A7\u{5319} - \u{684c}\u{9762}\u{6218}\u{672f}\u{7ea7}\u{6548}\u{7387}\u{6b66}\u{5668}"
+    } else {
+        "A7Box - Your Tactical Efficiency Weapon"
+    };
+
+    let show = MenuItem::with_id(app, "show", show_label, true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", quit_label, true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &quit])?;
 
     TrayIconBuilder::new()
         .icon(app.default_window_icon().unwrap().clone())
         .menu(&menu)
-        .tooltip("A7Box - Your Tactical Efficiency Weapon")
+        .tooltip(tooltip)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => {
                 if let Some(window) = app.get_webview_window("main") {

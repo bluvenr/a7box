@@ -378,7 +378,7 @@
         "noDelay": "None",
         "capture": "Capture",
         "capturing": "Capturing...",
-        "previewCapture": "Preview",
+        "captureAndEdit": "Capture & Edit",
         "detectMonitors": "Detect Monitors",
         "monitors": "Monitors",
         "lastCapture": "Last Capture",
@@ -388,8 +388,25 @@
         "copyPath": "Copy Path",
         "history": "History",
         "preview": "Preview",
+        "edit": "Edit",
         "webOnly": "Screenshot requires the desktop app (Tauri)",
-        "captureFailed": "Capture failed"
+        "captureFailed": "Capture failed",
+        "loadFailed": "Failed to load image",
+        "saveFailed": "Failed to save"
+      },
+      "editor": {
+        "pencil": "Pencil",
+        "rect": "Rectangle",
+        "arrow": "Arrow",
+        "text": "Text",
+        "mosaic": "Mosaic",
+        "undo": "Undo",
+        "redo": "Redo",
+        "save": "Save",
+        "copy": "Copy",
+        "copied": "Copied",
+        "close": "Close",
+        "textPlaceholder": "Type text..."
       }
     },
     "httpServer": {

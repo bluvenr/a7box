@@ -128,6 +128,28 @@ export async function getMonitors(): Promise<MonitorInfo[]> {
   }
 }
 
+export async function fileToBase64(path: string): Promise<string | null> {
+  const invoke = await getInvoke()
+  if (!invoke) return null
+  try {
+    return await invoke<string>('file_to_base64', { path })
+  } catch (e) {
+    console.error('[A7Box] fileToBase64 failed:', e)
+    return null
+  }
+}
+
+export async function saveEditedImage(data: string): Promise<CaptureResult | null> {
+  const invoke = await getInvoke()
+  if (!invoke) return null
+  try {
+    return await invoke<CaptureResult>('save_edited_image', { data })
+  } catch (e) {
+    console.error('[A7Box] saveEditedImage failed:', e)
+    return null
+  }
+}
+
 // ============ HTTP Server ============
 
 export interface ServerInfo {

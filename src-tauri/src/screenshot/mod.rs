@@ -124,3 +124,41 @@ pub fn get_monitors() -> Result<Vec<MonitorInfo>, String> {
         })
         .collect())
 }
+
+/// Read a file as base64 data URL
+pub fn file_to_base64(path: String) -> Result<String, String> {
+    let data = fs::read(&path).map_err(|e| format!("Failed to read file: {}", e))?;
+    let b64 = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &data);
+    Ok(format!("data:image/png;base64,{}", b64))
+}
+
+/// Save base64 image data to file
+pub fn save_base64_image(data: String, filename_prefix: &str) -> Result<CaptureResult, String> {
+    let dir = screenshots_dir()?;
+    let timestamp = Local::now().format("%Y%m%d_%H%M%S");
+    let filename = format!("{}_{}_edited.png", filename_prefix, timestamp);
+    let filepath = dir.join(&filename);
+
+    // Strip data URL prefix if present
+    let b64_data = if data.starts_with("data:") {
+        data.split(',').nth(1).unwrap_or(&data)
+    } else {
+        &data
+    };
+
+    let bytes = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, b64_data)
+        .map_err(|e| format!("Failed to decode base64: {}", e))?;
+
+    // Read image dimensions from PNG header
+    let img = screenshots::image::load_from_memory_with_format(&bytes, screenshots::image::ImageFormat::Png)
+        .map_err(|e| format!("Failed to read image: {}", e))?;
+
+    fs::write(&filepath, &bytes).map_err(|e| format!("Failed to write file: {}", e))?;
+
+    Ok(CaptureResult {
+        path: filepath.to_string_lossy().to_string(),
+        width: img.width(),
+        height: img.height(),
+        filename,
+    })
+}

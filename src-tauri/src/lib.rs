@@ -45,6 +45,8 @@ pub fn run() {
             commands::capture_region,
             commands::capture_to_base64,
             commands::get_monitors,
+            commands::file_to_base64,
+            commands::save_edited_image,
             // HTTP Server
             commands::start_http_server,
             commands::stop_http_server,

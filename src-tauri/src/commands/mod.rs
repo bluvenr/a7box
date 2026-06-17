@@ -50,6 +50,16 @@ pub fn get_monitors() -> Result<Vec<screenshot::MonitorInfo>, String> {
     screenshot::get_monitors()
 }
 
+#[tauri::command]
+pub fn file_to_base64(path: String) -> Result<String, String> {
+    screenshot::file_to_base64(path)
+}
+
+#[tauri::command]
+pub fn save_edited_image(data: String) -> Result<screenshot::CaptureResult, String> {
+    screenshot::save_base64_image(data, "edited")
+}
+
 // ============ HTTP Server Commands ============
 
 #[tauri::command]

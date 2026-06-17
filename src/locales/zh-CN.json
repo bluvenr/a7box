@@ -378,7 +378,7 @@
         "noDelay": "无",
         "capture": "截图",
         "capturing": "截图中...",
-        "previewCapture": "预览",
+        "captureAndEdit": "截图并编辑",
         "detectMonitors": "检测显示器",
         "monitors": "显示器",
         "lastCapture": "最近截图",
@@ -388,8 +388,25 @@
         "copyPath": "复制路径",
         "history": "历史记录",
         "preview": "预览",
+        "edit": "编辑",
         "webOnly": "截图功能需要桌面应用 (Tauri)",
-        "captureFailed": "截图失败"
+        "captureFailed": "截图失败",
+        "loadFailed": "加载图片失败",
+        "saveFailed": "保存失败"
+      },
+      "editor": {
+        "pencil": "画笔",
+        "rect": "矩形",
+        "arrow": "箭头",
+        "text": "文字",
+        "mosaic": "马赛克",
+        "undo": "撤销",
+        "redo": "重做",
+        "save": "保存",
+        "copy": "复制",
+        "copied": "已复制",
+        "close": "关闭",
+        "textPlaceholder": "输入文字..."
       }
     },
     "httpServer": {

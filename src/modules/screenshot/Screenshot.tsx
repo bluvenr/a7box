@@ -2,11 +2,17 @@
  * A7Box Screenshot Tool
  * Capture full-screen and region screenshots via Rust backend
  * Falls back to browser Canvas API in web mode
+ * Integrates ScreenshotEditor for annotation
  */
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Camera, Monitor, Square, Clock, FolderOpen, Copy, Image as ImageIcon } from 'lucide-react'
-import { captureFullScreen, captureToBase64, getMonitors, type CaptureResult, type MonitorInfo } from '../../shared/utils/tauriBridge'
+import { Camera, Monitor, Square, Clock, FolderOpen, Copy, Pencil } from 'lucide-react'
+import {
+  captureFullScreen, captureToBase64, getMonitors,
+  fileToBase64, saveEditedImage,
+  type CaptureResult, type MonitorInfo,
+} from '../../shared/utils/tauriBridge'
+import ScreenshotEditor from './ScreenshotEditor'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -17,11 +23,13 @@ export default function Screenshot() {
   const [mode, setMode] = useState<'fullscreen' | 'region'>('fullscreen')
   const [delay, setDelay] = useState(0)
   const [result, setResult] = useState<CaptureResult | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
   const [monitors, setMonitors] = useState<MonitorInfo[]>([])
   const [capturing, setCapturing] = useState(false)
   const [history, setHistory] = useState<CaptureResult[]>([])
   const [error, setError] = useState<string | null>(null)
+
+  // Editor state
+  const [editorImage, setEditorImage] = useState<string | null>(null)
 
   const loadMonitors = useCallback(async () => {
     const m = await getMonitors()
@@ -57,17 +65,65 @@ export default function Screenshot() {
     setCapturing(false)
   }
 
-  const handlePreview = async () => {
+  // Open editor with a captured file
+  const openEditor = async (path: string) => {
+    if (!isTauri()) {
+      setError(t('modules.screenshot.ui.webOnly'))
+      return
+    }
+    const b64 = await fileToBase64(path)
+    if (b64) {
+      setEditorImage(b64)
+    } else {
+      setError(t('modules.screenshot.ui.loadFailed'))
+    }
+  }
+
+  // Preview → capture fresh → open editor directly
+  const handlePreviewAndEdit = async () => {
     if (!isTauri()) {
       setError(t('modules.screenshot.ui.webOnly'))
       return
     }
     const b64 = await captureToBase64()
-    setPreview(b64)
+    if (b64) {
+      setEditorImage(b64)
+    } else {
+      setError(t('modules.screenshot.ui.captureFailed'))
+    }
+  }
+
+  // Editor save callback
+  const handleEditorSave = async (dataUrl: string) => {
+    const res = await saveEditedImage(dataUrl)
+    if (res) {
+      setResult(res)
+      setHistory((prev) => [res, ...prev].slice(0, 10))
+      setEditorImage(null)
+    } else {
+      setError(t('modules.screenshot.ui.saveFailed'))
+    }
+  }
+
+  // Editor copy callback (fallback for clipboard API)
+  const handleEditorCopy = (_dataUrl: string) => {
+    // Clipboard API handled inside editor; this is a no-op fallback
   }
 
   const copyPath = async (path: string) => {
     await navigator.clipboard.writeText(path)
+  }
+
+  // If editor is open, render it full-screen
+  if (editorImage) {
+    return (
+      <ScreenshotEditor
+        imageData={editorImage}
+        onSave={handleEditorSave}
+        onCopy={handleEditorCopy}
+        onClose={() => setEditorImage(null)}
+      />
+    )
   }
 
   return (
@@ -175,13 +231,13 @@ export default function Screenshot() {
             {capturing ? t('modules.screenshot.ui.capturing') : t('modules.screenshot.ui.capture')}
           </button>
 
-          {/* Preview */}
+          {/* Capture + Edit directly */}
           <button
-            onClick={handlePreview}
+            onClick={handlePreviewAndEdit}
             className="flex items-center gap-2 rounded-lg bg-bg-hover px-3 py-2 text-sm text-text-secondary transition hover:bg-bg-elevated hover:text-text-primary cursor-pointer"
           >
-            <ImageIcon size={14} />
-            {t('modules.screenshot.ui.previewCapture')}
+            <Pencil size={14} />
+            {t('modules.screenshot.ui.captureAndEdit')}
           </button>
         </div>
       </div>
@@ -193,16 +249,6 @@ export default function Screenshot() {
         </div>
       )}
 
-      {/* Preview Image */}
-      {preview && (
-        <div className="mb-4 rounded-xl border border-border-subtle bg-bg-elevated p-4">
-          <h3 className="mb-2 text-sm font-semibold text-text-primary">
-            {t('modules.screenshot.ui.preview')}
-          </h3>
-          <img src={preview} alt="Screenshot preview" className="max-h-[400px] w-auto rounded-lg" />
-        </div>
-      )}
-
       {/* Last Result */}
       {result && (
         <div className="mb-4 rounded-xl border border-border-subtle bg-bg-elevated p-4">
@@ -210,12 +256,20 @@ export default function Screenshot() {
             <h3 className="text-sm font-semibold text-text-primary">
               {t('modules.screenshot.ui.lastCapture')}
             </h3>
-            <button
-              onClick={() => copyPath(result.path)}
-              className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-text-muted transition hover:text-primary cursor-pointer"
-            >
-              <Copy size={10} /> {t('modules.screenshot.ui.copyPath')}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => openEditor(result.path)}
+                className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition hover:bg-primary/20 cursor-pointer"
+              >
+                <Pencil size={11} /> {t('modules.screenshot.ui.edit')}
+              </button>
+              <button
+                onClick={() => copyPath(result.path)}
+                className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-text-muted transition hover:text-primary cursor-pointer"
+              >
+                <Copy size={10} /> {t('modules.screenshot.ui.copyPath')}
+              </button>
+            </div>
           </div>
           <div className="rounded-lg bg-bg-base p-3 text-sm">
             <p><span className="text-text-muted">{t('modules.screenshot.ui.fileName')}:</span> <span className="text-text-primary">{result.filename}</span></p>
@@ -241,12 +295,22 @@ export default function Screenshot() {
                   <span className="text-sm text-text-primary">{h.filename}</span>
                   <span className="ml-2 text-xs text-text-muted">{h.width}x{h.height}</span>
                 </div>
-                <button
-                  onClick={() => copyPath(h.path)}
-                  className="rounded p-1 text-text-muted transition hover:text-primary cursor-pointer"
-                >
-                  <FolderOpen size={12} />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => openEditor(h.path)}
+                    className="rounded p-1 text-text-muted transition hover:text-primary cursor-pointer"
+                    title={t('modules.screenshot.ui.edit')}
+                  >
+                    <Pencil size={12} />
+                  </button>
+                  <button
+                    onClick={() => copyPath(h.path)}
+                    className="rounded p-1 text-text-muted transition hover:text-primary cursor-pointer"
+                    title={t('modules.screenshot.ui.copyPath')}
+                  >
+                    <FolderOpen size={12} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

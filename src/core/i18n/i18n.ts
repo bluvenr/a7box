@@ -43,6 +43,14 @@ i18n.use(initReactI18next).init({
 export async function changeLanguage(lang: LanguageCode): Promise<void> {
   await i18n.changeLanguage(lang)
   localStorage.setItem('a7box-language', lang)
+
+  // Notify Rust backend to update tray menu language
+  if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+    try {
+      const { invoke } = await import('@tauri-apps/api/core')
+      await invoke('update_tray_language', { lang })
+    } catch { /* ignore in browser mode */ }
+  }
 }
 
 // Get current language

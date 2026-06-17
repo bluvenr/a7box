@@ -1,5 +1,6 @@
 // A7Box System Tray Module
 // Creates system tray icon with context menu
+// Supports dynamic language switching via update_tray_language()
 
 use tauri::{
     menu::{Menu, MenuItem},
@@ -7,34 +8,49 @@ use tauri::{
     Manager, Runtime,
 };
 
-/// Detect system locale using sys-locale (works on Windows + macOS)
-fn is_chinese_locale() -> bool {
-    if let Some(locale) = sys_locale::get_locale() {
-        return locale.starts_with("zh") || locale.starts_with("ZH");
+/// Tray icon fixed ID for removal/rebuild
+pub const TRAY_ID: &str = "main-tray";
+
+/// Get i18n labels based on language code
+fn get_labels(lang: &str) -> (&'static str, &'static str, &'static str) {
+    if lang.starts_with("zh") {
+        (
+            "\u{663e}\u{793a} A7\u{5323}",                          // 显示 A7匣
+            "\u{9000}\u{51fa}",                                      // 退出
+            "A7\u{5323} - \u{684c}\u{9762}\u{6218}\u{672f}\u{7ea7}\u{6548}\u{7387}\u{6b66}\u{5668}", // A7匣 - 桌面战术级效率武器
+        )
+    } else {
+        (
+            "Show A7Box",
+            "Quit",
+            "A7Box - Your Tactical Efficiency Weapon",
+        )
     }
-    // Fallback: check env vars (Linux/container)
-    if let Ok(lang) = std::env::var("LANG") {
-        return lang.starts_with("zh");
-    }
-    false
 }
 
-/// Setup system tray with context menu
-pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::error::Error>> {
-    let is_zh = is_chinese_locale();
-    let show_label = if is_zh { "\u{663e}\u{793a} A7\u{5319}" } else { "Show A7Box" };
-    let quit_label = if is_zh { "\u{9000}\u{51fa}" } else { "Quit" };
-    let tooltip = if is_zh {
-        "A7\u{5319} - \u{684c}\u{9762}\u{6218}\u{672f}\u{7ea7}\u{6548}\u{7387}\u{6b66}\u{5668}"
-    } else {
-        "A7Box - Your Tactical Efficiency Weapon"
-    };
+/// Detect system locale using sys-locale (works on Windows + macOS)
+fn detect_locale() -> String {
+    if let Some(locale) = sys_locale::get_locale() {
+        return locale;
+    }
+    if let Ok(lang) = std::env::var("LANG") {
+        return lang;
+    }
+    "en".to_string()
+}
+
+/// Build (or rebuild) the system tray with the given language
+fn build_tray<R: Runtime>(app: &tauri::AppHandle<R>, lang: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let (show_label, quit_label, tooltip) = get_labels(lang);
+
+    // Remove existing tray if present
+    let _ = app.remove_tray_by_id(TRAY_ID);
 
     let show = MenuItem::with_id(app, "show", show_label, true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", quit_label, true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &quit])?;
 
-    TrayIconBuilder::new()
+    TrayIconBuilder::with_id(TRAY_ID)
         .icon(app.default_window_icon().unwrap().clone())
         .menu(&menu)
         .tooltip(tooltip)
@@ -72,4 +88,17 @@ pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::er
         .build(app)?;
 
     Ok(())
+}
+
+/// Initial tray setup (uses system locale)
+pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::error::Error>> {
+    let locale = detect_locale();
+    build_tray(app.handle(), &locale)
+}
+
+/// Update tray language (called from frontend when language changes)
+pub fn update_tray_language<R: Runtime>(app: &tauri::AppHandle<R>, lang: &str) {
+    if let Err(e) = build_tray(app, lang) {
+        eprintln!("[WARN] Failed to update tray language: {}", e);
+    }
 }

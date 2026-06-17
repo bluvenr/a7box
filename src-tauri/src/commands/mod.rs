@@ -90,3 +90,10 @@ pub fn get_http_server_info(state: tauri::State<'_, Arc<HttpServerState>>) -> Op
         directory: dir.to_string_lossy().to_string(),
     })
 }
+
+// ============ Tray Commands ============
+
+#[tauri::command]
+pub fn update_tray_language(app: AppHandle, lang: String) {
+    crate::tray::update_tray_language(&app, &lang);
+}

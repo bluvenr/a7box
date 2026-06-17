@@ -51,6 +51,8 @@ pub fn run() {
             commands::start_http_server,
             commands::stop_http_server,
             commands::get_http_server_info,
+            // Tray
+            commands::update_tray_language,
         ])
         // Setup: tray + global shortcuts + window close behavior
         .setup(|app| {

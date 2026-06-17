@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    a7box_temp_lib::run()
+    a7box_lib::run()
 }

@@ -64,6 +64,10 @@
   "nav": {
     "tools": "工具"
   },
+  "sidebar": {
+    "collapse": "收起侧栏",
+    "expand": "展开侧栏"
+  },
   "commandPalette": {
     "placeholder": "搜索命令或工具...",
     "recentlyUsed": "最近使用",

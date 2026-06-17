@@ -64,6 +64,10 @@
   "nav": {
     "tools": "Tools"
   },
+  "sidebar": {
+    "collapse": "Collapse Sidebar",
+    "expand": "Expand Sidebar"
+  },
   "commandPalette": {
     "placeholder": "Search commands or tools...",
     "recentlyUsed": "Recently Used",

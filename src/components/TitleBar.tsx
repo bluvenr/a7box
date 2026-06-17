@@ -66,12 +66,23 @@ export function TitleBar() {
     getCurrentWindow().hide()
   }, [])
 
+  const handleDragStart = useCallback(async (e: React.MouseEvent) => {
+    // Only drag on left click, and not on buttons
+    if (e.button !== 0) return
+    if (!isTauri()) return
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window')
+      await getCurrentWindow().startDragging()
+    } catch { /* ignore */ }
+  }, [])
+
   const isMac = platform === 'macos'
 
   return (
     <div
       className="flex h-8 shrink-0 select-none items-center bg-bg-elevated"
       data-tauri-drag-region
+      onMouseDown={handleDragStart}
       onDoubleClick={handleMaximize}
     >
       {/* macOS: left padding for traffic light buttons */}

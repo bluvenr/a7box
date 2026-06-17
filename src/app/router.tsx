@@ -5,6 +5,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { MainLayout } from './layouts/MainLayout'
+import { ErrorBoundary, ModuleSkeleton } from '../shared/components'
 
 // Core pages (lazy loaded)
 const Home = lazy(() => import('./pages/Home'))
@@ -21,12 +22,14 @@ const ImageConvert = lazy(() => import('../modules/image-convert/ImageConvert'))
 const ColorTool = lazy(() => import('../modules/color-tool/ColorTool'))
 const Base64Tool = lazy(() => import('../modules/base64-tool/Base64Tool'))
 
-// Page loading skeleton
-function PageLoader() {
+// Wrap a module component with ErrorBoundary + Suspense
+function ModuleRoute({ moduleId, children }: { moduleId: string; children: React.ReactNode }) {
   return (
-    <div className="flex h-full items-center justify-center bg-bg-base">
-      <div className="animate-pulse text-text-muted text-sm">Loading...</div>
-    </div>
+    <ErrorBoundary moduleId={moduleId}>
+      <Suspense fallback={<ModuleSkeleton />}>
+        {children}
+      </Suspense>
+    </ErrorBoundary>
   )
 }
 
@@ -39,7 +42,7 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: (
-          <Suspense fallback={<PageLoader />}>
+          <Suspense fallback={<ModuleSkeleton />}>
             <Home />
           </Suspense>
         ),
@@ -47,7 +50,7 @@ export const router = createBrowserRouter([
       {
         path: 'settings',
         element: (
-          <Suspense fallback={<PageLoader />}>
+          <Suspense fallback={<ModuleSkeleton />}>
             <Settings />
           </Suspense>
         ),
@@ -55,75 +58,39 @@ export const router = createBrowserRouter([
       // Tool module routes
       {
         path: 'json-formatter',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <JsonFormatter />
-          </Suspense>
-        ),
+        element: <ModuleRoute moduleId="json-formatter"><JsonFormatter /></ModuleRoute>,
       },
       {
         path: 'qr-code',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <QrCode />
-          </Suspense>
-        ),
+        element: <ModuleRoute moduleId="qr-code"><QrCode /></ModuleRoute>,
       },
       {
         path: 'markdown-preview',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <MarkdownPreview />
-          </Suspense>
-        ),
+        element: <ModuleRoute moduleId="markdown-preview"><MarkdownPreview /></ModuleRoute>,
       },
       {
         path: 'code-minify',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <CodeMinify />
-          </Suspense>
-        ),
+        element: <ModuleRoute moduleId="code-minify"><CodeMinify /></ModuleRoute>,
       },
       {
         path: 'image-compress',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <ImageCompress />
-          </Suspense>
-        ),
+        element: <ModuleRoute moduleId="image-compress"><ImageCompress /></ModuleRoute>,
       },
       {
         path: 'hash-generator',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <HashGenerator />
-          </Suspense>
-        ),
+        element: <ModuleRoute moduleId="hash-generator"><HashGenerator /></ModuleRoute>,
       },
       {
         path: 'image-convert',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <ImageConvert />
-          </Suspense>
-        ),
+        element: <ModuleRoute moduleId="image-convert"><ImageConvert /></ModuleRoute>,
       },
       {
         path: 'color-tool',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <ColorTool />
-          </Suspense>
-        ),
+        element: <ModuleRoute moduleId="color-tool"><ColorTool /></ModuleRoute>,
       },
       {
         path: 'base64-tool',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <Base64Tool />
-          </Suspense>
-        ),
+        element: <ModuleRoute moduleId="base64-tool"><Base64Tool /></ModuleRoute>,
       },
     ],
   },

@@ -166,6 +166,28 @@ html, body, #root {
 .markdown-preview li { margin-bottom: 0.25em; }
 .markdown-preview hr { border: none; border-top: 1px solid var(--color-border-subtle); margin: 2em 0; }
 
+/* Toast slide-in animation */
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Light theme overrides */
+[data-theme='light'] {
+  --color-bg-base: #F8F9FA;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-overlay: #F0F0F0;
+  --color-bg-hover: #E9ECEF;
+
+  --color-text-primary: #1A1A2E;
+  --color-text-secondary: #495057;
+  --color-text-muted: #868E96;
+  --color-text-disabled: #ADB5BD;
+
+  --color-border-base: #DEE2E6;
+  --color-border-subtle: #E9ECEF;
+}
+
 /* Highlight.js dark theme overrides */
 .markdown-preview .hljs { color: #abb2bf; }
 .markdown-preview .hljs-keyword, .markdown-preview .hljs-selector-tag { color: #c678dd; }

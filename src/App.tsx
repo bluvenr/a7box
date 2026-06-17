@@ -9,10 +9,15 @@ import { AppRouter } from './app/router'
 import { useCommandPalette, initUsageHistory } from './core/command-palette'
 import { useModuleRegistry } from './core/registry'
 import { allModules } from './modules'
+import { ToastProvider } from './shared/components'
+import { useThemeProvider } from './core/theme/ThemeProvider'
 
 function App() {
   const toggle = useCommandPalette((state) => state.toggle)
   const registerAll = useModuleRegistry((state) => state.registerAll)
+
+  // Theme management
+  useThemeProvider()
 
   // Initialization
   useEffect(() => {
@@ -38,7 +43,9 @@ function App() {
 
   return (
     <I18nextProvider i18n={i18n}>
-      <AppRouter />
+      <ToastProvider>
+        <AppRouter />
+      </ToastProvider>
     </I18nextProvider>
   )
 }

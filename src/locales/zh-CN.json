@@ -56,6 +56,11 @@
     "dev": "开发工具",
     "misc": "其他"
   },
+  "home": {
+    "recentlyUsed": "最近使用",
+    "noTools": "暂无可用工具",
+    "enableInSettings": "前往设置启用工具模块"
+  },
   "nav": {
     "tools": "工具"
   },

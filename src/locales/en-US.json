@@ -56,6 +56,11 @@
     "dev": "Dev Tools",
     "misc": "Misc"
   },
+  "home": {
+    "recentlyUsed": "Recently Used",
+    "noTools": "No available tools",
+    "enableInSettings": "Go to Settings to enable tool modules"
+  },
   "nav": {
     "tools": "Tools"
   },

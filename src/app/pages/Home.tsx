@@ -1,13 +1,15 @@
 /**
  * A7Box Home Page
- * Displays tool grid and recently used items
+ * Displays recently used tools, categorized tool grid
  */
 
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useModuleRegistry } from '../../core/registry'
 import { useCommandPalette } from '../../core/command-palette'
-import { Box, Search } from 'lucide-react'
+import { getRecentModuleIds, recordUsage } from '../../shared/utils'
+import { Box, Search, Clock } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import type { A7Module } from '../../core/types'
 
 export default function Home() {
@@ -16,18 +18,38 @@ export default function Home() {
   const togglePalette = useCommandPalette((state) => state.toggle)
   const modules = useModuleRegistry((state) => state.modules)
   const enabledModuleIds = useModuleRegistry((state) => state.enabledModuleIds)
+  const [recentIds, setRecentIds] = useState<string[]>([])
 
   // Stable selector: derive enabled modules without creating new array in selector
   const enabledModules = Array.from(modules.values()).filter((m) => enabledModuleIds.has(m.meta.id))
 
-  // Group by category
-  const modulesByCategory = enabledModules.reduce((acc, mod) => {
-    if (!acc[mod.meta.category]) {
-      acc[mod.meta.category] = []
-    }
-    acc[mod.meta.category].push(mod)
-    return acc
-  }, {} as Record<string, A7Module[]>)
+  // Load recent history
+  useEffect(() => {
+    setRecentIds(getRecentModuleIds(5))
+  }, [])
+
+  // Recently used modules (filter to only enabled ones)
+  const recentModules = recentIds
+    .map((id) => modules.get(id))
+    .filter((m): m is A7Module => !!m && enabledModuleIds.has(m.meta.id))
+
+  // Group by category (excluding recently used to avoid duplication)
+  const recentIdSet = new Set(recentIds)
+  const modulesByCategory = enabledModules
+    .filter((m) => !recentIdSet.has(m.meta.id))
+    .reduce((acc, mod) => {
+      if (!acc[mod.meta.category]) {
+        acc[mod.meta.category] = []
+      }
+      acc[mod.meta.category].push(mod)
+      return acc
+    }, {} as Record<string, A7Module[]>)
+
+  const handleModuleClick = (moduleId: string) => {
+    recordUsage(moduleId)
+    setRecentIds(getRecentModuleIds(5))
+    navigate(`/${moduleId}`)
+  }
 
   return (
     <div className="h-full overflow-auto p-8">
@@ -55,18 +77,40 @@ export default function Home() {
         </kbd>
       </button>
 
-      {/* Tool grid */}
-      {Object.entries(modulesByCategory).map(([category, modules]) => (
+      {/* Recently used */}
+      {recentModules.length > 0 && (
+        <div className="mb-8">
+          <div className="mb-4 flex items-center gap-2">
+            <Clock className="h-4 w-4 text-text-muted" />
+            <h2 className="text-sm font-medium uppercase tracking-wider text-text-muted">
+              {t('home.recentlyUsed')}
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {recentModules.map((mod) => (
+              <ModuleCard
+                key={mod.meta.id}
+                module={mod}
+                highlighted
+                onClick={() => handleModuleClick(mod.meta.id)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tool grid by category */}
+      {Object.entries(modulesByCategory).map(([category, mods]) => (
         <div key={category} className="mb-8">
           <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-text-muted">
             {t(`categories.${category}`)}
           </h2>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {modules.map((mod) => (
+            {mods.map((mod) => (
               <ModuleCard
                 key={mod.meta.id}
                 module={mod}
-                onClick={() => navigate(`/${mod.meta.id}`)}
+                onClick={() => handleModuleClick(mod.meta.id)}
               />
             ))}
           </div>
@@ -77,9 +121,9 @@ export default function Home() {
       {enabledModules.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Box className="mb-4 h-12 w-12 text-text-muted" />
-          <p className="text-text-secondary">No enabled tool modules</p>
+          <p className="text-text-secondary">{t('home.noTools')}</p>
           <p className="mt-1 text-sm text-text-muted">
-            Go to Settings to enable tool modules
+            {t('home.enableInSettings')}
           </p>
         </div>
       )}
@@ -88,7 +132,15 @@ export default function Home() {
 }
 
 // Module card component
-function ModuleCard({ module, onClick }: { module: A7Module; onClick: () => void }) {
+function ModuleCard({
+  module,
+  highlighted,
+  onClick,
+}: {
+  module: A7Module
+  highlighted?: boolean
+  onClick: () => void
+}) {
   const { t } = useTranslation()
   const Icon = typeof module.meta.icon === 'string' ? Box : module.meta.icon
 
@@ -99,10 +151,20 @@ function ModuleCard({ module, onClick }: { module: A7Module; onClick: () => void
   return (
     <button
       onClick={onClick}
-      className="group flex flex-col items-center gap-3 rounded-lg border border-border-subtle bg-bg-elevated p-6 transition-all cursor-pointer hover:border-border-focus hover:bg-bg-hover"
+      className={`group flex flex-col items-center gap-3 rounded-lg border p-6 transition-all cursor-pointer hover:border-border-focus hover:bg-bg-hover ${
+        highlighted
+          ? 'border-primary/20 bg-primary/5'
+          : 'border-border-subtle bg-bg-elevated'
+      }`}
     >
-      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-bg-hover transition-colors group-hover:bg-primary/10">
-        <Icon className="h-6 w-6 text-text-secondary transition-colors group-hover:text-primary" />
+      <div
+        className={`flex h-12 w-12 items-center justify-center rounded-lg transition-colors ${
+          highlighted
+            ? 'bg-primary/10 text-primary'
+            : 'bg-bg-hover text-text-secondary group-hover:bg-primary/10 group-hover:text-primary'
+        }`}
+      >
+        <Icon className="h-6 w-6" />
       </div>
       <div className="text-center">
         <p className="text-sm font-medium text-text-primary">{displayName}</p>

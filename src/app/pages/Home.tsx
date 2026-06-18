@@ -12,6 +12,7 @@ import { getRecentModuleIds, recordUsage } from '../../shared/utils'
 import { Box, Search, Clock } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import type { A7Module } from '../../core/types'
+import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
 
 export default function Home() {
   const { t } = useTranslation()
@@ -152,6 +153,8 @@ function ModuleCard({
 }) {
   const { t } = useTranslation()
   const Icon = typeof module.meta.icon === 'string' ? Box : module.meta.icon
+  const p2pRunning = useP2PStatus((s) => s.running)
+  const isRunning = module.meta.id === 'p2p-transfer' && p2pRunning
 
   // Use i18n name/description if available, fallback to static name
   const displayName = module.meta.nameI18n ? t(module.meta.nameI18n) : module.meta.name
@@ -160,12 +163,16 @@ function ModuleCard({
   return (
     <button
       onClick={onClick}
-      className={`group flex flex-col items-center gap-3 rounded-lg border p-6 transition-all cursor-pointer hover:border-border-focus hover:bg-bg-hover ${
+      className={`group relative flex flex-col items-center gap-3 rounded-lg border p-6 transition-all cursor-pointer hover:border-border-focus hover:bg-bg-hover ${
         highlighted
           ? 'border-primary/20 bg-primary/5'
           : 'border-border-subtle bg-bg-elevated'
       }`}
     >
+      {/* Running indicator */}
+      {isRunning && (
+        <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-green-400" />
+      )}
       <div
         className={`flex h-12 w-12 items-center justify-center rounded-lg transition-colors ${
           highlighted

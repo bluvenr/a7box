@@ -158,11 +158,11 @@ export interface ServerInfo {
   directory: string
 }
 
-export async function startHttpServer(directory: string, port: number): Promise<ServerInfo | null> {
+export async function startHttpServer(directory: string, port: number, allowUpload: boolean = true): Promise<ServerInfo | null> {
   const invoke = await getInvoke()
   if (!invoke) return null
   try {
-    return await invoke<ServerInfo>('start_http_server', { directory, port })
+    return await invoke<ServerInfo>('start_http_server', { directory, port, allowUpload })
   } catch (e) {
     console.error('[A7Box] HTTP server failed:', e)
     return null

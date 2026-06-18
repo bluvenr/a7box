@@ -68,8 +68,10 @@ pub fn start_http_server(
     state: tauri::State<'_, Arc<HttpServerState>>,
     directory: String,
     port: u16,
+    #[allow(unused_variables)] allow_upload: Option<bool>,
 ) -> Result<http_server::ServerInfo, String> {
-    http_server::start_server(state.inner().clone(), PathBuf::from(directory), port)
+    let upload = allow_upload.unwrap_or(true);
+    http_server::start_server(state.inner().clone(), PathBuf::from(directory), port, upload)
 }
 
 #[tauri::command]

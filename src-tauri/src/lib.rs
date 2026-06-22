@@ -79,7 +79,16 @@ pub fn run() {
             commands::p2p_manual_connect,
             commands::p2p_retry_transfer,
             commands::p2p_stop_service,
+            commands::p2p_get_running_port,
             commands::p2p_validate_dir,
+            commands::p2p_accept_transfer,
+            commands::p2p_reject_transfer,
+            commands::p2p_cancel_transfer,
+            commands::p2p_set_download_dir,
+            commands::p2p_get_download_dir,
+            // Cache Management
+            commands::get_cache_sizes,
+            commands::clear_cache,
         ])
         // Setup: tray + global shortcuts + window close behavior
         .setup(|app| {

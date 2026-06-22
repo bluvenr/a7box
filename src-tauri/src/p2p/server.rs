@@ -124,6 +124,14 @@ fn handle_file_receive(
     state: &P2PStateArc,
     app_handle: &tauri::AppHandle,
 ) -> Result<(), String> {
+    // Create approval channel
+    let (tx, rx) = std::sync::mpsc::channel();
+    state.set_pending_approval(&offer.transfer_id, tx);
+
+    // Set up cancel flag for this transfer
+    let cancel_flag = Arc::new(AtomicBool::new(false));
+    state.set_cancel_flag(&offer.transfer_id, cancel_flag.clone());
+
     // Emit event to frontend for approval
     let event_payload = serde_json::json!({
         "transfer_id": offer.transfer_id,
@@ -134,22 +142,65 @@ fn handle_file_receive(
     });
     let _ = app_handle.emit("p2p-incoming-file", &event_payload);
 
-    // Wait for approval via a channel stored in state
-    // For simplicity, auto-accept and let frontend handle rejection
-    // In production, we'd use a oneshot channel
-
-    // Send Accept (frontend can cancel by closing the transfer)
-    let accept = AcceptMsg {
-        transfer_id: offer.transfer_id.clone(),
-        resume_chunk: None,
-    };
-    write_json(writer, MsgType::Accept as u8, &accept)
-        .map_err(|e| format!("Accept send error: {}", e))?;
+    // Wait for approval (60s timeout)
+    match rx.recv_timeout(std::time::Duration::from_secs(60)) {
+        Ok(true) => {
+            // User accepted — send Accept message
+            let accept = AcceptMsg {
+                transfer_id: offer.transfer_id.clone(),
+                resume_chunk: None,
+            };
+            write_json(writer, MsgType::Accept as u8, &accept)
+                .map_err(|e| format!("Accept send error: {}", e))?;
+        }
+        Ok(false) => {
+            // User rejected
+            let reject = RejectMsg {
+                transfer_id: offer.transfer_id.clone(),
+                reason: "User rejected".to_string(),
+            };
+            write_json(writer, MsgType::Reject as u8, &reject).ok();
+            let _ = app_handle.emit("p2p-transfer-progress", serde_json::json!({
+                "transfer_id": offer.transfer_id,
+                "progress": 0.0,
+                "status": "rejected",
+            }));
+            state.remove_cancel_flag(&offer.transfer_id);
+            return Ok(());
+        }
+        Err(_) => {
+            // Timeout — auto reject
+            let reject = RejectMsg {
+                transfer_id: offer.transfer_id.clone(),
+                reason: "Approval timeout".to_string(),
+            };
+            write_json(writer, MsgType::Reject as u8, &reject).ok();
+            let _ = app_handle.emit("p2p-transfer-progress", serde_json::json!({
+                "transfer_id": offer.transfer_id,
+                "progress": 0.0,
+                "status": "rejected",
+            }));
+            state.remove_cancel_flag(&offer.transfer_id);
+            return Ok(());
+        }
+    }
 
     // Create receive directory
-    let download_dir = state.data_dir.join("downloads");
+    let download_dir = state.get_download_dir();
     std::fs::create_dir_all(&download_dir).map_err(|e| format!("Mkdir error: {}", e))?;
     let file_path = download_dir.join(&offer.filename);
+
+    // Record incoming transfer
+    state.add_transfer(crate::p2p::TransferInfo {
+        id: offer.transfer_id.clone(),
+        filename: offer.filename.clone(),
+        size: offer.size,
+        progress: 0.0,
+        status: "receiving".to_string(),
+        direction: "receive".to_string(),
+        peer_code: peer_code.to_string(),
+        file_path: file_path.to_string_lossy().to_string(),
+    });
 
     // Receive chunks
     let total_chunks = offer.total_chunks;
@@ -158,6 +209,20 @@ fn handle_file_receive(
         .map_err(|e| format!("Create file error: {}", e))?;
 
     for _i in 0..total_chunks {
+        // Check cancel flag
+        if cancel_flag.load(Ordering::Relaxed) {
+            drop(file);
+            let _ = std::fs::remove_file(&file_path);
+            let err = ErrorMsg {
+                transfer_id: offer.transfer_id.clone(),
+                message: "Cancelled by user".to_string(),
+            };
+            write_json(writer, MsgType::Error as u8, &err).ok();
+            state.update_transfer_progress(&offer.transfer_id, 0.0, "cancelled");
+            state.remove_cancel_flag(&offer.transfer_id);
+            return Ok(());
+        }
+
         let (msg_type, payload) = read_message(reader)
             .map_err(|e| format!("Chunk recv error: {}", e))?;
 
@@ -174,6 +239,7 @@ fn handle_file_receive(
 
         received += 1;
         let progress = (received as f32 / total_chunks as f32) * 100.0;
+        state.update_transfer_progress(&offer.transfer_id, progress, "receiving");
         let _ = app_handle.emit("p2p-transfer-progress", serde_json::json!({
             "transfer_id": offer.transfer_id,
             "progress": progress,
@@ -192,6 +258,8 @@ fn handle_file_receive(
             message: "SHA-256 mismatch".to_string(),
         };
         write_json(writer, MsgType::Error as u8, &err).ok();
+        state.update_transfer_progress(&offer.transfer_id, 0.0, "failed");
+        state.remove_cancel_flag(&offer.transfer_id);
         return Err("SHA-256 mismatch".to_string());
     }
 
@@ -202,12 +270,15 @@ fn handle_file_receive(
     };
     write_json(writer, MsgType::Complete as u8, &complete).ok();
 
+    state.update_transfer_progress(&offer.transfer_id, 100.0, "complete");
     let _ = app_handle.emit("p2p-transfer-progress", serde_json::json!({
         "transfer_id": offer.transfer_id,
         "progress": 100.0,
         "status": "complete",
         "path": file_path.to_string_lossy(),
     }));
+
+    state.remove_cancel_flag(&offer.transfer_id);
 
     Ok(())
 }

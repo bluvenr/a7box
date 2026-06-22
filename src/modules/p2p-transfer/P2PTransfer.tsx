@@ -14,9 +14,11 @@ import QRCode from 'qrcode'
 import {
   p2pGetIdentity, p2pSetAlias, p2pGetPeers, p2pStartService, p2pStopService,
   p2pSendFile, p2pGetSharedInfo, p2pSetSharedDir, p2pGetTransfers,
+  p2pAcceptTransfer, p2pRejectTransfer, p2pCancelTransfer,
+  p2pSetDownloadDir, p2pGetDownloadDir,
   p2pGetLocalIps, p2pRequestDir, p2pDownloadFile, p2pManualConnect, p2pRetryTransfer,
-  p2pValidateDir,
-  startHttpServer, stopHttpServer,
+  p2pValidateDir, p2pGetRunningPort,
+  startHttpServer, stopHttpServer, getHttpServerInfo,
   type ServerInfo,
   onP2PPeerDiscovered, onP2PPeerLost, onP2PTransferProgress,
   onP2PIncomingFile, onP2PAccessLog,
@@ -140,20 +142,26 @@ export default function P2PTransfer() {
 
   // Onboarding guide
   const [showGuide, setShowGuide] = useState(false)
+  const sharedDirRef = useRef<HTMLDivElement>(null)
+  const [highlightSharedDir, setHighlightSharedDir] = useState(false)
 
   // Transfer history search/filter
   const [historySearch, setHistorySearch] = useState('')
   const [historyFilter, setHistoryFilter] = useState<'all' | 'send' | 'receive'>('all')
 
+  // Download directory
+  const [downloadDir, setDownloadDir] = useState('')
+
   // ---- Effects ----
 
-  // Auto-start service on mount
+  // Sync with backend state on mount (handles component remount after navigation)
   useEffect(() => {
     if (!isTauri() || autoStartRef.current) return
     autoStartRef.current = true
     if (!localStorage.getItem(GUIDE_KEY)) setShowGuide(true)
 
     ;(async () => {
+      // Always load identity, transfers, shared info
       const id = await p2pGetIdentity()
       if (id) { setIdentity(id); setAliasInput(id.alias) }
       setLocalIps(await p2pGetLocalIps())
@@ -163,7 +171,18 @@ export default function P2PTransfer() {
         setSharedDir(info.directory); setSharedEnabled(info.enabled)
         setSharedFiles(info.files); setAccessLog(info.accessLog)
       }
-      if (autoStart) {
+      // Load download directory
+      setDownloadDir(await p2pGetDownloadDir())
+
+      // Check if P2P service is already running on the backend
+      const existingPort = await p2pGetRunningPort()
+      if (existingPort > 0) {
+        // Service is already running — sync state without restarting
+        setTcpPort(existingPort)
+        setRunning(true)
+        setPeers(await p2pGetPeers())
+      } else if (autoStart) {
+        // Service not running, auto-start if enabled
         setStarting(true)
         const port = await p2pStartService()
         if (port !== null) {
@@ -171,6 +190,24 @@ export default function P2PTransfer() {
           setTimeout(async () => setPeers(await p2pGetPeers()), 2000)
         }
         setStarting(false)
+      }
+
+      // Check if HTTP server is already running on the backend
+      const httpInfo = await getHttpServerInfo()
+      if (httpInfo) {
+        // Reconstruct with LAN IPs for proper URL/QR display
+        const ips = await p2pGetLocalIps()
+        const urls = ips.length > 0
+          ? ips.map(ip => `http://${ip}:${httpInfo.port}`)
+          : httpInfo.urls
+        const serverInfo: ServerInfo = { ...httpInfo, urls }
+        setHttpServer(serverInfo)
+        const url = urls[0]
+        setHttpUrl(url)
+        lastHttpPort.current = httpInfo.port
+        const qr = await QRCode.toDataURL(url, { width: 180, margin: 1 })
+        setQrDataUrl(qr)
+        setShowQr(true)
       }
     })()
   }, [])
@@ -182,6 +219,15 @@ export default function P2PTransfer() {
     const timer = setTimeout(() => setScanTimedOut(true), SCAN_TIMEOUT)
     return () => clearTimeout(timer)
   }, [running, peers.length, scanResetKey])
+
+  // Scan elapsed counter (shows countdown during scanning)
+  const [scanElapsed, setScanElapsed] = useState(0)
+  useEffect(() => {
+    if (!running || peers.length > 0 || scanTimedOut) { setScanElapsed(0); return }
+    setScanElapsed(0)
+    const iv = setInterval(() => setScanElapsed(e => e + 1), 1000)
+    return () => clearInterval(iv)
+  }, [running, peers.length, scanTimedOut])
 
   // Event listeners
   useEffect(() => {
@@ -328,6 +374,12 @@ export default function P2PTransfer() {
       toast(t('modules.p2p.ui.invalidPort', { defaultValue: 'Port must be 1-65535' }), 'error')
       return
     }
+    // Block self-connection: check against local IPs + own TCP port
+    const inputIp = match[1].trim()
+    if (port === _tcpPort && (localIps.includes(inputIp) || inputIp === '127.0.0.1' || inputIp === 'localhost')) {
+      toast(t('modules.p2p.ui.cannotConnectSelf', { defaultValue: 'Cannot connect to your own device' }), 'error')
+      return
+    }
     const peer = await p2pManualConnect(addr)
     if (peer) {
       setPeers(prev => prev.find(p => p.code === peer.code) ? prev : [...prev, peer])
@@ -336,7 +388,7 @@ export default function P2PTransfer() {
     } else {
       toast(t('modules.p2p.ui.connectFailed', { defaultValue: 'Connection failed' }), 'error')
     }
-  }, [manualAddr, toast, t])
+  }, [manualAddr, toast, t, _tcpPort, localIps])
 
   const handleSendFile = useCallback(async () => {
     if (filePaths.length === 0 || !targetPeer) return
@@ -622,13 +674,19 @@ export default function P2PTransfer() {
             </p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setIncomingFile(null)} className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 cursor-pointer">{t('modules.p2p.ui.accept')}</button>
-            <button onClick={() => setIncomingFile(null)} className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 cursor-pointer">{t('modules.p2p.ui.reject')}</button>
+            <button onClick={async () => {
+              await p2pAcceptTransfer(incomingFile.transfer_id)
+              setIncomingFile(null)
+            }} className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 cursor-pointer">{t('modules.p2p.ui.accept')}</button>
+            <button onClick={async () => {
+              await p2pRejectTransfer(incomingFile.transfer_id)
+              setIncomingFile(null)
+            }} className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 cursor-pointer">{t('modules.p2p.ui.reject')}</button>
           </div>
         </div>
       )}
 
-      {/* ---- Onboarding Guide ---- */}
+      {/* ---- Onboarding Guide (show for new users regardless of service state) ---- */}
       {showGuide && (
         <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-5">
           <div className="mb-4 flex items-center justify-between">
@@ -640,7 +698,7 @@ export default function P2PTransfer() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { icon: Wifi, title: 'step1title', desc: 'step1desc', color: 'text-green-400' },
+              { icon: Wifi, title: running ? 'guideStep1Running' : 'guideStep1Stopped', desc: running ? 'step1desc' : 'step1descStopped', color: 'text-green-400' },
               { icon: Send, title: 'step2title', desc: 'step2desc', color: 'text-blue-400' },
               { icon: Globe, title: 'step3title', desc: 'step3desc', color: 'text-purple-400' },
             ].map((step, i) => (
@@ -665,59 +723,6 @@ export default function P2PTransfer() {
       {/* ---- Main Content ---- */}
       {running ? (
       <>
-      {/* ---- Shared Directory (global config) ---- */}
-      <div className="mb-6 rounded-xl border border-border-subtle bg-bg-elevated p-4">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <FolderOpen size={15} className="text-primary" />
-            <h2 className="text-sm font-semibold text-text-primary">{t('modules.p2p.ui.sharedDir')}</h2>
-            {sharedEnabled && <span className="h-2 w-2 rounded-full bg-green-400" />}
-          </div>
-            {sharedEnabled && (
-              <button onClick={() => withRefresh('sharedDir', async () => { const info = await p2pGetSharedInfo(); if (info) { setSharedFiles(info.files); setAccessLog(info.accessLog) } })} className="text-text-muted hover:text-primary cursor-pointer" title={t('common.refresh')}>
-                <RefreshCw size={13} className={refreshing.sharedDir ? 'animate-spin' : ''} />
-              </button>
-            )}
-        </div>
-        <p className="text-xs text-text-muted mb-3">{t('modules.p2p.ui.sharedDirDesc')}</p>
-
-        <button onClick={() => handleBrowseDir(setSharedDir)} disabled={sharedEnabled || !!httpServer}
-          title={(sharedEnabled || !!httpServer) ? t('modules.p2p.ui.dirLocked') : t('modules.p2p.ui.clickToSelect')}
-          className="w-full flex items-center gap-2 rounded-lg border border-border-base bg-bg-base px-3 py-2 text-xs text-left hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition mb-2">
-          <FolderOpen size={13} className="text-text-muted shrink-0" />
-          <span className={sharedDir ? 'text-text-primary truncate' : 'text-text-disabled'}>
-            {sharedDir || t('modules.p2p.ui.clickToSelect')}
-          </span>
-        </button>
-
-        <div className="flex gap-2">
-          {!sharedEnabled ? (
-            <button onClick={() => handleToggleShared(true)} disabled={!sharedDir}
-              title={!sharedDir ? t('modules.p2p.ui.selectDir') : undefined}
-              className="flex-1 rounded-lg bg-green-600/90 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition">
-              <Play size={11} className="inline mr-1" />{t('modules.p2p.ui.enable')}
-            </button>
-          ) : (
-            <button onClick={() => handleToggleShared(false)}
-              className="flex-1 rounded-lg bg-red-600/90 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 cursor-pointer transition">
-              <Square size={11} className="inline mr-1" />{t('modules.p2p.ui.disable')}
-            </button>
-          )}
-        </div>
-
-        {sharedEnabled && sharedFiles.length > 0 && (
-          <div className="mt-3 max-h-24 overflow-y-auto space-y-1">
-            {sharedFiles.map(f => (
-              <div key={f.name} className="flex items-center gap-2 rounded px-2 py-1 text-xs">
-                {f.is_dir ? <Folder size={12} className="text-yellow-500" /> : <FileText size={12} className="text-text-muted" />}
-                <span className="text-text-primary">{f.name}</span>
-                <span className="text-text-disabled">{formatSize(f.size)}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Left: Primary (3/5) */}
         <div className="lg:col-span-3 space-y-5">
@@ -738,7 +743,28 @@ export default function P2PTransfer() {
                   </>
                 )}
               </div>
+              {/* Manual connect — always accessible */}
+              {!showManual && (
+                <button onClick={() => setShowManual(true)}
+                  className="text-[11px] text-text-muted hover:text-primary cursor-pointer">{t('modules.p2p.ui.manualConnect')}</button>
+              )}
             </div>
+
+            {/* Inline manual connect — works regardless of scan/peers state */}
+            {showManual && (
+              <div className="flex gap-2 mb-3">
+                <input value={manualAddr} onChange={(e) => setManualAddr(e.target.value)}
+                  placeholder={t('modules.p2p.ui.manualConnectPlaceholder')}
+                  className="flex-1 rounded-lg border border-border-base bg-bg-base px-3 py-2 text-xs text-text-primary outline-none focus:border-primary"
+                  onKeyDown={(e) => e.key === 'Enter' && manualAddr.trim() && handleManualConnect()} />
+                <button onClick={handleManualConnect} disabled={!manualAddr.trim() || !/^.+:\d+$/.test(manualAddr.trim())}
+                  className="rounded-lg bg-primary px-3 py-2 text-xs text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">{t('modules.p2p.ui.connect')}</button>
+                <button onClick={() => { setShowManual(false); setManualAddr('') }}
+                  className="rounded-lg border border-border-base px-2 py-2 text-text-muted hover:text-text-primary cursor-pointer">
+                  <X size={12} />
+                </button>
+              </div>
+            )}
 
             {running && peers.length === 0 && !scanTimedOut ? (
               /* Scanning animation */
@@ -752,6 +778,9 @@ export default function P2PTransfer() {
                   <div className="absolute inset-0 rounded-full border-2 border-primary/30 p2p-scan-ring" />
                 </div>
                 <p className="text-xs text-text-muted">{t('modules.p2p.ui.scanning')}</p>
+                {scanElapsed > 2 && (
+                  <p className="text-[11px] text-text-disabled mt-1.5 tabular-nums">{scanElapsed}s / {SCAN_TIMEOUT / 1000}s</p>
+                )}
               </div>
             ) : running && peers.length === 0 && scanTimedOut ? (
               /* Scan timeout with tips */
@@ -767,16 +796,6 @@ export default function P2PTransfer() {
                   <button onClick={() => setShowManual(!showManual)}
                     className="text-xs text-primary hover:underline cursor-pointer">{t('modules.p2p.ui.manualConnect')}</button>
                 </div>
-                {showManual && (
-                  <div className="flex gap-2 mt-2">
-                    <input value={manualAddr} onChange={(e) => setManualAddr(e.target.value)}
-                      placeholder={t('modules.p2p.ui.manualConnectPlaceholder')}
-                      className="flex-1 rounded-lg border border-border-base bg-bg-base px-3 py-2 text-xs text-text-primary outline-none focus:border-primary"
-                      onKeyDown={(e) => e.key === 'Enter' && manualAddr.trim() && handleManualConnect()} />
-                    <button onClick={handleManualConnect} disabled={!manualAddr.trim() || !/^.+:\d+$/.test(manualAddr.trim())}
-                      className="rounded-lg bg-primary px-3 py-2 text-xs text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">{t('modules.p2p.ui.connect')}</button>
-                  </div>
-                )}
               </div>
             ) : peers.length === 0 ? (
               <p className="text-center text-xs text-text-disabled py-4">{t('modules.p2p.ui.noPeers')}</p>
@@ -874,7 +893,7 @@ export default function P2PTransfer() {
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <RefreshCw size={14} className="text-primary animate-spin" />
-                <h2 className="text-sm font-semibold text-text-primary">{t('modules.p2p.ui.transfers')}</h2>
+                <h2 className="text-sm font-semibold text-text-primary">{t('modules.p2p.ui.activeTransfers')}</h2>
               </div>
               <div className="space-y-2">
                 {activeTransfers.map(tr => {
@@ -896,6 +915,10 @@ export default function P2PTransfer() {
                             </span>
                           )}
                           <span className="text-xs font-bold text-primary">{tr.progress.toFixed(0)}%</span>
+                          <button onClick={() => p2pCancelTransfer(tr.id)}
+                            className="text-text-muted hover:text-red-400 cursor-pointer" title={t('modules.p2p.ui.cancelTransfer', { defaultValue: '取消传输' })}>
+                            <X size={12} />
+                          </button>
                         </div>
                       </div>
                       <div className="mt-1.5 h-1.5 rounded-full bg-bg-base overflow-hidden">
@@ -916,11 +939,28 @@ export default function P2PTransfer() {
                 <h2 className="text-sm font-semibold text-text-primary">{t('modules.p2p.ui.transfers')}</h2>
                 <span className="text-[10px] text-text-disabled">{transfers.length}</span>
               </div>
-              {transfers.length > 0 && (
-                <button onClick={handleClearHistory} className="text-text-muted hover:text-red-400 cursor-pointer" title={t('modules.p2p.ui.clearHistory')}>
-                  <Trash2 size={12} />
+              <div className="flex items-center gap-2">
+                {/* Download directory */}
+                <button
+                  onClick={async () => {
+                    const { open } = await import('@tauri-apps/plugin-dialog')
+                    const selected = await open({ directory: true, multiple: false })
+                    if (selected) {
+                      await p2pSetDownloadDir(selected as string)
+                      setDownloadDir(selected as string)
+                    }
+                  }}
+                  className="flex items-center gap-1 text-text-muted hover:text-primary cursor-pointer transition"
+                  title={`${t('modules.p2p.ui.downloadDir', { defaultValue: '下载目录' })}: ${downloadDir}`}>
+                  <Download size={12} />
+                  <span className="text-[11px]">{t('modules.p2p.ui.saveTo', { defaultValue: '保存到' })}</span>
                 </button>
-              )}
+                {transfers.length > 0 && (
+                  <button onClick={handleClearHistory} className="text-text-muted hover:text-red-400 cursor-pointer" title={t('modules.p2p.ui.clearHistory')}>
+                    <Trash2 size={12} />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Search + Filter */}
@@ -967,9 +1007,11 @@ export default function P2PTransfer() {
                       )}
                       <span className={`font-medium ${
                         tr.status === 'complete' ? 'text-green-400' :
-                        tr.status === 'failed' || tr.status === 'rejected' ? 'text-red-400' : 'text-text-muted'
+                        tr.status === 'failed' || tr.status === 'rejected' ? 'text-red-400' :
+                        tr.status === 'cancelled' ? 'text-orange-400' : 'text-text-muted'
                       }`}>
-                        {tr.status === 'complete' ? '\u2713' : tr.status}
+                        {tr.status === 'complete' ? '\u2713' :
+                         tr.status === 'cancelled' ? t('modules.p2p.ui.cancelled', { defaultValue: '已取消' }) : tr.status}
                       </span>
                     </div>
                   </div>
@@ -981,25 +1023,90 @@ export default function P2PTransfer() {
 
         {/* Right: Secondary (2/5) */}
         <div className="lg:col-span-2 space-y-5">
+
+          {/* Shared Directory — config for web share & remote browsing */}
+          <div ref={sharedDirRef} className={`rounded-xl border bg-bg-elevated p-4 transition-all duration-500 ${highlightSharedDir ? 'border-yellow-400 ring-2 ring-yellow-400/30' : 'border-border-subtle'}`}>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <FolderOpen size={15} className="text-primary" />
+                <h2 className="text-sm font-semibold text-text-primary">{t('modules.p2p.ui.sharedDir')}</h2>
+                {sharedEnabled && <span className="h-2 w-2 rounded-full bg-green-400" />}
+              </div>
+              {sharedEnabled && (
+                <button onClick={() => withRefresh('sharedDir', async () => { const info = await p2pGetSharedInfo(); if (info) { setSharedFiles(info.files); setAccessLog(info.accessLog) } })} className="text-text-muted hover:text-primary cursor-pointer" title={t('common.refresh')}>
+                  <RefreshCw size={13} className={refreshing.sharedDir ? 'animate-spin' : ''} />
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-text-muted mb-3">{t('modules.p2p.ui.sharedDirDesc')}</p>
+
+            <button onClick={() => handleBrowseDir(setSharedDir)} disabled={sharedEnabled || !!httpServer}
+              title={(sharedEnabled || !!httpServer) ? t('modules.p2p.ui.dirLocked') : t('modules.p2p.ui.clickToSelect')}
+              className="w-full flex items-center gap-2 rounded-lg border border-border-base bg-bg-base px-3 py-2 text-xs text-left hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition mb-2">
+              <FolderOpen size={13} className="text-text-muted shrink-0" />
+              <span className={sharedDir ? 'text-text-primary truncate' : 'text-text-disabled'}>
+                {sharedDir || t('modules.p2p.ui.clickToSelect')}
+              </span>
+            </button>
+
+            <div className="flex gap-2">
+              {!sharedEnabled ? (
+                <button onClick={() => handleToggleShared(true)} disabled={!sharedDir}
+                  title={!sharedDir ? t('modules.p2p.ui.selectDir') : undefined}
+                  className="flex-1 rounded-lg bg-green-600/90 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition">
+                  <Play size={11} className="inline mr-1" />{t('modules.p2p.ui.enable')}
+                </button>
+              ) : (
+                <button onClick={() => handleToggleShared(false)}
+                  className="flex-1 rounded-lg bg-red-600/90 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 cursor-pointer transition">
+                  <Square size={11} className="inline mr-1" />{t('modules.p2p.ui.disable')}
+                </button>
+              )}
+            </div>
+
+            {sharedEnabled && sharedFiles.length > 0 && (
+              <div className="mt-3 max-h-24 overflow-y-auto space-y-1">
+                {sharedFiles.map(f => (
+                  <div key={f.name} className="flex items-center gap-2 rounded px-2 py-1 text-xs">
+                    {f.is_dir ? <Folder size={12} className="text-yellow-500" /> : <FileText size={12} className="text-text-muted" />}
+                    <span className="text-text-primary">{f.name}</span>
+                    <span className="text-text-disabled">{formatSize(f.size)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Web Share (HTTP Server) */}
           <div className="rounded-xl border border-border-subtle bg-bg-elevated p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <QrCode size={15} className="text-primary" />
+                <Globe size={15} className="text-primary" />
                 <h2 className="text-sm font-semibold text-text-primary">{t('modules.p2p.ui.webShare')}</h2>
                 {httpServer && <span className="h-2 w-2 rounded-full bg-green-400" />}
               </div>
               {httpServer && (
-                <button onClick={() => setShowQr(!showQr)} className="text-text-muted hover:text-primary cursor-pointer">
+                <button onClick={() => setShowQr(!showQr)}
+                  className="text-text-muted hover:text-primary cursor-pointer"
+                  title={showQr ? t('modules.p2p.ui.hideQr', { defaultValue: '隐藏二维码' }) : t('modules.p2p.ui.showQr', { defaultValue: '显示二维码' })}>
                   <QrCode size={13} />
                 </button>
               )}
             </div>
 
             {!sharedEnabled ? (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+              <div
+                onClick={() => {
+                  sharedDirRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  setHighlightSharedDir(true)
+                  setTimeout(() => setHighlightSharedDir(false), 2000)
+                }}
+                className="flex items-start gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 cursor-pointer hover:bg-yellow-500/15 transition">
                 <AlertCircle size={14} className="text-yellow-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-yellow-600 dark:text-yellow-400">{t('modules.p2p.ui.webShareNeedDir')}</p>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                  {t('modules.p2p.ui.webShareNeedDir')}
+                  <span className="ml-1 underline">{t('modules.p2p.ui.goToSetup', { defaultValue: '点击前往设置' })}</span>
+                </p>
               </div>
             ) : (
               <>
@@ -1136,18 +1243,17 @@ export default function P2PTransfer() {
       </>
       ) : (
         /* Service stopped: clean empty state */
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-bg-elevated mb-4">
-            <WifiOff size={28} className="text-text-muted" />
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 mb-4">
+            <Wifi size={24} className="text-primary" />
           </div>
-          <p className="text-sm font-medium text-text-secondary mb-2">{t('modules.p2p.ui.serviceStopped')}</p>
-          <p className="text-xs text-text-muted mb-4">{t('modules.p2p.ui.stoppedHint')}</p>
+          <p className="text-sm font-medium text-text-secondary mb-2">{t('modules.p2p.ui.stoppedHint')}</p>
           <button onClick={async () => {
             setStarting(true)
             const port = await p2pStartService()
             if (port !== null) { setTcpPort(port); setRunning(true) }
             setStarting(false)
-          }} className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary/90 cursor-pointer transition">
+          }} className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary/90 cursor-pointer transition mt-2">
             {starting ? <RefreshCw size={14} className="animate-spin" /> : <Play size={14} />}
             {t('modules.p2p.ui.startService')}
           </button>

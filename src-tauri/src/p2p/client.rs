@@ -6,6 +6,8 @@ use crate::p2p::{PeerInfo, TransferInfo, P2PStateArc};
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::net::TcpStream;
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use tauri::Emitter;
 
 /// Connect to a peer and send a file
@@ -59,6 +61,10 @@ pub fn send_file(
         file_path: file_path.to_string_lossy().to_string(),
     });
 
+    // Set up cancel flag
+    let cancel_flag = Arc::new(AtomicBool::new(false));
+    state.set_cancel_flag(&transfer_id, cancel_flag.clone());
+
     // Send FileOffer
     let offer = FileOfferMsg {
         transfer_id: transfer_id.clone(),
@@ -103,6 +109,18 @@ pub fn send_file(
     let mut sent = 0u32;
 
     loop {
+        // Check cancel flag
+        if cancel_flag.load(Ordering::Relaxed) {
+            let err = ErrorMsg {
+                transfer_id: transfer_id.clone(),
+                message: "Cancelled by user".to_string(),
+            };
+            write_json(&mut writer, MsgType::Error as u8, &err).ok();
+            state.update_transfer_progress(&transfer_id, 0.0, "cancelled");
+            state.remove_cancel_flag(&transfer_id);
+            return Ok(transfer_id);
+        }
+
         let n = file.read(&mut buf).map_err(|e| format!("Read error: {}", e))?;
         if n == 0 { break; }
 
@@ -143,6 +161,8 @@ pub fn send_file(
         "progress": 100.0,
         "status": "complete",
     }));
+
+    state.remove_cancel_flag(&transfer_id);
 
     Ok(transfer_id)
 }

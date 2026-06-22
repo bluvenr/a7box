@@ -10,7 +10,8 @@ pub mod client;
 use identity::Identity;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use mdns_sd::ServiceDaemon;
 
@@ -59,11 +60,24 @@ pub struct P2PState {
     // Service handles for stop
     pub server_stop: Mutex<Option<Arc<AtomicBool>>>,
     pub mdns_daemon: Mutex<Option<ServiceDaemon>>,
+    // Approval channel: transfer_id -> sender (true=accept, false=reject)
+    pub pending_approvals: Mutex<HashMap<String, Sender<bool>>>,
+    // Cancel flags: transfer_id -> cancel flag
+    pub cancel_flags: Mutex<HashMap<String, Arc<AtomicBool>>>,
+    // Configurable download directory
+    pub download_dir: Mutex<PathBuf>,
 }
 
 impl P2PState {
     pub fn new(data_dir: PathBuf) -> Self {
         let identity = Identity::load_or_create(&data_dir);
+        // Load persisted download dir, or default to data_dir/downloads
+        let default_dl = data_dir.join("downloads");
+        let dl_dir = std::fs::read_to_string(data_dir.join("p2p_download_dir.txt"))
+            .ok()
+            .map(|s| PathBuf::from(s.trim()))
+            .filter(|p| p.is_dir())
+            .unwrap_or(default_dl);
         Self {
             identity: Mutex::new(identity),
             peers: Mutex::new(HashMap::new()),
@@ -72,9 +86,12 @@ impl P2PState {
             transfers: Mutex::new(Vec::new()),
             access_log: Mutex::new(Vec::new()),
             tcp_port: Mutex::new(0),
+            download_dir: Mutex::new(dl_dir),
             data_dir,
             server_stop: Mutex::new(None),
             mdns_daemon: Mutex::new(None),
+            pending_approvals: Mutex::new(HashMap::new()),
+            cancel_flags: Mutex::new(HashMap::new()),
         }
     }
 
@@ -142,6 +159,52 @@ impl P2PState {
 
     pub fn get_shared_dir(&self) -> Option<PathBuf> {
         self.shared_dir.lock().unwrap().clone()
+    }
+
+    // ---- Approval channel ----
+
+    pub fn set_pending_approval(&self, transfer_id: &str, sender: Sender<bool>) {
+        self.pending_approvals.lock().unwrap().insert(transfer_id.to_string(), sender);
+    }
+
+    pub fn take_approval(&self, transfer_id: &str) -> Option<Sender<bool>> {
+        self.pending_approvals.lock().unwrap().remove(transfer_id)
+    }
+
+    // ---- Cancel flags ----
+
+    pub fn set_cancel_flag(&self, transfer_id: &str, flag: Arc<AtomicBool>) {
+        self.cancel_flags.lock().unwrap().insert(transfer_id.to_string(), flag);
+    }
+
+    pub fn get_cancel_flag(&self, transfer_id: &str) -> Option<Arc<AtomicBool>> {
+        self.cancel_flags.lock().unwrap().get(transfer_id).cloned()
+    }
+
+    pub fn cancel_transfer(&self, transfer_id: &str) -> bool {
+        if let Some(flag) = self.get_cancel_flag(transfer_id) {
+            flag.store(true, Ordering::Relaxed);
+            self.update_transfer_progress(transfer_id, 0.0, "cancelled");
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn remove_cancel_flag(&self, transfer_id: &str) {
+        self.cancel_flags.lock().unwrap().remove(transfer_id);
+    }
+
+    // ---- Download directory ----
+
+    pub fn get_download_dir(&self) -> PathBuf {
+        self.download_dir.lock().unwrap().clone()
+    }
+
+    pub fn set_download_dir(&self, dir: PathBuf) {
+        *self.download_dir.lock().unwrap() = dir.clone();
+        // Persist to file
+        let _ = std::fs::write(self.data_dir.join("p2p_download_dir.txt"), dir.to_string_lossy().as_bytes());
     }
 }
 

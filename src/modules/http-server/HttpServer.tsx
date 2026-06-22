@@ -2,10 +2,10 @@
  * A7Box HTTP File Server
  * Start a local HTTP server to share files over LAN
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Globe, Play, Square, Copy, Wifi, WifiOff } from 'lucide-react'
-import { startHttpServer, stopHttpServer, type ServerInfo } from '../../shared/utils/tauriBridge'
+import { startHttpServer, stopHttpServer, getHttpServerInfo, p2pGetLocalIps, type ServerInfo } from '../../shared/utils/tauriBridge'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -21,6 +21,24 @@ export default function HttpServer() {
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+
+  // Sync with backend state on mount
+  useEffect(() => {
+    if (!isTauri()) return
+    ;(async () => {
+      const info = await getHttpServerInfo()
+      if (info) {
+        const ips = await p2pGetLocalIps()
+        const urls = ips.length > 0
+          ? ips.map(ip => `http://${ip}:${info.port}`)
+          : info.urls
+        setServerInfo({ ...info, urls })
+        setPort(info.port)
+        setDirectory(info.directory)
+        setRunning(true)
+      }
+    })()
+  }, [])
 
   const handleStart = async () => {
     setError(null)

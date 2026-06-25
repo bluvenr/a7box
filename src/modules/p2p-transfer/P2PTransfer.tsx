@@ -27,6 +27,7 @@ import {
 } from '../../shared/utils/tauriBridge'
 import { useP2PStatus } from './p2pStore'
 import { useToast } from '../../components/Toast'
+import { useConfirm, useAlert } from '../../components/Dialog'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -85,7 +86,7 @@ export default function P2PTransfer() {
   const [starting, setStarting] = useState(false)
   const autoStartRef = useRef(false)
   const [autoStart, setAutoStart] = useState(() =>
-    localStorage.getItem('a7box-p2p-autostart') !== 'false'
+    localStorage.getItem('a7box-p2p-autostart') === 'true'
   )
 
   // Peers
@@ -131,10 +132,9 @@ export default function P2PTransfer() {
     try { await fn() } finally { setRefreshing(prev => ({ ...prev, [key]: false })) }
   }, [])
 
-  // Incoming file notification
-  const [incomingFile, setIncomingFile] = useState<{
-    transfer_id: string; filename: string; size: number; peer_code: string; peer_alias: string
-  } | null>(null)
+  // Dialog hooks (declared early for use in effects)
+  const confirm = useConfirm()
+  const alert = useAlert()
 
   // Browse remote dir
   const [remoteDirPeer, setRemoteDirPeer] = useState('')
@@ -142,6 +142,7 @@ export default function P2PTransfer() {
 
   // Onboarding guide
   const [showGuide, setShowGuide] = useState(false)
+    const guideRef = useRef<HTMLDivElement>(null)
   const sharedDirRef = useRef<HTMLDivElement>(null)
   const [highlightSharedDir, setHighlightSharedDir] = useState(false)
 
@@ -268,13 +269,23 @@ export default function P2PTransfer() {
     }).then(u => u && unsubs.push(u))
 
     onP2PIncomingFile(data => {
-      setIncomingFile(data)
       // System notification (Web API)
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('A7Box - ' + t('modules.p2p.ui.incomingFile'), {
           body: `${data.filename} (${formatSize(data.size)}) — ${data.peer_alias}`,
         })
       }
+      // Show confirm dialog
+      confirm({
+        title: t('modules.p2p.ui.incomingFile'),
+        message: `${data.filename} (${formatSize(data.size)})`,
+        detail: `${data.peer_alias} (${data.peer_code})`,
+        confirmText: t('modules.p2p.ui.accept', { defaultValue: '接受' }),
+        cancelText: t('modules.p2p.ui.reject', { defaultValue: '拒绝' }),
+      }).then(accepted => {
+        if (accepted) p2pAcceptTransfer(data.transfer_id)
+        else p2pRejectTransfer(data.transfer_id)
+      })
     }).then(u => u && unsubs.push(u))
 
     onP2PAccessLog(entry => {
@@ -287,7 +298,7 @@ export default function P2PTransfer() {
     }
 
     return () => { unsubs.forEach(u => u()) }
-  }, [t])
+  }, [t, confirm])
 
   // ---- Callbacks ----
 
@@ -423,7 +434,14 @@ export default function P2PTransfer() {
   }, [])
 
   const handleToggleShared = useCallback(async (enabled: boolean) => {
-    if (enabled && !sharedDir) { toast(t('modules.p2p.ui.selectDir'), 'error'); return }
+    if (enabled && !sharedDir) {
+      await alert({
+        title: t('modules.p2p.ui.sharedDir', { defaultValue: '共享目录' }),
+        message: t('modules.p2p.ui.selectDir', { defaultValue: '请先选择共享目录' }),
+        icon: 'warning',
+      })
+      return
+    }
     // Validate directory exists before enabling
     if (enabled && sharedDir) {
       const valid = await p2pValidateDir(sharedDir)
@@ -443,7 +461,7 @@ export default function P2PTransfer() {
       setShowQr(false)
       toast(t('modules.p2p.ui.httpStopped'))
     }
-  }, [sharedDir, t, toast, httpServer])
+  }, [sharedDir, t, toast, alert, httpServer])
 
   // HTTP Server handlers
   const handleStartHttpServer = useCallback(async () => {
@@ -510,9 +528,16 @@ export default function P2PTransfer() {
     }
   }, [remoteDirPeer])
 
-  const handleClearHistory = useCallback(() => {
-    setTransfers([])
-  }, [])
+  const handleClearHistory = useCallback(async () => {
+    const ok = await confirm({
+      title: t('modules.p2p.ui.clearHistory', { defaultValue: '清空记录' }),
+      message: t('modules.p2p.ui.clearHistoryConfirm', { defaultValue: '确定要清空所有传输记录吗？此操作不可撤销。' }),
+      confirmText: t('common.confirm', { defaultValue: '确认' }),
+      cancelText: t('common.cancel', { defaultValue: '取消' }),
+      danger: true,
+    })
+    if (ok) setTransfers([])
+  }, [confirm, t])
 
   // Computed
   const activeTransfers = transfers.filter(tr =>
@@ -558,7 +583,22 @@ export default function P2PTransfer() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-text-primary">{t('modules.p2p.name')}</h1>
-              <p className="text-xs text-text-secondary">{t('modules.p2p.description')}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-text-secondary">{t('modules.p2p.description')}</p>
+                <button onClick={() => {
+                  if (showGuide) {
+                    guideRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    guideRef.current?.classList.remove('guide-flash')
+                    void guideRef.current?.offsetWidth
+                    guideRef.current?.classList.add('guide-flash')
+                  } else {
+                    setShowGuide(true)
+                  }
+                }}
+                  className="text-[11px] text-primary/70 hover:text-primary cursor-pointer transition shrink-0">
+                  {t('modules.p2p.ui.guide.title', { defaultValue: '快速上手' })} →
+                </button>
+              </div>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-4">
@@ -596,6 +636,11 @@ export default function P2PTransfer() {
                       await stopHttpServer()
                       setHttpServer(null); setHttpUrl(''); setQrDataUrl(''); setShowQr(false)
                     }
+                    // Re-sync shared state from backend
+                    const info = await p2pGetSharedInfo()
+                    if (info) {
+                      setSharedDir(info.directory); setSharedEnabled(info.enabled)
+                    }
                   }} className="text-text-muted hover:text-red-400 cursor-pointer" title={t('modules.p2p.ui.stopService')}>
                     <Power size={13} />
                   </button>
@@ -608,6 +653,26 @@ export default function P2PTransfer() {
                     const port = await p2pStartService()
                     if (port !== null) { setTcpPort(port); setRunning(true) }
                     setStarting(false)
+                    // Re-sync shared + HTTP state from backend
+                    const info = await p2pGetSharedInfo()
+                    if (info) {
+                      setSharedDir(info.directory); setSharedEnabled(info.enabled)
+                      setSharedFiles(info.files); setAccessLog(info.accessLog)
+                    }
+                    const httpInfo = await getHttpServerInfo()
+                    if (httpInfo) {
+                      const ips = await p2pGetLocalIps()
+                      const urls = ips.length > 0
+                        ? ips.map(ip => `http://${ip}:${httpInfo.port}`)
+                        : httpInfo.urls
+                      setHttpServer({ ...httpInfo, urls })
+                      const url = urls[0]
+                      setHttpUrl(url)
+                      lastHttpPort.current = httpInfo.port
+                      const qr = await QRCode.toDataURL(url, { width: 180, margin: 1 })
+                      setQrDataUrl(qr)
+                      setShowQr(true)
+                    }
                   }} className="ml-1 text-primary hover:underline cursor-pointer">{t('modules.p2p.ui.startService')}</button>
                 </span>
               )}
@@ -664,31 +729,9 @@ export default function P2PTransfer() {
         </div>
       </div>
 
-      {/* Incoming File Notification */}
-      {incomingFile && (
-        <div className="mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-blue-400">{t('modules.p2p.ui.incomingFile')}</p>
-            <p className="text-xs text-text-secondary">
-              {incomingFile.filename} ({formatSize(incomingFile.size)}) — {incomingFile.peer_alias} ({incomingFile.peer_code})
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={async () => {
-              await p2pAcceptTransfer(incomingFile.transfer_id)
-              setIncomingFile(null)
-            }} className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 cursor-pointer">{t('modules.p2p.ui.accept')}</button>
-            <button onClick={async () => {
-              await p2pRejectTransfer(incomingFile.transfer_id)
-              setIncomingFile(null)
-            }} className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 cursor-pointer">{t('modules.p2p.ui.reject')}</button>
-          </div>
-        </div>
-      )}
-
       {/* ---- Onboarding Guide (show for new users regardless of service state) ---- */}
       {showGuide && (
-        <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-5">
+        <div ref={guideRef} className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-5">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Zap size={16} className="text-primary" />
@@ -696,6 +739,9 @@ export default function P2PTransfer() {
             </div>
             <button onClick={dismissGuide} className="text-xs text-text-muted hover:text-text-primary cursor-pointer">{t('modules.p2p.ui.guide.skip')}</button>
           </div>
+          <p className="text-xs text-text-secondary mb-4 leading-relaxed">
+            {t('modules.p2p.ui.guide.intro', { defaultValue: '在同一网络（WiFi/网线）下的设备之间互相传输文件，无需 U 盘、无需联网。支持电脑之间、电脑与手机之间传输。' })}
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               { icon: Wifi, title: running ? 'guideStep1Running' : 'guideStep1Stopped', desc: running ? 'step1desc' : 'step1descStopped', color: 'text-green-400' },
@@ -1051,9 +1097,8 @@ export default function P2PTransfer() {
 
             <div className="flex gap-2">
               {!sharedEnabled ? (
-                <button onClick={() => handleToggleShared(true)} disabled={!sharedDir}
-                  title={!sharedDir ? t('modules.p2p.ui.selectDir') : undefined}
-                  className="flex-1 rounded-lg bg-green-600/90 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition">
+                <button onClick={() => handleToggleShared(true)}
+                  className="flex-1 rounded-lg bg-green-600/90 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 cursor-pointer transition">
                   <Play size={11} className="inline mr-1" />{t('modules.p2p.ui.enable')}
                 </button>
               ) : (
@@ -1257,6 +1302,21 @@ export default function P2PTransfer() {
             {starting ? <RefreshCw size={14} className="animate-spin" /> : <Play size={14} />}
             {t('modules.p2p.ui.startService')}
           </button>
+          {!showGuide && (
+            <button onClick={() => {
+                  if (showGuide) {
+                    guideRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    guideRef.current?.classList.remove('guide-flash')
+                    void guideRef.current?.offsetWidth
+                    guideRef.current?.classList.add('guide-flash')
+                  } else {
+                    setShowGuide(true)
+                  }
+                }}
+              className="mt-3 text-xs text-text-muted hover:text-primary cursor-pointer transition">
+              {t('modules.p2p.ui.guide.viewGuide', { defaultValue: '查看使用指南' })} →
+            </button>
+          )}
         </div>
       )}
     </div>

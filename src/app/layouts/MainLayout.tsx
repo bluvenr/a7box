@@ -13,9 +13,15 @@ import { useGlobalShortcuts } from '../../core/shortcuts'
 import { Logo } from '../../components/Logo'
 import { TitleBar } from '../../components/TitleBar'
 import { ToastContainer } from '../../components/Toast'
+import { DialogContainer } from '../../components/Dialog'
 import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
+import { useHttpServiceStatus } from '../../modules/http-server/httpServiceStore'
 import { useSettingsStore } from '../../core/settings'
 import type { LucideIcon } from 'lucide-react'
+
+function isTauri(): boolean {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+}
 
 // LocalStorage key for sidebar state
 const SIDEBAR_KEY = 'a7box-sidebar-collapsed'
@@ -35,6 +41,30 @@ export function MainLayout() {
 
   // Register global shortcuts (Tauri + keyboard fallback)
   useGlobalShortcuts()
+
+  // Listen for deep link events from Windows context menu
+  const setPendingDirectory = useHttpServiceStatus((s) => s.setPendingDirectory)
+  useEffect(() => {
+    if (!isTauri()) return
+
+    let unlisten: (() => void) | undefined
+    ;(async () => {
+      try {
+        const { listen } = await import('@tauri-apps/api/event')
+        unlisten = await listen<string>('deep-link-received', (event) => {
+          const dir = event.payload
+          if (dir) {
+            setPendingDirectory(dir)
+            navigate('/http-server')
+          }
+        })
+      } catch {
+        // Tauri API not available
+      }
+    })()
+
+    return () => { unlisten?.() }
+  }, [navigate, setPendingDirectory])
 
   // Sidebar collapsed state (persisted)
   const [collapsed, setCollapsed] = useState(() => {
@@ -148,6 +178,9 @@ export function MainLayout() {
 
       {/* Global toast notifications */}
       <ToastContainer />
+
+      {/* Global dialog modals */}
+      <DialogContainer />
     </div>
   )
 }
@@ -205,7 +238,9 @@ function ModuleNavItem({
   const IconComponent = typeof Icon === 'string' ? Box : Icon
   const displayName = nameI18n ? t(nameI18n) : fallbackName
   const p2pRunning = useP2PStatus((s) => s.running)
+  const httpCount = useHttpServiceStatus((s) => s.count)
   const showDot = moduleId === 'p2p-transfer' && p2pRunning
+  const httpActive = moduleId === 'http-server' && httpCount > 0
 
   return (
     <button
@@ -219,6 +254,12 @@ function ModuleNavItem({
       {!collapsed && <span className="truncate">{displayName}</span>}
       {showDot && (
         <span className={`h-2 w-2 rounded-full bg-green-400 ${collapsed ? 'absolute -top-0.5 -right-0.5' : 'ml-auto'}`} />
+      )}
+      {httpActive && (
+        <span className={`flex items-center gap-1 ${collapsed ? 'absolute -top-0.5 -right-0.5' : 'ml-auto'}`}>
+          <span className="h-2 w-2 shrink-0 rounded-full bg-green-400" />
+          <span className="text-[10px] font-medium leading-none text-green-400">{httpCount}</span>
+        </span>
       )}
     </button>
   )

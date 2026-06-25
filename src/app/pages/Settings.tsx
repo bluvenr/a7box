@@ -8,6 +8,7 @@ import { useSettingsStore, SUPPORTED_LANGUAGES, changeLanguage, useUpdater } fro
 import { useModuleRegistry } from '../../core/registry'
 import { getCacheSizes, clearCache } from '../../shared/utils/tauriBridge'
 import type { CacheSizes as CacheSizesType } from '../../shared/utils/tauriBridge'
+import { useConfirm } from '../../components/Dialog'
 import {
   Globe, Palette, Box, Info, RefreshCw, Download,
   CheckCircle, AlertCircle, Loader2, GripVertical,
@@ -536,7 +537,7 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
   const [cacheSizes, setCacheSizes] = useState<CacheSizesType | null>(null)
   const [loading, setLoading] = useState(true)
   const [clearing, setClearing] = useState<string | null>(null)
-  const [confirmTarget, setConfirmTarget] = useState<string | null>(null)
+  const confirm = useConfirm()
 
   const loadSizes = async () => {
     setLoading(true)
@@ -558,7 +559,6 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
   const handleClear = async (category: 'p2pDownloads' | 'screenshots' | 'transferHistory') => {
     setClearing(category)
     await clearCache(category)
-    setConfirmTarget(null)
     await loadSizes()
     setClearing(null)
   }
@@ -570,41 +570,9 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
     await clearCache('p2pDownloads')
     await clearCache('screenshots')
     await clearCache('transferHistory')
-    setConfirmTarget(null)
     await loadSizes()
     setClearing(null)
   }
-
-  // Build confirm message based on category
-  const getConfirmInfo = (cat: string): { msg: string; detail: string } => {
-    switch (cat) {
-      case 'p2pDownloads':
-        return {
-          msg: t('settings.cacheConfirmDownloads', { defaultValue: '将删除下载目录中的所有文件，此操作不可撤销。' }),
-          detail: `${cacheSizes?.p2pFileCount ?? 0} ${t('settings.cacheFileUnit', { defaultValue: '个文件' })}，${formatSize(cacheSizes?.p2pDownloads ?? 0)}`,
-        }
-      case 'screenshots':
-        return {
-          msg: t('settings.cacheConfirmScreenshots', { defaultValue: '将删除所有截图文件，此操作不可撤销。' }),
-          detail: `${cacheSizes?.screenshotFileCount ?? 0} ${t('settings.cacheFileUnit', { defaultValue: '个文件' })}，${formatSize(cacheSizes?.screenshots ?? 0)}`,
-        }
-      case 'transferHistory':
-        return {
-          msg: t('settings.cacheConfirmHistory', { defaultValue: '将清空所有传输记录，此操作不可撤销。' }),
-          detail: `${cacheSizes?.transferCount ?? 0} ${t('settings.cacheRecordUnit', { defaultValue: '条记录' })}`,
-        }
-      case 'all':
-        return {
-          msg: t('settings.cacheConfirmAll', { defaultValue: '将清理所有缓存数据和传输记录，此操作不可撤销。' }),
-          detail: `${(cacheSizes?.p2pFileCount ?? 0) + (cacheSizes?.screenshotFileCount ?? 0)} ${t('settings.cacheFileUnit', { defaultValue: '个文件' })}，${formatSize(totalSize)}`,
-        }
-      default:
-        return { msg: '', detail: '' }
-    }
-  }
-
-  const isConfirming = confirmTarget !== null
-  const confirmInfo = isConfirming ? getConfirmInfo(confirmTarget) : null
 
   return (
     <SettingSection title={t('settings.storageCache', { defaultValue: '存储与缓存' })} icon={Database}>
@@ -620,7 +588,17 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
             </p>
           </div>
           <button
-            onClick={() => setConfirmTarget('all')}
+            onClick={async () => {
+              const ok = await confirm({
+                title: t('settings.cacheClearAll', { defaultValue: '全部清理' }),
+                message: t('settings.cacheConfirmAll', { defaultValue: '将清理所有缓存数据和传输记录，此操作不可撤销。' }),
+                detail: `${(cacheSizes?.p2pFileCount ?? 0) + (cacheSizes?.screenshotFileCount ?? 0)} ${t('settings.cacheFileUnit', { defaultValue: '个文件' })}，${formatSize(totalSize)}`,
+                confirmText: t('settings.cacheConfirmBtn', { defaultValue: '确认清理' }),
+                cancelText: t('common.cancel', { defaultValue: '取消' }),
+                danger: true,
+              })
+              if (ok) handleClearAll()
+            }}
             disabled={loading || clearing === 'all' || totalSize === 0}
             className="inline-flex items-center gap-1.5 rounded-md bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-500/20 disabled:opacity-40 cursor-pointer"
           >
@@ -648,7 +626,17 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
                 {loading ? '...' : formatSize(cacheSizes?.p2pDownloads ?? 0)}
               </span>
               <button
-                onClick={() => setConfirmTarget('p2pDownloads')}
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: t('settings.cacheDownloads', { defaultValue: '传输接收文件' }),
+                    message: t('settings.cacheConfirmDownloads', { defaultValue: '将删除下载目录中的所有文件，此操作不可撤销。' }),
+                    detail: `${cacheSizes?.p2pFileCount ?? 0} ${t('settings.cacheFileUnit', { defaultValue: '个文件' })}，${formatSize(cacheSizes?.p2pDownloads ?? 0)}`,
+                    confirmText: t('settings.cacheConfirmBtn', { defaultValue: '确认清理' }),
+                    cancelText: t('common.cancel', { defaultValue: '取消' }),
+                    danger: true,
+                  })
+                  if (ok) handleClear('p2pDownloads')
+                }}
                 disabled={loading || clearing !== null || (cacheSizes?.p2pDownloads ?? 0) === 0}
                 className="text-text-muted hover:text-red-400 cursor-pointer disabled:opacity-30 transition"
                 title={t('settings.cacheClear', { defaultValue: '清理' })}
@@ -675,7 +663,17 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
                 {loading ? '...' : formatSize(cacheSizes?.screenshots ?? 0)}
               </span>
               <button
-                onClick={() => setConfirmTarget('screenshots')}
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: t('settings.cacheScreenshots', { defaultValue: '截图文件' }),
+                    message: t('settings.cacheConfirmScreenshots', { defaultValue: '将删除所有截图文件，此操作不可撤销。' }),
+                    detail: `${cacheSizes?.screenshotFileCount ?? 0} ${t('settings.cacheFileUnit', { defaultValue: '个文件' })}，${formatSize(cacheSizes?.screenshots ?? 0)}`,
+                    confirmText: t('settings.cacheConfirmBtn', { defaultValue: '确认清理' }),
+                    cancelText: t('common.cancel', { defaultValue: '取消' }),
+                    danger: true,
+                  })
+                  if (ok) handleClear('screenshots')
+                }}
                 disabled={loading || clearing !== null || (cacheSizes?.screenshots ?? 0) === 0}
                 className="text-text-muted hover:text-red-400 cursor-pointer disabled:opacity-30 transition"
                 title={t('settings.cacheClear', { defaultValue: '清理' })}
@@ -698,7 +696,17 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
             </div>
             <div className="flex items-center gap-3 shrink-0 ml-3">
               <button
-                onClick={() => setConfirmTarget('transferHistory')}
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: t('settings.cacheTransferHistory', { defaultValue: '传输记录' }),
+                    message: t('settings.cacheConfirmHistory', { defaultValue: '将清空所有传输记录，此操作不可撤销。' }),
+                    detail: `${cacheSizes?.transferCount ?? 0} ${t('settings.cacheRecordUnit', { defaultValue: '条记录' })}`,
+                    confirmText: t('settings.cacheConfirmBtn', { defaultValue: '确认清理' }),
+                    cancelText: t('common.cancel', { defaultValue: '取消' }),
+                    danger: true,
+                  })
+                  if (ok) handleClear('transferHistory')
+                }}
                 disabled={loading || clearing !== null || (cacheSizes?.transferCount ?? 0) === 0}
                 className="text-text-muted hover:text-red-400 cursor-pointer disabled:opacity-30 transition"
                 title={t('settings.cacheClear', { defaultValue: '清理' })}
@@ -708,34 +716,6 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
             </div>
           </div>
         </div>
-
-        {/* Confirmation bar */}
-        {isConfirming && confirmInfo && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 animate-in fade-in">
-            <AlertCircle size={14} className="text-red-400 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-red-400">{confirmInfo.msg}</p>
-              <p className="text-[11px] text-red-400/70 mt-0.5">{confirmInfo.detail}</p>
-            </div>
-            <button
-              onClick={() => {
-                if (confirmTarget === 'all') handleClearAll()
-                else handleClear(confirmTarget as 'p2pDownloads' | 'screenshots' | 'transferHistory')
-              }}
-              disabled={clearing !== null}
-              className="shrink-0 rounded-md bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50 cursor-pointer transition"
-            >
-              {t('settings.cacheConfirmBtn', { defaultValue: '确认清理' })}
-            </button>
-            <button
-              onClick={() => setConfirmTarget(null)}
-              disabled={clearing !== null}
-              className="shrink-0 rounded-md border border-border-base px-3 py-1 text-xs text-text-muted hover:text-text-primary cursor-pointer transition"
-            >
-              {t('common.cancel', { defaultValue: '取消' })}
-            </button>
-          </div>
-        )}
 
         {/* Refresh button */}
         <div className="flex justify-end">

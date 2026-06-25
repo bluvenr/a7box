@@ -13,6 +13,7 @@ import { Box, Search, Clock } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import type { A7Module } from '../../core/types'
 import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
+import { useHttpServiceStatus } from '../../modules/http-server/httpServiceStore'
 
 export default function Home() {
   const { t } = useTranslation()
@@ -154,7 +155,9 @@ function ModuleCard({
   const { t } = useTranslation()
   const Icon = typeof module.meta.icon === 'string' ? Box : module.meta.icon
   const p2pRunning = useP2PStatus((s) => s.running)
-  const isRunning = module.meta.id === 'p2p-transfer' && p2pRunning
+  const httpCount = useHttpServiceStatus((s) => s.count)
+  const isP2pRunning = module.meta.id === 'p2p-transfer' && p2pRunning
+  const isHttpActive = module.meta.id === 'http-server' && httpCount > 0
 
   // Use i18n name/description if available, fallback to static name
   const displayName = module.meta.nameI18n ? t(module.meta.nameI18n) : module.meta.name
@@ -170,8 +173,13 @@ function ModuleCard({
       }`}
     >
       {/* Running indicator */}
-      {isRunning && (
+      {isP2pRunning && (
         <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-green-400" />
+      )}
+      {isHttpActive && (
+        <span className="absolute top-1.5 right-1.5 flex items-center gap-0.5 rounded-full bg-green-500 px-1.5 py-0.5">
+          <span className="text-[9px] font-bold text-white">{httpCount}</span>
+        </span>
       )}
       <div
         className={`flex h-12 w-12 items-center justify-center rounded-lg transition-colors ${

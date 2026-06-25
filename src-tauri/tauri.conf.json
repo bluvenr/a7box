@@ -39,6 +39,11 @@
     "createUpdaterArtifacts": true
   },
   "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["a7box"]
+      }
+    },
     "updater": {
       "pubkey": "",
       "endpoints": [

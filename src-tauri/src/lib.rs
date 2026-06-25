@@ -4,22 +4,32 @@
 mod clipboard;
 mod commands;
 mod http_server;
+mod http_service;
 mod p2p;
+mod registry;
 mod screenshot;
 mod tray;
 
 use clipboard::ClipboardState;
 use http_server::HttpServerState;
+use http_service::HttpServiceState;
 use p2p::{P2PState, P2PStateArc};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tauri::Manager;
 use tauri::Emitter;
+use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+
+/// State to buffer a deep-link directory when the app cold-starts.
+/// The frontend consumes this via `get_pending_http_serve_dir` command.
+pub struct PendingHttpServeDir(pub Mutex<Option<String>>);
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let clipboard_state = Arc::new(ClipboardState::new());
     let http_server_state = Arc::new(HttpServerState::new());
+    let http_service_state = Arc::new(HttpServiceState::new());
+    let pending_http_serve_dir = PendingHttpServeDir(Mutex::new(None));
 
     // P2P state: use app data dir for persistence
     let data_dir = dirs::data_local_dir()
@@ -41,10 +51,41 @@ pub fn run() {
             None,
         ))
         .plugin(tauri_plugin_dialog::init())
+        // Deep link: registers a7box:// protocol handler in Windows registry
+        .plugin(tauri_plugin_deep_link::init())
+        // Single instance: ensures only one app instance; forwards deep link URLs
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            // Bring existing window to foreground when triggered from context menu
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+
+            let mut i = 1;
+            while i < args.len() {
+                if args[i].starts_with("a7box://http-server") {
+                    let dir = parse_deep_link_url(&args[i]);
+                    if !dir.is_empty() {
+                        let _ = app.emit("deep-link-received", &dir);
+                    }
+                    break;
+                }
+                if args[i] == "--http-serve" {
+                    if let Some(dir) = args.get(i + 1) {
+                        let _ = app.emit("deep-link-received", dir);
+                    }
+                    break;
+                }
+                i += 1;
+            }
+        }))
         // State
         .manage(clipboard_state)
         .manage(http_server_state)
+        .manage(http_service_state)
         .manage(p2p_state)
+        .manage(pending_http_serve_dir)
         // Commands
         .invoke_handler(tauri::generate_handler![
             // Clipboard
@@ -62,6 +103,10 @@ pub fn run() {
             commands::start_http_server,
             commands::stop_http_server,
             commands::get_http_server_info,
+            // Independent HTTP Service
+            commands::http_start_server,
+            commands::http_stop_server,
+            commands::http_list_servers,
             // Tray
             commands::update_tray_language,
             // P2P LAN Transfer
@@ -89,11 +134,41 @@ pub fn run() {
             // Cache Management
             commands::get_cache_sizes,
             commands::clear_cache,
+            // Deep Link: pending HTTP serve directory
+            get_pending_http_serve_dir,
         ])
         // Setup: tray + global shortcuts + window close behavior
         .setup(|app| {
             // Setup system tray
             tray::setup_tray(app)?;
+
+            // Check command-line args for deep link URL or --http-serve flag
+            // Store in PendingHttpServeDir state so frontend can fetch on mount
+            // (emitting before frontend listener is ready would lose the event)
+            let args: Vec<String> = std::env::args().collect();
+            let mut i = 1;
+            while i < args.len() {
+                if args[i].starts_with("a7box://http-server") {
+                    let dir = parse_deep_link_url(&args[i]);
+                    if let Ok(mut g) = app.state::<PendingHttpServeDir>().0.lock() {
+                        *g = Some(dir);
+                    }
+                    break;
+                }
+                if args[i] == "--http-serve" {
+                    if let Some(dir) = args.get(i + 1) {
+                        if let Ok(mut g) = app.state::<PendingHttpServeDir>().0.lock() {
+                            *g = Some(dir.clone());
+                        }
+                    }
+                    break;
+                }
+                i += 1;
+            }
+
+            // Register deep link protocol and Windows context menu
+            let _ = app.deep_link().register_all();
+            registry::setup_context_menu(app.handle());
 
             // Register global shortcuts (graceful: warn on failure, don't crash)
             let handle = app.handle().clone();
@@ -129,4 +204,47 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+/// Parse a deep link URL to extract the directory path.
+/// Input:  `a7box://http-server?dir=C:\some\path`
+/// Output: `C:\some\path`
+fn parse_deep_link_url(url: &str) -> String {
+    if let Some(query_start) = url.find('?') {
+        let query = &url[query_start + 1..];
+        for pair in query.split('&') {
+            let mut kv = pair.splitn(2, '=');
+            if let (Some(key), Some(value)) = (kv.next(), kv.next()) {
+                if key == "dir" {
+                    let dir = value.trim_matches('"');
+                    // Percent-decode common characters (e.g. %20 -> space)
+                    let mut result = String::new();
+                    let mut chars = dir.bytes();
+                    while let Some(b) = chars.next() {
+                        if b == b'%' {
+                            let h = chars.next().unwrap_or(b'0');
+                            let l = chars.next().unwrap_or(b'0');
+                            let hex = format!("{}{}", h as char, l as char);
+                            if let Ok(n) = u8::from_str_radix(&hex, 16) {
+                                result.push(n as char);
+                            }
+                        } else if b == b'+' {
+                            result.push(' ');
+                        } else {
+                            result.push(b as char);
+                        }
+                    }
+                    return result;
+                }
+            }
+        }
+    }
+    String::new()
+}
+
+/// Tauri command: returns and clears the pending HTTP serve directory from cold start.
+#[tauri::command]
+fn get_pending_http_serve_dir(state: tauri::State<'_, PendingHttpServeDir>) -> Option<String> {
+    let mut guard = state.0.lock().ok()?;
+    guard.take()
 }

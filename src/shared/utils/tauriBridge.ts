@@ -184,6 +184,41 @@ export async function getHttpServerInfo(): Promise<ServerInfo | null> {
   }
 }
 
+// ============ Independent HTTP Service ============
+
+export interface HttpInstanceInfo {
+  id: string
+  port: number
+  urls: string[]
+  directory: string
+}
+
+export async function httpStartServer(directory: string, port?: number): Promise<HttpInstanceInfo | null> {
+  const invoke = await getInvoke()
+  if (!invoke) return null
+  try {
+    return await invoke<HttpInstanceInfo>('http_start_server', { directory, port: port ?? null })
+  } catch (e) {
+    console.error('[A7Box] HTTP service start failed:', e)
+    return null
+  }
+}
+
+export async function httpStopServer(id: string): Promise<void> {
+  const invoke = await getInvoke()
+  if (invoke) {
+    try { await invoke('http_stop_server', { id }) } catch (e) { console.error('[A7Box] HTTP service stop failed:', e) }
+  }
+}
+
+export async function httpListServers(): Promise<HttpInstanceInfo[]> {
+  const invoke = await getInvoke()
+  if (!invoke) return []
+  try {
+    return await invoke<HttpInstanceInfo[]>('http_list_servers')
+  } catch { return [] }
+}
+
 // ============ P2P LAN Transfer ============
 
 export interface P2PIdentity {

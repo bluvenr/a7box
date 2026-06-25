@@ -9,7 +9,7 @@ export const httpServerModule: A7Module = {
     id: 'http-server',
     name: 'HTTP Server',
     nameI18n: 'modules.httpServer.name',
-    description: 'Start a local HTTP server for LAN file sharing',
+    description: 'Start multiple LAN HTTP servers for local directories',
     descriptionI18n: 'modules.httpServer.description',
     icon: Globe,
     category: 'network',

@@ -12,9 +12,11 @@ import { useConfirm } from '../../components/Dialog'
 import {
   Globe, Palette, Box, Info, RefreshCw, Download,
   CheckCircle, AlertCircle, Loader2, GripVertical,
-  Database, Trash2, FolderOpen, Image
+  Database, Trash2, FolderOpen, Image, Keyboard, RotateCcw
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { useShortcutStore } from '../../core/shortcuts'
+import { KeyCapture } from '../../components/KeyCapture'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -349,6 +351,9 @@ export default function Settings() {
 
         {/* Storage & Cache */}
         <StorageCacheSection t={t} />
+
+        {/* Shortcuts */}
+        {isTauri() && <ShortcutsSection t={t} />}
 
         {/* About & Updates */}
         <SettingSection title={t('common.about')} icon={Info}>
@@ -726,6 +731,94 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
           >
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
             {t('settings.cacheRefresh', { defaultValue: '重新扫描' })}
+          </button>
+        </div>
+      </div>
+    </SettingSection>
+  )
+}
+
+// Shortcuts section component
+function ShortcutsSection({ t }: { t: (key: string, opts?: Record<string, unknown>) => string }) {
+  const shortcuts = useShortcutStore((s: any) => s.shortcuts)
+  const updateShortcut = useShortcutStore((s: any) => s.updateShortcut)
+  const toggleShortcut = useShortcutStore((s: any) => s.toggleShortcut)
+  const resetDefaults = useShortcutStore((s: any) => s.resetDefaults)
+  const enabledModuleIds = useModuleRegistry((s: any) => s.enabledModuleIds)
+
+  const handleShortcutChange = async (action: string, keys: string, enabled: boolean) => {
+    updateShortcut(action, keys)
+    if (isTauri()) {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core')
+        await invoke('update_shortcut', { action, keys, enabled })
+      } catch { /* ignore */ }
+    }
+  }
+
+  const handleToggle = async (action: string, enabled: boolean) => {
+    toggleShortcut(action, enabled)
+    const sc = shortcuts.find((s: any) => s.action === action)
+    if (isTauri()) {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core')
+        await invoke('update_shortcut', { action, keys: sc?.keys || '', enabled })
+      } catch { /* ignore */ }
+    }
+  }
+
+  const handleReset = async () => {
+    resetDefaults()
+    const defaults = useShortcutStore.getState().shortcuts
+    if (isTauri()) {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core')
+        for (const sc of defaults) {
+          await invoke('update_shortcut', { action: sc.action, keys: sc.keys, enabled: sc.enabled })
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  return (
+    <SettingSection title={t('settings.shortcuts', { defaultValue: '快捷键' })} icon={Keyboard}>
+      <div className="space-y-2">
+        {shortcuts.map((sc: any) => {
+          const moduleDisabled = sc.moduleId && !enabledModuleIds.has(sc.moduleId)
+          return (
+            <div
+              key={sc.action}
+              className={`flex items-center justify-between py-2 ${moduleDisabled ? 'opacity-40 pointer-events-none' : ''}`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-sm text-text-primary">{t(sc.labelI18n)}</span>
+                {moduleDisabled && (
+                  <span className="text-xs text-text-disabled">
+                    ({t('settings.shortcutModuleDisabled', { defaultValue: '模块已关闭' })})
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <KeyCapture
+                  value={sc.keys}
+                  onChange={(keys: string) => handleShortcutChange(sc.action, keys, sc.enabled)}
+                  onCancel={() => {}}
+                />
+                <Toggle
+                  checked={sc.enabled}
+                  onChange={(v: boolean) => handleToggle(sc.action, v)}
+                />
+              </div>
+            </div>
+          )
+        })}
+        <div className="flex justify-end pt-2">
+          <button
+            onClick={handleReset}
+            className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-primary cursor-pointer transition"
+          >
+            <RotateCcw size={12} />
+            {t('settings.shortcutsReset', { defaultValue: '重置默认' })}
           </button>
         </div>
       </div>

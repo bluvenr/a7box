@@ -31,6 +31,9 @@ const HttpServer = lazy(() => import('../modules/http-server/HttpServer'))
 const CodeShare = lazy(() => import('../modules/code-share/CodeShare'))
 const P2PTransfer = lazy(() => import('../modules/p2p-transfer/P2PTransfer'))
 
+// Utility windows (standalone, no layout)
+const QrQuick = lazy(() => import('./pages/utility/QrQuick'))
+
 // Wrap a module component with ErrorBoundary + Suspense
 function ModuleRoute({ moduleId, children }: { moduleId: string; children: React.ReactNode }) {
   return (
@@ -44,6 +47,16 @@ function ModuleRoute({ moduleId, children }: { moduleId: string; children: React
 
 // Router configuration
 export const router = createBrowserRouter([
+  // Utility windows (standalone floating windows)
+  {
+    path: '/utility/qr-quick',
+    element: (
+      <Suspense fallback={null}>
+        <QrQuick />
+      </Suspense>
+    ),
+  },
+  // Main app routes
   {
     path: '/',
     element: <MainLayout />,

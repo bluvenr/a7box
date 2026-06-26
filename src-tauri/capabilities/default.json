@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": ["main", "qr-quick", "utility-*"],
   "permissions": [
     "core:default",
     "opener:default",
@@ -27,6 +27,10 @@
     "core:window:allow-set-title",
     "dialog:default",
     "dialog:allow-open",
+    "dialog:allow-save",
+    "fs:default",
+    "fs:allow-write-file",
+    "fs:allow-write-text-file",
     "deep-link:default"
   ]
 }

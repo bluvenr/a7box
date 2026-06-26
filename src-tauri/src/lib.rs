@@ -14,11 +14,15 @@ use clipboard::ClipboardState;
 use http_server::HttpServerState;
 use http_service::HttpServiceState;
 use p2p::{P2PState, P2PStateArc};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
 use tauri::Emitter;
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+
+/// Registry to track action -> keys mapping for dynamic unregistration
+pub struct ShortcutRegistry(pub Mutex<HashMap<String, String>>);
 
 /// State to buffer a deep-link directory when the app cold-starts.
 /// The frontend consumes this via `get_pending_http_serve_dir` command.
@@ -30,6 +34,7 @@ pub fn run() {
     let http_server_state = Arc::new(HttpServerState::new());
     let http_service_state = Arc::new(HttpServiceState::new());
     let pending_http_serve_dir = PendingHttpServeDir(Mutex::new(None));
+    let shortcut_registry = ShortcutRegistry(Mutex::new(HashMap::new()));
 
     // P2P state: use app data dir for persistence
     let data_dir = dirs::data_local_dir()
@@ -51,6 +56,7 @@ pub fn run() {
             None,
         ))
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         // Deep link: registers a7box:// protocol handler in Windows registry
         .plugin(tauri_plugin_deep_link::init())
         // Single instance: ensures only one app instance; forwards deep link URLs
@@ -86,6 +92,7 @@ pub fn run() {
         .manage(http_service_state)
         .manage(p2p_state)
         .manage(pending_http_serve_dir)
+        .manage(shortcut_registry)
         // Commands
         .invoke_handler(tauri::generate_handler![
             // Clipboard
@@ -134,6 +141,11 @@ pub fn run() {
             // Cache Management
             commands::get_cache_sizes,
             commands::clear_cache,
+            // Shortcut Management
+            commands::update_shortcut,
+            // Utility Windows
+            commands::create_utility_window,
+            commands::close_utility_window,
             // Deep Link: pending HTTP serve directory
             get_pending_http_serve_dir,
         ])
@@ -170,24 +182,74 @@ pub fn run() {
             let _ = app.deep_link().register_all();
             registry::setup_context_menu(app.handle());
 
-            // Register global shortcuts (graceful: warn on failure, don't crash)
+            // Register global shortcuts dynamically
             let handle = app.handle().clone();
-            let shortcut_handle = handle.clone();
-            if let Err(e) = app.global_shortcut().on_shortcut("CommandOrControl+Shift+A", move |_app, _shortcut, event| {
-                if event.state == ShortcutState::Pressed {
-                    let _ = shortcut_handle.emit("global-shortcut", "toggle-command-palette");
+            let default_shortcuts = vec![
+                ("toggle-command-palette", "CommandOrControl+Shift+A"),
+                ("open-screenshot", "CommandOrControl+Shift+S"),
+                ("clipboard-to-qr", "CommandOrControl+Shift+Q"),
+            ];
+            let registry = &app.state::<ShortcutRegistry>().0;
+            {
+                let mut reg = registry.lock().unwrap();
+                for (action, keys) in &default_shortcuts {
+                    let action_str = action.to_string();
+                    let keys_str = keys.to_string();
+                    let handle_clone = handle.clone();
+                    let action_emit = action_str.clone();
+                    // Unregister first in case the hotkey is already registered
+                    let _ = app.global_shortcut().unregister(keys_str.as_str());
+                    if let Err(e) = app.global_shortcut().on_shortcut(keys_str.as_str(), move |app_ref, _shortcut, event| {
+                        if event.state != ShortcutState::Pressed { return; }
+                        // Handle actions directly in Rust (no frontend roundtrip needed)
+                        match action_emit.as_str() {
+                            "toggle-command-palette" => {
+                                // Bring main window to front
+                                if let Some(w) = app_ref.get_webview_window("main") {
+                                    let _ = w.show();
+                                    let _ = w.unminimize();
+                                    let _ = w.set_focus();
+                                }
+                            }
+                            "open-screenshot" => {
+                                if let Some(w) = app_ref.get_webview_window("main") {
+                                    let _ = w.show();
+                                    let _ = w.unminimize();
+                                    let _ = w.set_focus();
+                                }
+                            }
+                            "clipboard-to-qr" => {
+                                // Create utility window directly from Rust
+                                use tauri::{WebviewUrl, WebviewWindowBuilder};
+                                let label = "qr-quick";
+                                // Close existing if any
+                                if let Some(existing) = app_ref.get_webview_window(label) {
+                                    let _ = existing.close();
+                                }
+                                if let Ok(_win) = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/qr-quick".into()))
+                                    .title("")
+                                    .inner_size(360.0, 440.0)
+                                    .resizable(false)
+                                    .decorations(false)
+                                    .always_on_top(true)
+                                    .visible(true)
+                                    .skip_taskbar(true)
+                                    .center()
+                                    .background_color(tauri::window::Color(10, 10, 11, 255))
+                                    .build()
+                                {
+                                    // Window stays open; user closes via X button, ESC, or double-click title bar
+                                }
+                            }
+                            _ => {}
+                        }
+                        // Also emit event to frontend for any additional handling
+                        let _ = handle_clone.emit("global-shortcut", &action_emit);
+                    }) {
+                        eprintln!("[WARN] Failed to register shortcut {}: {}", action_str, e);
+                    }
+                    reg.insert(action_str, keys_str);
                 }
-            }) {
-                eprintln!("[WARN] Failed to register Ctrl+Shift+A shortcut: {}", e);
-            }
-
-            let screenshot_handle = handle.clone();
-            if let Err(e) = app.global_shortcut().on_shortcut("CommandOrControl+Shift+S", move |_app, _shortcut, event| {
-                if event.state == ShortcutState::Pressed {
-                    let _ = screenshot_handle.emit("global-shortcut", "open-screenshot");
-                }
-            }) {
-                eprintln!("[WARN] Failed to register Ctrl+Shift+S shortcut: {}", e);
             }
 
             // Handle window close: hide to tray instead of exiting

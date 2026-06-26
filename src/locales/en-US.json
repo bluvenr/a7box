@@ -125,7 +125,14 @@
     "cacheConfirmDownloads": "All files in the download directory will be deleted. This cannot be undone.",
     "cacheConfirmScreenshots": "All screenshot files will be deleted. This cannot be undone.",
     "cacheConfirmHistory": "All transfer records will be cleared. This cannot be undone.",
-    "cacheConfirmAll": "All cache data and transfer records will be cleared. This cannot be undone."
+    "cacheConfirmAll": "All cache data and transfer records will be cleared. This cannot be undone.",
+    "shortcuts": "Shortcuts",
+    "shortcutsCapture": "Press key combination...",
+    "shortcutsReset": "Reset defaults",
+    "shortcutCommandPalette": "Command Palette",
+    "shortcutScreenshot": "Screenshot",
+    "shortcutClipboardQr": "Clipboard to QR",
+    "shortcutModuleDisabled": "Module disabled"
   },
   "updater": {
     "newVersion": "New version {{version}} available",
@@ -203,13 +210,22 @@
         "previewPlaceholder": "QR Preview",
         "downloadPng": "PNG",
         "downloadSvg": "SVG",
-        "decodeDropText": "Drop image here or click to upload",
-        "decodeSupportedFormats": "PNG, JPG, GIF, BMP supported",
+        "decodeDropText": "Drop QR image here or click to upload",
+        "decodeSupportedFormats": "PNG, JPG, GIF, BMP, WebP supported",
+        "decodePasteHint": "or press Ctrl+V to paste QR image",
         "decodeSuccess": "Decoded Successfully",
         "toastGenerated": "QR code generated",
         "toastCopied": "Copied to clipboard",
-        "toastCleared": "Cleared"
+        "toastCleared": "Cleared",
+        "shortcutHint": "Copy text then press {{keys}} to quickly generate QR"
       }
+    },
+    "qrQuick": {
+      "title": "Quick QR",
+      "download": "Download",
+      "copyImage": "Copy Image",
+      "copyText": "Copy Text",
+      "clipboardEmpty": "Clipboard is empty or contains non-text content"
     },
     "markdownPreview": {
       "name": "Markdown Preview",

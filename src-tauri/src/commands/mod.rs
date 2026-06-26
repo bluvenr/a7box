@@ -9,6 +9,7 @@ use crate::screenshot;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::AppHandle;
+use tauri::Manager;
 
 // ============ Clipboard Commands ============
 
@@ -530,6 +531,122 @@ fn clear_dir_contents(path: &std::path::Path) -> Result<(), String> {
         } else {
             std::fs::remove_file(&p).map_err(|e| format!("{}: {}", p.display(), e))?;
         }
+    }
+    Ok(())
+}
+
+// ============ Shortcut Management Commands ============
+
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShortcutConfig {
+    pub action: String,
+    pub keys: String,
+    pub enabled: bool,
+}
+
+#[tauri::command]
+pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bool) -> Result<(), String> {
+    use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+    use tauri::Emitter;
+
+    let state = app.state::<crate::ShortcutRegistry>();
+    let mut registry = state.0.lock().map_err(|e| e.to_string())?;
+
+    // Unregister old shortcut if exists
+    if let Some(old_keys) = registry.get(&action) {
+        let _ = app.global_shortcut().unregister(old_keys.as_str());
+    }
+
+    // Register new shortcut if enabled
+    if enabled && !keys.is_empty() {
+        let action_clone = action.clone();
+        let app_handle = app.clone();
+        app.global_shortcut()
+            .on_shortcut(keys.as_str(), move |app_ref, _shortcut, event| {
+                if event.state != ShortcutState::Pressed { return; }
+                // Handle actions directly in Rust
+                match action_clone.as_str() {
+                    "toggle-command-palette" | "open-screenshot" => {
+                        if let Some(w) = app_ref.get_webview_window("main") {
+                            let _ = w.show();
+                            let _ = w.unminimize();
+                            let _ = w.set_focus();
+                        }
+                    }
+                    "clipboard-to-qr" => {
+                        use tauri::{WebviewUrl, WebviewWindowBuilder};
+                        let label = "qr-quick";
+                        if let Some(existing) = app_ref.get_webview_window(label) {
+                            let _ = existing.close();
+                        }
+                        if let Ok(_win) = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/qr-quick".into()))
+                            .title("")
+                            .inner_size(360.0, 440.0)
+                            .resizable(false)
+                            .decorations(false)
+                            .always_on_top(true)
+                            .visible(true)
+                            .skip_taskbar(true)
+                            .center()
+                            .background_color(tauri::window::Color(10, 10, 11, 255))
+                            .build()
+                        {
+                            // Window stays open; user closes via X button, ESC, or double-click title bar
+                        }
+                    }
+                    _ => {}
+                }
+                // Also emit to frontend
+                let _ = app_handle.emit("global-shortcut", &action_clone);
+            })
+            .map_err(|e| format!("Failed to register shortcut: {}", e))?;
+        registry.insert(action.clone(), keys);
+    } else {
+        registry.remove(&action);
+    }
+
+    Ok(())
+}
+
+// ============ Utility Window Commands ============
+
+#[tauri::command]
+pub fn create_utility_window(
+    app: AppHandle,
+    label: String,
+    url: String,
+    width: f64,
+    height: f64,
+) -> Result<(), String> {
+    use tauri::{WebviewUrl, WebviewWindowBuilder};
+
+    // Close existing window with same label if any
+    if let Some(existing) = app.get_webview_window(&label) {
+        let _ = existing.close();
+    }
+
+    let builder = WebviewWindowBuilder::new(&app, &label, WebviewUrl::App(url.into()))
+        .title("")
+        .inner_size(width, height)
+        .resizable(false)
+        .decorations(false)
+        .always_on_top(true)
+        .visible(true)
+        .skip_taskbar(true)
+        .center()
+        .background_color(tauri::window::Color(10, 10, 11, 255));
+
+    let _window = builder.build().map_err(|e| format!("Failed to create window: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn close_utility_window(app: AppHandle, label: String) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window(&label) {
+        window.close().map_err(|e| format!("Failed to close window: {}", e))?;
     }
     Ok(())
 }

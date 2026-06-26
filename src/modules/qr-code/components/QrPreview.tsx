@@ -2,8 +2,20 @@
  * QR Code Preview Component
  */
 
-import { Copy, Download, FileDown } from 'lucide-react'
+import { Copy, Download, FileDown, Keyboard } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useShortcutStore } from '../../../core/shortcuts'
+
+/** Format Tauri key string to human-readable display */
+function formatShortcut(keys: string): string {
+  return keys
+    .replace(/CommandOrControl/gi, 'Ctrl')
+    .replace(/Command/gi, '⌘')
+    .replace(/Control/gi, 'Ctrl')
+    .replace(/Shift/gi, 'Shift')
+    .replace(/Alt/gi, 'Alt')
+    .replace(/\+/g, ' + ')
+}
 
 interface QrPreviewProps {
   qrDataUrl: string | null
@@ -21,6 +33,10 @@ export function QrPreview({
   onDownloadSvg,
 }: QrPreviewProps) {
   const { t } = useTranslation()
+  const shortcutKeys = useShortcutStore((s) => {
+    const sc = s.shortcuts.find((c) => c.action === 'clipboard-to-qr')
+    return sc?.enabled ? sc?.keys : null
+  })
   return (
     <div className="flex h-full flex-col items-center justify-center gap-6">
       {/* QR preview area */}
@@ -77,6 +93,19 @@ export function QrPreview({
             <FileDown className="h-4 w-4" />
             {t('modules.qrCode.ui.downloadSvg')}
           </button>
+        </div>
+      )}
+
+      {/* Shortcut hint */}
+      {shortcutKeys && (
+        <div className="flex items-center gap-1.5 text-text-disabled">
+          <Keyboard size={11} />
+          <span className="text-xs">
+            {t('modules.qrCode.ui.shortcutHint', {
+              keys: formatShortcut(shortcutKeys),
+              defaultValue: `复制文本后按 ${formatShortcut(shortcutKeys)} 快速生成二维码`,
+            })}
+          </span>
         </div>
       )}
     </div>

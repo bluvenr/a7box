@@ -39,8 +39,8 @@ export function useQrCode() {
   /** Generate QR code from content */
   const generate = useCallback(
     async (text?: string): Promise<boolean> => {
-      const source = text ?? content
-      if (!source.trim()) {
+      const source = (text ?? content).trim()
+      if (!source) {
         setError('Content is empty')
         setQrDataUrl(null)
         return false
@@ -71,8 +71,8 @@ export function useQrCode() {
   /** Generate QR code as SVG string */
   const generateSvg = useCallback(
     async (text?: string): Promise<string | null> => {
-      const source = text ?? content
-      if (!source.trim()) return null
+      const source = (text ?? content).trim()
+      if (!source) return null
 
       try {
         return await QRCode.toString(source, {
@@ -115,20 +115,51 @@ export function useQrCode() {
         image.src = dataUrl
       })
 
+      // Upscale small images for better QR detection
+      const minSize = 512
+      const scale = Math.max(1, minSize / Math.min(img.width, img.height))
       const canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
+      canvas.width = Math.round(img.width * scale)
+      canvas.height = Math.round(img.height * scale)
       const ctx = canvas.getContext('2d')
       if (!ctx) {
         setDecodeError('Canvas not supported')
         return null
       }
 
-      ctx.drawImage(img, 0, 0)
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      // Use nearest-neighbor for sharp pixel scaling
+      ctx.imageSmoothingEnabled = false
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
-      // Decode
-      const code = jsQR(imageData.data, imageData.width, imageData.height)
+      // Get image data and convert to grayscale with threshold
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const data = imageData.data
+      for (let i = 0; i < data.length; i += 4) {
+        // Grayscale
+        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
+        // Threshold (binarize)
+        const bw = gray > 128 ? 255 : 0
+        data[i] = data[i + 1] = data[i + 2] = bw
+      }
+      ctx.putImageData(imageData, 0, 0)
+
+      // Try decode with processed image
+      const processedData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      let code = jsQR(processedData.data, processedData.width, processedData.height)
+
+      // Retry with original if preprocessing didn't help
+      if (!code) {
+        const origCanvas = document.createElement('canvas')
+        origCanvas.width = img.width
+        origCanvas.height = img.height
+        const origCtx = origCanvas.getContext('2d')
+        if (origCtx) {
+          origCtx.drawImage(img, 0, 0)
+          const origData = origCtx.getImageData(0, 0, origCanvas.width, origCanvas.height)
+          code = jsQR(origData.data, origData.width, origData.height)
+        }
+      }
+
       if (code) {
         setDecodedText(code.data)
         return code.data
@@ -145,9 +176,25 @@ export function useQrCode() {
   /** Download QR as PNG */
   const downloadPng = useCallback(async () => {
     if (!qrDataUrl) return
+    const filename = `qrcode-${Date.now()}.png`
+    if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+      try {
+        const { save } = await import('@tauri-apps/plugin-dialog')
+        const { writeFile } = await import('@tauri-apps/plugin-fs')
+        const filePath = await save({
+          defaultPath: filename,
+          filters: [{ name: 'PNG Image', extensions: ['png'] }],
+        })
+        if (!filePath) return
+        const base64 = qrDataUrl.split(',')[1]
+        const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+        await writeFile(filePath, binary)
+        return
+      } catch { /* fallback to browser */ }
+    }
     const a = document.createElement('a')
     a.href = qrDataUrl
-    a.download = `qrcode-${Date.now()}.png`
+    a.download = filename
     a.click()
   }, [qrDataUrl])
 
@@ -155,11 +202,25 @@ export function useQrCode() {
   const downloadSvg = useCallback(async () => {
     const svg = await generateSvg()
     if (!svg) return
+    const filename = `qrcode-${Date.now()}.svg`
+    if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+      try {
+        const { save } = await import('@tauri-apps/plugin-dialog')
+        const { writeTextFile } = await import('@tauri-apps/plugin-fs')
+        const filePath = await save({
+          defaultPath: filename,
+          filters: [{ name: 'SVG Image', extensions: ['svg'] }],
+        })
+        if (!filePath) return
+        await writeTextFile(filePath, svg)
+        return
+      } catch { /* fallback to browser */ }
+    }
     const blob = new Blob([svg], { type: 'image/svg+xml' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `qrcode-${Date.now()}.svg`
+    a.download = filename
     a.click()
     URL.revokeObjectURL(url)
   }, [generateSvg])

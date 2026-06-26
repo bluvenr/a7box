@@ -3,7 +3,7 @@
  * Upload image to decode QR code
  */
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Upload, X, Copy } from 'lucide-react'
 
@@ -28,12 +28,49 @@ export function DecodePanel({
   const [copied, setCopied] = useState(false)
 
   const handleDrop = useCallback(
-    (e: React.DragEvent) => {
+    async (e: React.DragEvent) => {
       e.preventDefault()
       setIsDragging(false)
+
+      // Try file drop first (from file system or pasted file)
       const file = e.dataTransfer.files[0]
       if (file && file.type.startsWith('image/')) {
         onDecode(file)
+        return
+      }
+
+      // Try URL drop (dragging an <img> element from web page)
+      const url =
+        e.dataTransfer.getData('text/uri-list') ||
+        e.dataTransfer.getData('text/plain')
+      if (url && (url.startsWith('data:image/') || url.match(/\.(png|jpg|jpeg|gif|bmp|webp|svg)/i))) {
+        try {
+          const res = await fetch(url)
+          const blob = await res.blob()
+          if (blob.type.startsWith('image/')) {
+            onDecode(new File([blob], 'dropped-image.png', { type: blob.type }))
+          }
+        } catch {
+          // URL fetch failed, ignore
+        }
+        return
+      }
+
+      // Try HTML drop (dragging an <img> element)
+      const html = e.dataTransfer.getData('text/html')
+      if (html) {
+        const match = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+        if (match && match[1]) {
+          try {
+            const res = await fetch(match[1])
+            const blob = await res.blob()
+            if (blob.type.startsWith('image/')) {
+              onDecode(new File([blob], 'dropped-image.png', { type: blob.type }))
+            }
+          } catch {
+            // HTML img fetch failed, ignore
+          }
+        }
       }
     },
     [onDecode]
@@ -56,6 +93,25 @@ export function DecodePanel({
       setTimeout(() => setCopied(false), 2000)
     }
   }
+
+  // Handle paste from clipboard (Ctrl+V)
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) {
+            onDecode(file)
+            break
+          }
+        }
+      }
+    }
+    document.addEventListener('paste', handlePaste)
+    return () => document.removeEventListener('paste', handlePaste)
+  }, [onDecode])
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -95,6 +151,9 @@ export function DecodePanel({
             </p>
             <p className="mt-1 text-xs text-text-muted">
               {t('modules.qrCode.ui.decodeSupportedFormats')}
+            </p>
+            <p className="mt-1 text-xs text-text-muted">
+              {t('modules.qrCode.ui.decodePasteHint', { defaultValue: '也可按 Ctrl+V 粘贴二维码图片' })}
             </p>
           </>
         )}

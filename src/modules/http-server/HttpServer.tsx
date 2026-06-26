@@ -22,9 +22,11 @@ function isTauri(): boolean {
 
 const GUIDE_KEY = 'a7box-http-guide-seen'
 const HISTORY_KEY = 'a7box-http-history'
+const ACTIVE_KEY = 'a7box-http-active'
 const MAX_HISTORY = 5
 
 interface HistoryItem { directory: string; port: number; stoppedAt: number }
+interface ActiveEntry { directory: string; port: number }
 
 function loadHistory(): HistoryItem[] {
   try {
@@ -40,6 +42,12 @@ function loadHistory(): HistoryItem[] {
 }
 function saveHistory(items: HistoryItem[]) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, MAX_HISTORY)))
+}
+function loadActive(): ActiveEntry[] {
+  try { return JSON.parse(localStorage.getItem(ACTIVE_KEY) || '[]') } catch { return [] }
+}
+function saveActive(entries: ActiveEntry[]) {
+  localStorage.setItem(ACTIVE_KEY, JSON.stringify(entries))
 }
 
 // ── Component ─────────────────────────────────────────────────────────────
@@ -79,6 +87,30 @@ export default function HttpServer() {
       const list = await httpListServers()
       if (list.length > 0) setInstances(list)
 
+      // Merge previously active instances (app was closed without stopping)
+      const prevActive = loadActive()
+      const runningDirs = new Set(list.map((i: HttpInstanceInfo) => i.directory))
+      const orphaned = prevActive.filter((a) => !runningDirs.has(a.directory))
+      if (orphaned.length > 0) {
+        setRecentHistory((prev) => {
+          const merged = [
+            ...orphaned.map((o) => ({ directory: o.directory, port: o.port, stoppedAt: Date.now() })),
+            ...prev,
+          ]
+          const seen = new Set<string>()
+          const deduped = merged.filter((item) => {
+            if (seen.has(item.directory)) return false
+            seen.add(item.directory)
+            return true
+          })
+          const next = deduped.slice(0, MAX_HISTORY)
+          saveHistory(next)
+          return next
+        })
+      }
+      // Save current running instances for crash recovery
+      saveActive(list.map((i: HttpInstanceInfo) => ({ directory: i.directory, port: i.port })))
+
       // Fetch pending HTTP serve dir from Rust (cold-start from context menu)
       try {
         const { invoke } = await import('@tauri-apps/api/core')
@@ -107,6 +139,11 @@ export default function HttpServer() {
       } catch { /* ignore */ }
     })()
   }, [])
+
+  // ── Track running instances for crash recovery ──
+  useEffect(() => {
+    saveActive(instances.map((i) => ({ directory: i.directory, port: i.port })))
+  }, [instances])
 
   // ── Consume pending directory from deep link (Windows context menu) ──
   useEffect(() => {
@@ -239,6 +276,56 @@ export default function HttpServer() {
     })
     toast(t('modules.httpServer.ui.stopped', { defaultValue: '服务已停止' }))
   }, [confirm, removeInstance, toast, t])
+
+  // ── Stop all instances ──
+  const handleStopAll = useCallback(async () => {
+    if (instances.length === 0) return
+    const ok = await confirm({
+      title: t('modules.httpServer.ui.stopAll', { defaultValue: '停止全部' }),
+      message: t('modules.httpServer.ui.stopAllConfirm', {
+        defaultValue: '确定要停止全部 {{count}} 个网页服务吗？',
+        count: instances.length,
+      }),
+      confirmText: t('common.confirm', { defaultValue: '确认' }),
+      cancelText: t('common.cancel', { defaultValue: '取消' }),
+      danger: true,
+    })
+    if (!ok) return
+    // Stop all in parallel
+    const stopped = instances.map((inst) => ({
+      inst,
+      promise: httpStopServer(inst.id).then(() => inst).catch(() => null),
+    }))
+    const results = await Promise.all(stopped.map((s) => s.promise))
+    // Remove all from state
+    results.forEach((inst) => {
+      if (inst) removeInstance(inst.id)
+    })
+    setStoppingId(null)
+    // Save to history
+    const now = Date.now()
+    const newItems: HistoryItem[] = results
+      .filter(Boolean)
+      .map((inst) => ({ directory: inst!.directory, port: inst!.port, stoppedAt: now }))
+    if (newItems.length > 0) {
+      setRecentHistory((prev) => {
+        const merged = [...newItems, ...prev]
+        const seen = new Set<string>()
+        const deduped = merged.filter((item) => {
+          if (seen.has(item.directory)) return false
+          seen.add(item.directory)
+          return true
+        })
+        const next = deduped.slice(0, MAX_HISTORY)
+        saveHistory(next)
+        return next
+      })
+    }
+    toast(t('modules.httpServer.ui.stoppedAll', {
+      defaultValue: '已停止 {{count}} 个服务',
+      count: newItems.length,
+    }))
+  }, [instances, confirm, removeInstance, toast, t])
 
   // ── Copy URL ──
   const handleCopyUrl = useCallback(async (url: string) => {
@@ -466,6 +553,25 @@ export default function HttpServer() {
       {/* ── Running Instances ── */}
       {instances.length > 0 ? (
         <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs text-text-muted">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+              <span>{t('modules.httpServer.ui.runningCount', {
+                defaultValue: '{{count}} 个运行中',
+                count: instances.length,
+              })}</span>
+            </div>
+            {instances.length >= 2 && (
+              <button
+                type="button"
+                onClick={handleStopAll}
+                className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-text-muted transition hover:bg-danger/10 hover:text-danger cursor-pointer"
+              >
+                <Square size={11} className="fill-current" />
+                {t('modules.httpServer.ui.stopAll', { defaultValue: '停止全部' })}
+              </button>
+            )}
+          </div>
           {instances.map((inst) => (
             <InstanceCard
               key={inst.id}

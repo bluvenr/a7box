@@ -23,7 +23,7 @@ export const useHttpServiceStatus = create<HttpServiceState>((set) => ({
   setInstances: (list) => set({ instances: list, count: list.length }),
   addInstance: (inst) =>
     set((s) => {
-      const next = [...s.instances.filter((i) => i.id !== inst.id), inst]
+      const next = [inst, ...s.instances.filter((i) => i.id !== inst.id)]
       return { instances: next, count: next.length }
     }),
   removeInstance: (id) =>

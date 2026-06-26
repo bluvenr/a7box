@@ -48,6 +48,14 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
     enabled: true,
     moduleId: 'qr-code',
   },
+  {
+    action: 'clipboard-to-md',
+    labelI18n: 'settings.shortcutClipboardMd',
+    descriptionI18n: 'settings.shortcutClipboardMdDesc',
+    keys: 'CommandOrControl+Shift+M',
+    enabled: true,
+    moduleId: 'markdown-preview',
+  },
 ]
 
 function loadShortcuts(): ShortcutConfig[] {

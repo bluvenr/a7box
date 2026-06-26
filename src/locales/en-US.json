@@ -133,6 +133,8 @@
     "shortcutScreenshot": "Screenshot",
     "shortcutClipboardQr": "QR Quick Actions",
     "shortcutClipboardQrDesc": "Auto-generate QR from clipboard text, or auto-decode QR from clipboard image",
+    "shortcutClipboardMd": "Markdown Convert",
+    "shortcutClipboardMdDesc": "Auto-convert HTML to Markdown or Markdown to HTML from clipboard",
     "shortcutModuleDisabled": "Module disabled"
   },
   "updater": {
@@ -144,6 +146,26 @@
     "upToDate": "You're up to date",
     "downloadProgress": "Downloading {{progress}}%",
     "readyToInstall": "Update ready, restart to install"
+  },
+  "mdQuick": {
+    "title": "Quick Format Convert",
+    "clipboardEmpty": "Clipboard is empty",
+    "clipboardError": "Cannot read clipboard",
+    "lines": "lines",
+    "chars": "chars",
+    "copy": "Copy",
+    "download": "Download",
+    "inputPlaceholderHtml": "Paste HTML content...",
+    "inputPlaceholderMd": "Type Markdown...",
+    "inputLabelHtml": "HTML Input",
+    "inputLabelMd": "Markdown Input",
+    "outputLabelMd": "Markdown Output",
+    "outputLabelHtml": "HTML Output",
+    "preview": "Preview",
+    "source": "Source",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit Fullscreen",
+    "outputEmpty": "Converted output will appear here"
   },
   "modules": {
     "jsonFormatter": {
@@ -233,20 +255,35 @@
       "clipboardEmpty": "Clipboard is empty or contains non-text content"
     },
     "markdownPreview": {
-      "name": "Markdown Preview",
-      "description": "Live markdown preview with syntax highlighting",
-      "commands": { "open": "Markdown Preview" },
+      "name": "Markdown Editor",
+      "description": "Live markdown preview, syntax highlighting, file import and HTML conversion",
+      "commands": { "open": "Markdown Editor" },
       "ui": {
         "previewToggle": "Preview",
-        "copyTooltip": "Copy rendered HTML",
+        "modeToggle": "Toggle forward/reverse conversion mode",
+        "copyTooltip": "Copy rendered HTML (rich text)",
+        "copyMdTooltip": "Copy generated Markdown",
         "downloadTooltip": "Download as HTML",
-        "editorPlaceholder": "Type your markdown here...",
+        "downloadMdTooltip": "Download Markdown source file",
+        "openFile": "Open file (.md / .html)",
+        "openFileBtn": "Open",
+        "fullscreen": "Fullscreen preview",
+        "editorPlaceholder": "Type your markdown here...\n\nDrag & drop .md files to import",
+        "reversePlaceholder": "Paste HTML content here...\n\nIt will be converted to Markdown",
+        "dropHint": "Drop to import file",
         "statusLines": "Lines:",
         "statusWords": "Words:",
         "statusChars": "Chars:",
-        "toastCopied": "HTML copied to clipboard",
+        "statusReverse": "HTML→MD mode",
+                "shortcutHint": "Copy content then press {{keys}} for quick convert",
+        "toastCopied": "HTML copied to clipboard (rich text)",
+        "toastMdCopied": "Markdown copied to clipboard",
         "toastDownloaded": "HTML file downloaded",
-        "toastCleared": "Cleared"
+        "toastMdDownloaded": "Markdown file downloaded",
+        "toastCleared": "Cleared",
+        "toastFileImported": "File imported",
+        "toastAutoSwitchToMd": "Switched to HTML→MD mode",
+        "toastAutoSwitchToPreview": "Switched to MD→HTML mode"
       }
     },
     "codeMinify": {

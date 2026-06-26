@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Home, Settings, Box, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useModuleRegistry } from '../../core/registry'
@@ -235,8 +235,10 @@ function ModuleNavItem({
   moduleId: string
 }) {
   const { t } = useTranslation()
+  const location = useLocation()
   const IconComponent = typeof Icon === 'string' ? Box : Icon
   const displayName = nameI18n ? t(nameI18n) : fallbackName
+  const isActive = location.pathname === `/${moduleId}`
   const p2pRunning = useP2PStatus((s) => s.running)
   const httpCount = useHttpServiceStatus((s) => s.count)
   const showDot = moduleId === 'p2p-transfer' && p2pRunning
@@ -246,8 +248,12 @@ function ModuleNavItem({
     <button
       onClick={onClick}
       title={collapsed ? displayName : undefined}
-      className={`relative flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary ${
+      className={`relative flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
         collapsed ? 'justify-center' : ''
+      } ${
+        isActive
+          ? 'bg-bg-hover text-text-primary'
+          : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'
       }`}
     >
       <IconComponent className="h-4 w-4 shrink-0" />

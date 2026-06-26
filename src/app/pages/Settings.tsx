@@ -94,12 +94,30 @@ export default function Settings() {
     return idxA - idxB
   })
 
-  const handleModuleToggle = (moduleId: string, enabled: boolean) => {
+  const handleModuleToggle = async (moduleId: string, enabled: boolean) => {
     settings.setModuleEnabled(moduleId, enabled)
     if (enabled) {
       registryEnable(moduleId)
     } else {
       registryDisable(moduleId)
+    }
+    // Sync associated shortcuts with module enable/disable state
+    if (isTauri()) {
+      try {
+        const shortcuts = useShortcutStore.getState().shortcuts
+        const { invoke } = await import('@tauri-apps/api/core')
+        for (const sc of shortcuts) {
+          if (sc.moduleId === moduleId) {
+            // When module disabled: unregister its shortcuts
+            // When module enabled: re-register with stored enabled state
+            await invoke('update_shortcut', {
+              action: sc.action,
+              keys: sc.keys,
+              enabled: enabled && sc.enabled,
+            })
+          }
+        }
+      } catch { /* ignore */ }
     }
   }
 

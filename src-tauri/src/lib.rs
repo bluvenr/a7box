@@ -189,6 +189,7 @@ pub fn run() {
                 ("toggle-command-palette", "CommandOrControl+Shift+A"),
                 ("open-screenshot", "CommandOrControl+Shift+S"),
                 ("clipboard-to-qr", "CommandOrControl+Shift+Q"),
+                ("clipboard-to-md", "CommandOrControl+Shift+M"),
             ];
             let registry = &app.state::<ShortcutRegistry>().0;
             {
@@ -241,6 +242,25 @@ pub fn run() {
                                 {
                                     // Window stays open; user closes via X button, ESC, or double-click title bar
                                 }
+                            }
+                            "clipboard-to-md" => {
+                                use tauri::{WebviewUrl, WebviewWindowBuilder};
+                                let label = "md-convert";
+                                if let Some(existing) = app_ref.get_webview_window(label) {
+                                    let _ = existing.close();
+                                }
+                                if let Ok(_win) = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/md-convert".into()))
+                                    .title("")
+                                    .inner_size(520.0, 600.0)
+                                    .resizable(true)
+                                    .decorations(false)
+                                    .always_on_top(true)
+                                    .visible(true)
+                                    .skip_taskbar(true)
+                                    .center()
+                                    .background_color(tauri::window::Color(10, 10, 11, 255))
+                                    .build()
+                                {}
                             }
                             _ => {}
                         }

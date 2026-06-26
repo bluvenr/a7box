@@ -33,6 +33,7 @@ const P2PTransfer = lazy(() => import('../modules/p2p-transfer/P2PTransfer'))
 
 // Utility windows (standalone, no layout)
 const QrQuick = lazy(() => import('./pages/utility/QrQuick'))
+const MdConvert = lazy(() => import('./pages/utility/MdConvert'))
 
 // Wrap a module component with ErrorBoundary + Suspense
 function ModuleRoute({ moduleId, children }: { moduleId: string; children: React.ReactNode }) {
@@ -53,6 +54,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <QrQuick />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/md-convert',
+    element: (
+      <Suspense fallback={null}>
+        <MdConvert />
       </Suspense>
     ),
   },

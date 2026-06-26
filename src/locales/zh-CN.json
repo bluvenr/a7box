@@ -133,6 +133,8 @@
     "shortcutScreenshot": "截图",
     "shortcutClipboardQr": "二维码快捷操作",
     "shortcutClipboardQrDesc": "剪贴板为文本时自动生成二维码，为图片时自动解析二维码",
+    "shortcutClipboardMd": "Markdown 格式转换",
+    "shortcutClipboardMdDesc": "剪贴板为 HTML 时自动转 Markdown，为 Markdown 时自动转 HTML",
     "shortcutModuleDisabled": "模块已关闭"
   },
   "updater": {
@@ -144,6 +146,26 @@
     "upToDate": "已是最新版本",
     "downloadProgress": "下载中 {{progress}}%",
     "readyToInstall": "更新已就绪，重启安装"
+  },
+  "mdQuick": {
+    "title": "快速格式转换",
+    "clipboardEmpty": "剪贴板为空",
+    "clipboardError": "无法读取剪贴板",
+    "lines": "行",
+    "chars": "字符",
+    "copy": "复制",
+    "download": "下载",
+    "inputPlaceholderHtml": "粘贴 HTML 内容...",
+    "inputPlaceholderMd": "输入 Markdown...",
+    "inputLabelHtml": "HTML 输入",
+    "inputLabelMd": "Markdown 输入",
+    "outputLabelMd": "Markdown 输出",
+    "outputLabelHtml": "HTML 输出",
+    "preview": "预览",
+    "source": "源码",
+    "fullscreen": "全屏查看",
+    "exitFullscreen": "退出全屏",
+    "outputEmpty": "转换结果将显示在这里"
   },
   "modules": {
     "jsonFormatter": {
@@ -233,20 +255,35 @@
       "clipboardEmpty": "剪贴板为空或包含非文本内容"
     },
     "markdownPreview": {
-      "name": "Markdown 预览",
-      "description": "Markdown 实时预览与语法高亮",
-      "commands": { "open": "Markdown 预览" },
+      "name": "Markdown 编辑器",
+      "description": "Markdown 实时预览、语法高亮、文件导入与 HTML 互转",
+      "commands": { "open": "Markdown 编辑器" },
       "ui": {
         "previewToggle": "预览",
-        "copyTooltip": "复制渲染后的 HTML",
+        "modeToggle": "切换正向/反向转换模式",
+        "copyTooltip": "复制渲染后的 HTML（富文本）",
+        "copyMdTooltip": "复制生成的 Markdown",
         "downloadTooltip": "下载为 HTML",
-        "editorPlaceholder": "在此输入 Markdown...",
+        "downloadMdTooltip": "下载 Markdown 源文件",
+        "openFile": "打开文件（.md / .html）",
+        "openFileBtn": "打开",
+        "fullscreen": "全屏预览",
+        "editorPlaceholder": "在此输入 Markdown...\n\n支持拖拽 .md 文件导入",
+        "reversePlaceholder": "在此粘贴 HTML 内容...\n\n将自动转换为 Markdown",
+        "dropHint": "松开鼠标导入文件",
         "statusLines": "行数:",
         "statusWords": "词数:",
         "statusChars": "字符:",
-        "toastCopied": "HTML 已复制到剪贴板",
+        "statusReverse": "HTML→MD 模式",
+                "shortcutHint": "按 {{keys}} 快速格式转换",
+        "toastCopied": "HTML 已复制到剪贴板（富文本）",
+        "toastMdCopied": "Markdown 已复制到剪贴板",
         "toastDownloaded": "HTML 文件已下载",
-        "toastCleared": "已清空"
+        "toastMdDownloaded": "Markdown 文件已下载",
+        "toastCleared": "已清空",
+        "toastFileImported": "文件已导入",
+        "toastAutoSwitchToMd": "已自动切换到 HTML→MD 模式",
+        "toastAutoSwitchToPreview": "已自动切换到 MD→HTML 模式"
       }
     },
     "codeMinify": {

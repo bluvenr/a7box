@@ -1,3 +1,5 @@
+@import "katex/dist/katex.min.css";
+@import "highlight.js/styles/atom-one-dark.min.css";
 @import "tailwindcss";
 
 /* A7Box Geek Dark Theme */
@@ -172,9 +174,36 @@ input[type="number"] {
   font-weight: 600;
 }
 .markdown-preview img { max-width: 100%; border-radius: var(--radius-md); }
-.markdown-preview ul, .markdown-preview ol { padding-left: 1.5em; margin-bottom: 1em; }
+.markdown-preview ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+.markdown-preview ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
 .markdown-preview li { margin-bottom: 0.25em; }
 .markdown-preview hr { border: none; border-top: 1px solid var(--color-border-subtle); margin: 2em 0; }
+
+/* Task list checkboxes */
+.markdown-preview .task-list-item {
+  list-style: none;
+  margin-left: -1.5em;
+}
+.markdown-preview .task-checkbox {
+  margin-right: 0.4em;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+/* KaTeX math */
+.markdown-preview .katex-block {
+  margin: 1em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5em 0;
+}
+.markdown-preview .math-error {
+  color: var(--color-error);
+  background: var(--color-bg-hover);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+}
 
 /* Toast slide-in animation */
 @keyframes toastSlideIn {
@@ -241,4 +270,26 @@ input[type="number"] {
 }
 .instance-highlight {
   animation: instance-highlight 2.5s ease-out forwards;
+}
+
+/* ─── Mermaid Diagrams ─────────────────────────────────────────────────── */
+.mermaid {
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  margin: 1em 0;
+  overflow-x: auto;
+}
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+.mermaid-error {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 6px;
+  padding: 0.75em 1em;
+  font-size: 0.85em;
+  white-space: pre-wrap;
 }

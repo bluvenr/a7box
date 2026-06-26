@@ -8,6 +8,8 @@ import { create } from 'zustand'
 export interface ShortcutConfig {
   action: string
   labelI18n: string
+  /** Optional description i18n key for tooltip */
+  descriptionI18n?: string
   keys: string
   enabled: boolean
   /** Module ID this shortcut depends on. null = core (always available) */
@@ -41,6 +43,7 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
   {
     action: 'clipboard-to-qr',
     labelI18n: 'settings.shortcutClipboardQr',
+    descriptionI18n: 'settings.shortcutClipboardQrDesc',
     keys: 'CommandOrControl+Shift+Q',
     enabled: true,
     moduleId: 'qr-code',

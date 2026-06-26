@@ -17,31 +17,47 @@ export function useGlobalShortcuts() {
   const toggle = useCommandPalette((s) => s.toggle)
 
   // Sync shortcuts to Rust on mount, respecting module enabled state
+  // Wait for modules to register before syncing (they may not be ready yet)
   useEffect(() => {
     if (!isTauri()) return
 
     const STORAGE_KEY = 'a7box-shortcuts'
-    const enabledIds = useModuleRegistry.getState().enabledModuleIds
 
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      const shortcuts: Array<{ action: string; keys: string; enabled: boolean; moduleId?: string | null }> =
-        stored ? JSON.parse(stored) : useShortcutStore.getState().shortcuts
+    const syncShortcuts = (enabledIds: Set<string>) => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY)
+        const shortcuts: Array<{ action: string; keys: string; enabled: boolean; moduleId?: string | null }> =
+          stored ? JSON.parse(stored) : useShortcutStore.getState().shortcuts
 
-      import('@tauri-apps/api/core').then(({ invoke }) => {
-        for (const sc of shortcuts) {
-          // If the shortcut depends on a module that is disabled, skip registration
-          const moduleEnabled = !sc.moduleId || enabledIds.has(sc.moduleId)
-          const shouldRegister = sc.enabled && moduleEnabled
-          invoke('update_shortcut', {
-            action: sc.action,
-            keys: sc.keys,
-            enabled: shouldRegister,
-          }).catch(() => {})
+        import('@tauri-apps/api/core').then(({ invoke }) => {
+          for (const sc of shortcuts) {
+            const moduleEnabled = !sc.moduleId || enabledIds.has(sc.moduleId)
+            const shouldRegister = sc.enabled && moduleEnabled
+            invoke('update_shortcut', {
+              action: sc.action,
+              keys: sc.keys,
+              enabled: shouldRegister,
+            }).catch(() => {})
+          }
+        }).catch(() => {})
+      } catch {
+        // localStorage not available or invalid JSON
+      }
+    }
+
+    // Check if modules are already registered
+    const currentIds = useModuleRegistry.getState().enabledModuleIds
+    if (currentIds.size > 0) {
+      syncShortcuts(currentIds)
+    } else {
+      // Modules not ready yet — wait for them to register
+      const unsub = useModuleRegistry.subscribe((state) => {
+        if (state.enabledModuleIds.size > 0) {
+          syncShortcuts(state.enabledModuleIds)
+          unsub()
         }
-      }).catch(() => {})
-    } catch {
-      // localStorage not available or invalid JSON
+      })
+      return unsub
     }
   }, [])
 

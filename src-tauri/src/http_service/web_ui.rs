@@ -12,7 +12,7 @@ pub const DIRECTORY_LISTING_HTML: &str = r##"<!DOCTYPE html>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;background:#0c0c0c;color:#d4d4d8;min-height:100vh;line-height:1.6;-webkit-font-smoothing:antialiased}
-.wrap{max-width:640px;margin:0 auto;padding:40px 24px 60px}
+.wrap{max-width:640px;margin:0 auto;padding:24px 24px 48px}
 
 /* ── Header ── */
 .hd{display:flex;align-items:center;gap:14px;margin-bottom:24px}

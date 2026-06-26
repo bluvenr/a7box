@@ -5,7 +5,18 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Upload, X, Copy } from 'lucide-react'
+import { Upload, X, Copy, Keyboard } from 'lucide-react'
+import { useShortcutStore } from '../../../core/shortcuts'
+
+function formatShortcut(keys: string): string {
+  return keys
+    .replace(/CommandOrControl/gi, 'Ctrl')
+    .replace(/Command/gi, '⌘')
+    .replace(/Control/gi, 'Ctrl')
+    .replace(/Shift/gi, 'Shift')
+    .replace(/Alt/gi, 'Alt')
+    .replace(/\+/g, ' + ')
+}
 
 interface DecodePanelProps {
   decodedText: string | null
@@ -26,6 +37,10 @@ export function DecodePanel({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [copied, setCopied] = useState(false)
+  const shortcutKeys = useShortcutStore((s) => {
+    const sc = s.shortcuts.find((c) => c.action === 'clipboard-to-qr')
+    return sc?.enabled ? sc?.keys : null
+  })
 
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
@@ -189,6 +204,19 @@ export function DecodePanel({
       {decodeError && (
         <div className="rounded-lg border border-error/30 bg-error/5 p-4">
           <p className="text-sm text-error">{decodeError}</p>
+        </div>
+      )}
+
+      {/* Shortcut hint */}
+      {shortcutKeys && (
+        <div className="flex items-center gap-1.5 text-text-disabled">
+          <Keyboard size={11} />
+          <span className="text-xs">
+            {t('modules.qrCode.ui.decodeShortcutHint', {
+              keys: formatShortcut(shortcutKeys),
+              defaultValue: `复制二维码图片后按 ${formatShortcut(shortcutKeys)} 快速解析`,
+            })}
+          </span>
         </div>
       )}
     </div>

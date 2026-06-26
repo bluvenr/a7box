@@ -790,8 +790,16 @@ function ShortcutsSection({ t }: { t: (key: string, opts?: Record<string, unknow
               key={sc.action}
               className={`flex items-center justify-between py-2 ${moduleDisabled ? 'opacity-40 pointer-events-none' : ''}`}
             >
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
                 <span className="text-sm text-text-primary">{t(sc.labelI18n)}</span>
+                {sc.descriptionI18n && (
+                  <span className="group relative">
+                    <Info size={13} className="text-text-disabled cursor-help" />
+                    <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-bg-elevated px-2.5 py-1.5 text-xs text-text-secondary shadow-lg border border-border-subtle opacity-0 transition-opacity group-hover:opacity-100">
+                      {t(sc.descriptionI18n)}
+                    </span>
+                  </span>
+                )}
                 {moduleDisabled && (
                   <span className="text-xs text-text-disabled">
                     ({t('settings.shortcutModuleDisabled', { defaultValue: '模块已关闭' })})

@@ -131,7 +131,8 @@
     "shortcutsReset": "Reset defaults",
     "shortcutCommandPalette": "Command Palette",
     "shortcutScreenshot": "Screenshot",
-    "shortcutClipboardQr": "Clipboard to QR",
+    "shortcutClipboardQr": "QR Quick Actions",
+    "shortcutClipboardQrDesc": "Auto-generate QR from clipboard text, or auto-decode QR from clipboard image",
     "shortcutModuleDisabled": "Module disabled"
   },
   "updater": {
@@ -217,14 +218,18 @@
         "toastGenerated": "QR code generated",
         "toastCopied": "Copied to clipboard",
         "toastCleared": "Cleared",
-        "shortcutHint": "Copy text then press {{keys}} to quickly generate QR"
+        "shortcutHint": "Copy content then press {{keys}} to generate QR",
+        "decodeShortcutHint": "Copy QR image then press {{keys}} to decode"
       }
     },
     "qrQuick": {
       "title": "Quick QR",
+      "decodeTitle": "QR Decode",
       "download": "Download",
       "copyImage": "Copy Image",
       "copyText": "Copy Text",
+      "copyResult": "Copy Result",
+      "noQrFound": "No QR code found in image",
       "clipboardEmpty": "Clipboard is empty or contains non-text content"
     },
     "markdownPreview": {

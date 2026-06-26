@@ -131,7 +131,8 @@
     "shortcutsReset": "重置默认",
     "shortcutCommandPalette": "命令面板",
     "shortcutScreenshot": "截图",
-    "shortcutClipboardQr": "剪贴板→二维码",
+    "shortcutClipboardQr": "二维码快捷操作",
+    "shortcutClipboardQrDesc": "剪贴板为文本时自动生成二维码，为图片时自动解析二维码",
     "shortcutModuleDisabled": "模块已关闭"
   },
   "updater": {
@@ -217,14 +218,18 @@
         "toastGenerated": "二维码已生成",
         "toastCopied": "已复制到剪贴板",
         "toastCleared": "已清空",
-        "shortcutHint": "复制文本后按 {{keys}} 快速生成二维码"
+        "shortcutHint": "复制内容后按 {{keys}} 快速生成二维码",
+        "decodeShortcutHint": "复制二维码图片后按 {{keys}} 快速解析"
       }
     },
     "qrQuick": {
       "title": "快速二维码",
+      "decodeTitle": "二维码解析",
       "download": "下载",
       "copyImage": "复制图片",
       "copyText": "复制文本",
+      "copyResult": "复制解析结果",
+      "noQrFound": "未在图片中检测到二维码",
       "clipboardEmpty": "剪贴板为空或包含非文本内容"
     },
     "markdownPreview": {

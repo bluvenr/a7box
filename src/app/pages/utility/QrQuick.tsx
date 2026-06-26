@@ -1,28 +1,52 @@
 /**
  * QR Quick Utility Window
- * Floating window that generates QR code from clipboard text.
+ * Floating window that auto-detects clipboard content:
+ * - Image → decode QR code and show result
+ * - Text → generate QR code
  * Triggered by global shortcut (Ctrl+Shift+Q).
  */
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { QrCode, Copy, Download, X, FileText } from 'lucide-react'
+import { QrCode, Copy, Download, X, FileText, ScanLine } from 'lucide-react'
 import QRCodeLib from 'qrcode'
+import jsQR from 'jsqr'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 }
 
+type Mode = 'generate' | 'decode'
+
 export default function QrQuick() {
   const { t } = useTranslation()
+  const [mode, setMode] = useState<Mode>('generate')
   const [text, setText] = useState('')
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
+  const [sourceImage, setSourceImage] = useState<string | null>(null)
+  const [decodedText, setDecodedText] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<'img' | 'text' | false>(false)
 
-  // Read clipboard on mount
+  // Smart clipboard detection on mount
   useEffect(() => {
     (async () => {
       try {
+        // Try image first
+        if (isTauri()) {
+          const { invoke } = await import('@tauri-apps/api/core')
+          try {
+            const imgData = await invoke<{ base64: string; width: number; height: number }>('get_clipboard_image')
+            const dataUrl = await rgbaToDataUrl(imgData.base64, imgData.width, imgData.height)
+            setSourceImage(dataUrl)
+            setMode('decode')
+            await decodeQrFromDataUrl(dataUrl, imgData.width, imgData.height)
+            return
+          } catch {
+            // No image in clipboard, fall through to text
+          }
+        }
+
+        // Try text
         let clipText = ''
         if (isTauri()) {
           const { invoke } = await import('@tauri-apps/api/core')
@@ -30,7 +54,6 @@ export default function QrQuick() {
         } else {
           clipText = await navigator.clipboard.readText()
         }
-        // Trim whitespace and validate
         const trimmed = clipText.trim()
         if (!trimmed) {
           setError(t('qrQuick.clipboardEmpty', { defaultValue: '剪贴板为空或包含非文本内容' }))
@@ -77,6 +100,65 @@ export default function QrQuick() {
     }
   }
 
+  /** Decode QR from RGBA canvas data */
+  const decodeQrFromDataUrl = async (dataUrl: string, _w: number, _h: number) => {
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const image = new Image()
+        image.onload = () => resolve(image)
+        image.onerror = reject
+        image.src = dataUrl
+      })
+
+      // Upscale small images for better detection
+      const minSize = 512
+      const scale = Math.max(1, minSize / Math.min(img.width, img.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.width * scale)
+      canvas.height = Math.round(img.height * scale)
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { setError('Canvas not supported'); return }
+
+      ctx.imageSmoothingEnabled = false
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+      // Grayscale + binarize
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const data = imageData.data
+      for (let i = 0; i < data.length; i += 4) {
+        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
+        const bw = gray > 128 ? 255 : 0
+        data[i] = data[i + 1] = data[i + 2] = bw
+      }
+      ctx.putImageData(imageData, 0, 0)
+
+      const processedData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      let code = jsQR(processedData.data, processedData.width, processedData.height)
+
+      // Retry with original if preprocessing didn't help
+      if (!code) {
+        const origCanvas = document.createElement('canvas')
+        origCanvas.width = img.width
+        origCanvas.height = img.height
+        const origCtx = origCanvas.getContext('2d')
+        if (origCtx) {
+          origCtx.drawImage(img, 0, 0)
+          const origData = origCtx.getImageData(0, 0, origCanvas.width, origCanvas.height)
+          code = jsQR(origData.data, origData.width, origData.height)
+        }
+      }
+
+      if (code) {
+        setDecodedText(code.data)
+        setError(null)
+      } else {
+        setError(t('qrQuick.noQrFound', { defaultValue: '未在图片中检测到二维码' }))
+      }
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
   const handleCopyImage = async () => {
     if (!qrDataUrl) return
     try {
@@ -86,16 +168,15 @@ export default function QrQuick() {
       setCopied('img')
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Fallback: copy data URL as text
       await navigator.clipboard.writeText(qrDataUrl)
       setCopied('img')
       setTimeout(() => setCopied(false), 2000)
     }
   }
 
-  const handleCopyText = async () => {
-    if (!text) return
-    await navigator.clipboard.writeText(text)
+  const handleCopyText = async (content: string) => {
+    if (!content) return
+    await navigator.clipboard.writeText(content)
     setCopied('text')
     setTimeout(() => setCopied(false), 2000)
   }
@@ -124,20 +205,25 @@ export default function QrQuick() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-bg-elevated p-4 select-none">
-      {/* Title bar - draggable */}
+    <div className="flex h-screen flex-col bg-bg-elevated px-4 pb-4 select-none">
+      {/* Title bar - draggable (extends to top edge) */}
       <div
-        className="mb-3 flex items-center justify-between cursor-grab"
+        className="mb-3 flex items-center justify-between cursor-grab pt-4"
         data-tauri-drag-region
         onMouseDown={(e) => {
-          // Double-click to close
           if (e.detail === 2) closeWindow()
         }}
       >
         <div className="flex items-center gap-2 pointer-events-none" data-tauri-drag-region>
-          <QrCode size={16} className="text-primary" />
+          {mode === 'generate' ? (
+            <QrCode size={16} className="text-primary" />
+          ) : (
+            <ScanLine size={16} className="text-primary" />
+          )}
           <span className="text-sm font-medium text-text-primary">
-            {t('qrQuick.title', { defaultValue: '快速二维码' })}
+            {mode === 'generate'
+              ? t('qrQuick.title', { defaultValue: '快速二维码' })
+              : t('qrQuick.decodeTitle', { defaultValue: '二维码解析' })}
           </span>
         </div>
         <button
@@ -148,30 +234,41 @@ export default function QrQuick() {
         </button>
       </div>
 
-      {/* QR code */}
+      {/* Content */}
       <div className="flex flex-1 flex-col items-center justify-center">
-        {qrDataUrl ? (
-          <div className="rounded-lg bg-white p-3 shadow-lg">
-            <img src={qrDataUrl} alt="QR Code" className="h-56 w-56" />
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-center">
             <p className="text-sm text-text-muted">{error}</p>
           </div>
+        ) : mode === 'generate' ? (
+          /* Generate mode: show QR */
+          qrDataUrl ? (
+            <div className="rounded-lg bg-white p-3 shadow-lg">
+              <img src={qrDataUrl} alt="QR Code" className="h-56 w-56" />
+            </div>
+          ) : (
+            <LoadingIndicator />
+          )
         ) : (
-          <div className="flex items-center gap-2 text-text-muted">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <span className="text-sm">{t('common.loading', { defaultValue: '加载中...' })}</span>
-          </div>
+          /* Decode mode: show source image */
+          sourceImage ? (
+            <div className="rounded-lg bg-white p-3 shadow-lg">
+              <img src={sourceImage} alt="Source" className="max-h-48 max-w-56 rounded object-contain" />
+            </div>
+          ) : (
+            <LoadingIndicator />
+          )
         )}
       </div>
 
-      {/* Source text */}
-      {text && (
+      {/* Text area */}
+      {(mode === 'generate' ? text : decodedText) && (
         <div className="mb-3 flex items-start gap-2 rounded-lg bg-bg-base p-2">
-          <p className="line-clamp-2 flex-1 text-xs text-text-muted break-all">{text}</p>
+          <p className="line-clamp-3 flex-1 text-xs text-text-muted break-all">
+            {mode === 'generate' ? text : decodedText}
+          </p>
           <button
-            onClick={handleCopyText}
+            onClick={() => handleCopyText(mode === 'generate' ? text : decodedText!)}
             className="shrink-0 rounded p-1 text-text-disabled transition hover:text-primary"
             title={t('qrQuick.copyText', { defaultValue: '复制文本' })}
           >
@@ -181,7 +278,7 @@ export default function QrQuick() {
       )}
 
       {/* Actions */}
-      {qrDataUrl && (
+      {mode === 'generate' && qrDataUrl && (
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={handleCopyImage}
@@ -199,6 +296,42 @@ export default function QrQuick() {
           </button>
         </div>
       )}
+      {mode === 'decode' && decodedText && (
+        <div className="flex items-center justify-center">
+          <button
+            onClick={() => handleCopyText(decodedText)}
+            className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-4 py-2 text-xs font-medium text-primary transition hover:bg-primary/20"
+          >
+            <Copy size={13} />
+            {copied === 'text' ? t('common.copied') : t('qrQuick.copyResult', { defaultValue: '复制解析结果' })}
+          </button>
+        </div>
+      )}
     </div>
   )
+}
+
+function LoadingIndicator() {
+  const { t } = useTranslation()
+  return (
+    <div className="flex items-center gap-2 text-text-muted">
+      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <span className="text-sm">{t('common.loading', { defaultValue: '加载中...' })}</span>
+    </div>
+  )
+}
+
+/** Convert RGBA base64 bytes to a PNG data URL via canvas */
+async function rgbaToDataUrl(base64: string, width: number, height: number): Promise<string> {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')!
+  const imageData = new ImageData(new Uint8ClampedArray(bytes.buffer), width, height)
+  ctx.putImageData(imageData, 0, 0)
+  return canvas.toDataURL('image/png')
 }

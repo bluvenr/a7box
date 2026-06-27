@@ -279,10 +279,8 @@ ${bodyHtml}
     }
   }
 
-  const toggleMode = () => {
-    const next = mode === 'html-to-md' ? 'md-to-html' : 'html-to-md'
+  const switchMode = (next: Mode) => {
     setMode(next)
-    // MD→HTML defaults to preview, HTML→MD defaults to source
     setShowPreview(next === 'md-to-html')
   }
 
@@ -321,17 +319,28 @@ ${bodyHtml}
 
       {/* Mode toggle */}
       <div className="flex items-center gap-2 px-4 pb-2">
-        <button
-          onClick={toggleMode}
-          className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${
-            mode === 'html-to-md'
-              ? 'bg-accent/10 text-accent'
-              : 'bg-primary/10 text-primary'
-          }`}
-        >
-          <ArrowLeftRight className="h-3 w-3" />
-          {mode === 'html-to-md' ? 'HTML → MD' : 'MD → HTML'}
-        </button>
+        <div className="flex overflow-hidden rounded-md border border-border-subtle">
+          <button
+            onClick={() => switchMode('html-to-md')}
+            className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium transition-colors ${
+              mode === 'html-to-md'
+                ? 'bg-accent/10 text-accent'
+                : 'text-text-muted hover:bg-bg-hover'
+            }`}
+          >
+            {t('mdQuick.htmlToMd', { defaultValue: 'HTML 转 MD' })}
+          </button>
+          <button
+            onClick={() => switchMode('md-to-html')}
+            className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium transition-colors ${
+              mode === 'md-to-html'
+                ? 'bg-primary/10 text-primary'
+                : 'text-text-muted hover:bg-bg-hover'
+            }`}
+          >
+            {t('mdQuick.mdToHtml', { defaultValue: 'MD 转 HTML' })}
+          </button>
+        </div>
         <span className="text-[11px] text-text-muted">
           {lines} {t('mdQuick.lines', { defaultValue: '行' })} · {chars} {t('mdQuick.chars', { defaultValue: '字符' })}
         </span>
@@ -393,10 +402,13 @@ ${bodyHtml}
                         : 'text-text-muted hover:bg-bg-hover hover:text-text-secondary'
                     }`}
                     title={outputFullscreen
-                      ? t('mdQuick.exitFullscreen', { defaultValue: '退出全屏' })
-                      : t('mdQuick.fullscreen', { defaultValue: '全屏查看' })}
+                      ? t('mdQuick.exitFullscreen', { defaultValue: '还原分栏' })
+                      : t('mdQuick.fullscreen', { defaultValue: '输出最大化' })}
                   >
                     {outputFullscreen ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
+                    {outputFullscreen
+                      ? t('mdQuick.exitFullscreen', { defaultValue: '还原' })
+                      : t('mdQuick.fullscreen', { defaultValue: '最大化' })}
                   </button>
                   <button
                     onClick={handleCopy}

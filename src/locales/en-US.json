@@ -165,8 +165,10 @@
     "outputLabelHtml": "HTML Output",
     "preview": "Preview",
     "source": "Source",
-    "fullscreen": "Fullscreen",
-    "exitFullscreen": "Exit Fullscreen",
+    "htmlToMd": "HTML to MD",
+    "mdToHtml": "MD to HTML",
+    "fullscreen": "Maximize",
+    "exitFullscreen": "Restore",
     "outputEmpty": "Converted output will appear here"
   },
   "modules": {

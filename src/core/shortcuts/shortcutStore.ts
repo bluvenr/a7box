@@ -56,6 +56,14 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
     enabled: true,
     moduleId: 'markdown-preview',
   },
+  {
+    action: 'clipboard-to-json',
+    labelI18n: 'settings.shortcutClipboardJson',
+    descriptionI18n: 'settings.shortcutClipboardJsonDesc',
+    keys: 'CommandOrControl+Shift+J',
+    enabled: true,
+    moduleId: 'json-formatter',
+  },
 ]
 
 function loadShortcuts(): ShortcutConfig[] {

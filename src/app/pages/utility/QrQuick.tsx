@@ -5,8 +5,9 @@
  * - Text → generate QR code
  * Triggered by global shortcut (Ctrl+Shift+Q).
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import { QrCode, Copy, Download, X, FileText, ScanLine } from 'lucide-react'
 import QRCodeLib from 'qrcode'
 import jsQR from 'jsqr'
@@ -68,14 +69,26 @@ export default function QrQuick() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const closeWindow = async () => {
+  const closeWindow = useCallback(async () => {
     if (isTauri()) {
       try {
         const { invoke } = await import('@tauri-apps/api/core')
         await invoke('close_utility_window', { label: 'qr-quick' })
       } catch { /* ignore */ }
     }
-  }
+  }, [])
+
+  // Double-click title bar to maximize/restore
+  const toggleMaximize = useCallback(async () => {
+    try {
+      const win = getCurrentWindow()
+      if (await win.isMaximized()) {
+        await win.unmaximize()
+      } else {
+        await win.maximize()
+      }
+    } catch { /* ignore in non-Tauri env */ }
+  }, [])
 
   // ESC to close
   useEffect(() => {
@@ -84,7 +97,7 @@ export default function QrQuick() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [closeWindow])
 
   const generateQr = async (content: string) => {
     try {
@@ -208,11 +221,9 @@ export default function QrQuick() {
     <div className="flex h-screen flex-col bg-bg-elevated px-4 pb-4 select-none">
       {/* Title bar - draggable (extends to top edge) */}
       <div
-        className="mb-3 flex items-center justify-between cursor-grab pt-4"
+        className="mb-3 flex cursor-pointer items-center justify-between pt-4"
         data-tauri-drag-region
-        onMouseDown={(e) => {
-          if (e.detail === 2) closeWindow()
-        }}
+        onDoubleClick={toggleMaximize}
       >
         <div className="flex items-center gap-2 pointer-events-none" data-tauri-drag-region>
           {mode === 'generate' ? (
@@ -228,7 +239,7 @@ export default function QrQuick() {
         </div>
         <button
           onClick={closeWindow}
-          className="rounded p-1 text-text-muted transition hover:bg-bg-hover hover:text-text-primary"
+          className="pointer-events-auto rounded p-1 text-text-muted transition hover:bg-bg-hover hover:text-text-primary"
         >
           <X size={14} />
         </button>

@@ -34,6 +34,7 @@ const P2PTransfer = lazy(() => import('../modules/p2p-transfer/P2PTransfer'))
 // Utility windows (standalone, no layout)
 const QrQuick = lazy(() => import('./pages/utility/QrQuick'))
 const MdConvert = lazy(() => import('./pages/utility/MdConvert'))
+const JsonQuick = lazy(() => import('./pages/utility/JsonQuick'))
 
 // Wrap a module component with ErrorBoundary + Suspense
 function ModuleRoute({ moduleId, children }: { moduleId: string; children: React.ReactNode }) {
@@ -62,6 +63,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <MdConvert />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/json-quick',
+    element: (
+      <Suspense fallback={null}>
+        <JsonQuick />
       </Suspense>
     ),
   },

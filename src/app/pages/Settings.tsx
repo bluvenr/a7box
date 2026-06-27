@@ -2,7 +2,7 @@
  * A7Box Settings Page (v2 - with Tauri integration)
  */
 
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSettingsStore, SUPPORTED_LANGUAGES, changeLanguage, useUpdater } from '../../core'
 import { useModuleRegistry } from '../../core/registry'
@@ -46,6 +46,56 @@ export default function Settings() {
   const scrollDeltaRef = useRef<number>(0)
 
   const updater = useUpdater()
+
+  // ─── Tab navigation state ───────────────────────────────────────────────
+  const [activeSection, setActiveSection] = useState('general')
+  const isScrollingRef = useRef(false)
+
+  const navItems: { id: string; label: string; icon: LucideIcon }[] = useMemo(() => {
+    const items: { id: string; label: string; icon: LucideIcon }[] = [
+      { id: 'general', label: t('settings.general'), icon: Globe },
+      { id: 'appearance', label: t('settings.appearance'), icon: Palette },
+      { id: 'modules', label: t('settings.modules'), icon: Box },
+      { id: 'storage', label: t('settings.storageCache', { defaultValue: '存储与缓存' }), icon: Database },
+    ]
+    if (isTauri()) {
+      items.push({ id: 'shortcuts', label: t('settings.shortcuts', { defaultValue: '快捷键' }), icon: Keyboard })
+    }
+    items.push({ id: 'about', label: t('common.about'), icon: Info })
+    return items
+  }, [t])
+
+  const handleNavClick = useCallback((sectionId: string) => {
+    const el = document.getElementById(`settings-${sectionId}`)
+    if (!el) return
+    isScrollingRef.current = true
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setActiveSection(sectionId)
+    setTimeout(() => { isScrollingRef.current = false }, 600)
+  }, [])
+
+  // IntersectionObserver — auto-highlight active tab on scroll
+  useEffect(() => {
+    const root = scrollRef.current
+    if (!root) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isScrollingRef.current) return
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id.replace('settings-', ''))
+            break
+          }
+        }
+      },
+      { root, rootMargin: '0px 0px -50% 0px' }
+    )
+    navItems.forEach(({ id }) => {
+      const el = document.getElementById(`settings-${id}`)
+      if (el) observer.observe(el)
+    })
+    return () => observer.disconnect()
+  }, [navItems])
 
   // Auto-start toggle: sync with Tauri autostart plugin
   const handleAutoStartToggle = async (v: boolean) => {
@@ -122,14 +172,57 @@ export default function Settings() {
   }
 
   return (
-    <div ref={scrollRef} className="h-full overflow-auto p-8">
-      <h1 className="mb-8 text-2xl font-bold text-text-primary">
-        {t('settings.title')}
-      </h1>
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="shrink-0 px-6 pt-6 pb-2">
+        <h1 className="text-2xl font-bold text-text-primary">
+          {t('settings.title')}
+        </h1>
+      </div>
 
-      <div className="max-w-2xl space-y-8">
-        {/* General settings */}
-        <SettingSection title={t('settings.general')} icon={Globe}>
+      {/* Mobile horizontal tabs */}
+      <nav className="flex md:hidden shrink-0 gap-1 px-3 py-2 overflow-x-auto border-b border-border-subtle">
+        {navItems.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => handleNavClick(id)}
+            className={`flex items-center gap-1.5 shrink-0 rounded-md px-3 py-1.5 text-xs transition-colors whitespace-nowrap ${
+              activeSection === id
+                ? 'bg-primary/10 text-primary font-medium'
+                : 'text-text-muted hover:bg-bg-hover hover:text-text-secondary'
+            }`}
+          >
+            <Icon size={13} className="shrink-0" />
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      <div className="flex flex-1 min-h-0">
+        {/* Left tab navigation (desktop) */}
+        <nav className="hidden md:flex shrink-0 flex-col gap-0.5 px-3 py-4 overflow-y-auto border-r border-border-subtle w-[140px]">
+          {navItems.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => handleNavClick(id)}
+              className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors text-left ${
+                activeSection === id
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : 'text-text-muted hover:bg-bg-hover hover:text-text-secondary'
+              }`}
+            >
+              <Icon size={15} className="shrink-0" />
+              <span className="truncate">{label}</span>
+            </button>
+          ))}
+        </nav>
+
+        {/* Right content area */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="max-w-2xl space-y-8">
+            {/* General settings */}
+            <section id="settings-general">
+            <SettingSection title={t('settings.general')} icon={Globe}>
           {/* Language selection */}
           <SettingRow
             label={t('settings.language')}
@@ -184,10 +277,12 @@ export default function Settings() {
               onChange={(v) => settings.updateSetting('checkUpdateOnStart', v)}
             />
           </SettingRow>
-        </SettingSection>
+          </SettingSection>
+            </section>
 
-        {/* Appearance settings */}
-        <SettingSection title={t('settings.appearance')} icon={Palette}>
+            {/* Appearance settings */}
+            <section id="settings-appearance">
+            <SettingSection title={t('settings.appearance')} icon={Palette}>
           <SettingRow label={t('settings.theme')} description={t('settings.themeDesc')}>
             <select
               value={settings.theme}
@@ -215,10 +310,12 @@ export default function Settings() {
             />
             <span className="ml-2 text-sm text-text-muted">{settings.fontSize}px</span>
           </SettingRow>
-        </SettingSection>
+          </SettingSection>
+            </section>
 
-        {/* Module management */}
-        <SettingSection title={t('settings.modules')} icon={Box}>
+            {/* Module management */}
+            <section id="settings-modules">
+            <SettingSection title={t('settings.modules')} icon={Box}>
           <p className="mb-2 flex items-center gap-1.5 text-xs text-text-muted">
             <GripVertical size={12} className="shrink-0" />
             {t('settings.modulesDragHint')}
@@ -365,16 +462,24 @@ export default function Settings() {
           {allModules.length === 0 && (
             <p className="py-4 text-center text-sm text-text-muted">{t('settings.noModules')}</p>
           )}
-        </SettingSection>
+          </SettingSection>
+            </section>
 
-        {/* Storage & Cache */}
-        <StorageCacheSection t={t} />
+            {/* Storage & Cache */}
+            <section id="settings-storage">
+            <StorageCacheSection t={t} />
+            </section>
 
-        {/* Shortcuts */}
-        {isTauri() && <ShortcutsSection t={t} />}
+            {/* Shortcuts */}
+            {isTauri() && (
+              <section id="settings-shortcuts">
+              <ShortcutsSection t={t} />
+              </section>
+            )}
 
-        {/* About & Updates */}
-        <SettingSection title={t('common.about')} icon={Info}>
+            {/* About & Updates */}
+            <section id="settings-about">
+            <SettingSection title={t('common.about')} icon={Info}>
           <div className="space-y-3 text-sm">
             <p className="text-text-secondary">
               <span className="text-text-muted">{t('app.name')}</span> v0.1.0
@@ -394,7 +499,10 @@ export default function Settings() {
               <UpdateSection updater={updater} t={t} />
             </div>
           </div>
-        </SettingSection>
+            </SettingSection>
+            </section>
+          </div>
+        </div>
       </div>
     </div>
   )

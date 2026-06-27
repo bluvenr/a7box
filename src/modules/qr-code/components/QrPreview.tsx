@@ -103,7 +103,7 @@ export function QrPreview({
           <span className="text-xs">
             {t('modules.qrCode.ui.shortcutHint', {
               keys: formatShortcut(shortcutKeys),
-              defaultValue: `复制文本后按 ${formatShortcut(shortcutKeys)} 快速生成二维码`,
+              defaultValue: `Press ${formatShortcut(shortcutKeys)} to quick generate after copying text`,
             })}
           </span>
         </div>

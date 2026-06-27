@@ -517,6 +517,7 @@
         "stopConfirm": "确定要停止此网页服务吗？",
         "browse": "浏览文件夹",
         "dirPlaceholder": "选择文件夹...",
+                "selectDir": "选择文件夹...",
         "portAuto": "自动",
         "selectDirFirst": "请先选择目录",
         "portInvalid": "端口范围 1024-65535",

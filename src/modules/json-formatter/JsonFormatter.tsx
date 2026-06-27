@@ -193,10 +193,10 @@ export default function JsonFormatter() {
   const handleClear = useCallback(async () => {
     if (!input) return
     const ok = await confirm({
-      title: t('modules.jsonFormatter.ui.clearConfirmTitle', { defaultValue: '清空内容' }),
-      message: t('modules.jsonFormatter.ui.clearConfirmMsg', { defaultValue: '将清空编辑器中的所有内容，此操作不可撤销。' }),
-      confirmText: t('common.confirm', { defaultValue: '确认' }),
-      cancelText: t('common.cancel', { defaultValue: '取消' }),
+      title: t('modules.jsonFormatter.ui.clearConfirmTitle', { defaultValue: 'Clear content' }),
+      message: t('modules.jsonFormatter.ui.clearConfirmMsg', { defaultValue: 'This will clear all content in the editor. This cannot be undone.' }),
+      confirmText: t('common.confirm', { defaultValue: 'Confirm' }),
+      cancelText: t('common.cancel', { defaultValue: 'Cancel' }),
       danger: true,
     })
     if (ok) {
@@ -271,7 +271,7 @@ export default function JsonFormatter() {
       const text = await file.text()
       setInput(text)
       validate(text)
-      showToast(t('modules.jsonFormatter.ui.toastFileImported', { defaultValue: '文件已导入' }))
+      showToast(t('modules.jsonFormatter.ui.toastFileImported', { defaultValue: 'File imported' }))
     }
   }, [setInput, validate, showToast, t])
 
@@ -299,7 +299,7 @@ export default function JsonFormatter() {
                 const text = await readTextFile(filePath)
                 setInput(text)
                 validate(text)
-                showToast(t('modules.jsonFormatter.ui.toastFileImported', { defaultValue: '文件已导入' }))
+                showToast(t('modules.jsonFormatter.ui.toastFileImported', { defaultValue: 'File imported' }))
               } catch { /* file read error */ }
             }
           }
@@ -380,7 +380,7 @@ export default function JsonFormatter() {
           <Keyboard size={11} />
           <span>
             {t('modules.jsonFormatter.ui.inWindowShortcuts', {
-              defaultValue: 'Alt+F 格式化 · Alt+M 压缩',
+              defaultValue: 'Alt+F Format · Alt+M Compress',
             })}
           </span>
         </span>
@@ -390,7 +390,7 @@ export default function JsonFormatter() {
             <span>
               {t('modules.jsonFormatter.ui.floatingShortcutHint', {
                 keys: formatShortcut(floatingShortcut),
-                defaultValue: `复制 JSON 后按 ${formatShortcut(floatingShortcut)} 快速格式化`,
+                defaultValue: `Press ${formatShortcut(floatingShortcut)} to quick format after copying JSON`,
               })}
             </span>
           </span>
@@ -411,7 +411,7 @@ export default function JsonFormatter() {
       {isDragOver && (
         <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center border-2 border-dashed border-primary/60 bg-primary/5">
           <div className="rounded-lg bg-bg-elevated px-6 py-4 text-sm font-medium text-primary shadow-lg">
-            {t('modules.jsonFormatter.ui.dropHint', { defaultValue: '拖放 .json 文件到此处' })}
+            {t('modules.jsonFormatter.ui.dropHint', { defaultValue: 'Drop .json file here' })}
           </div>
         </div>
       )}

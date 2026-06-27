@@ -115,14 +115,14 @@ export function Toolbar({
           onClick={isAllFolded ? onUnfoldAll : onFoldAll}
           className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
           title={isAllFolded
-            ? t('modules.jsonFormatter.ui.unfoldAll', { defaultValue: '全部展开' })
-            : t('modules.jsonFormatter.ui.foldAll', { defaultValue: '全部折叠' })}
+            ? t('modules.jsonFormatter.ui.unfoldAll', { defaultValue: 'Expand All' })
+            : t('modules.jsonFormatter.ui.foldAll', { defaultValue: 'Collapse All' })}
         >
           {isAllFolded ? <ChevronsUpDown className="h-3.5 w-3.5" /> : <ChevronsDownUp className="h-3.5 w-3.5" />}
           <span className="hidden sm:inline">
             {isAllFolded
-              ? t('modules.jsonFormatter.ui.unfoldAll', { defaultValue: '展开' })
-              : t('modules.jsonFormatter.ui.foldAll', { defaultValue: '折叠' })}
+              ? t('modules.jsonFormatter.ui.unfoldAll', { defaultValue: 'Expand' })
+              : t('modules.jsonFormatter.ui.foldAll', { defaultValue: 'Collapse' })}
           </span>
         </button>
       )}

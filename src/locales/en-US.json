@@ -517,6 +517,7 @@
         "stopConfirm": "Are you sure you want to stop this web service?",
         "browse": "Browse Folder",
         "dirPlaceholder": "Select a folder...",
+                "selectDir": "Select folder...",
         "portAuto": "Auto",
         "selectDirFirst": "Please select a directory first",
         "portInvalid": "Port range: 1024-65535",

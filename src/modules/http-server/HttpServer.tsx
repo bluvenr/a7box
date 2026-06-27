@@ -119,17 +119,17 @@ export default function HttpServer() {
           startingDirRef.current = dir
           const alreadyRunning = list.some((i: HttpInstanceInfo) => i.directory === dir)
           if (alreadyRunning) {
-            toast(t('modules.httpServer.ui.alreadyRunning', { defaultValue: '该目录的网页服务已在运行中' }), 'info')
+            toast(t('modules.httpServer.ui.alreadyRunning', { defaultValue: 'Web service is already running for this directory' }), 'info')
           } else {
             const info = await httpStartServer(dir, undefined)
             if (info) {
               addInstance(info)
               setHighlightId(info.id)
               setTimeout(() => setHighlightId(null), 2500)
-              toast(t('modules.httpServer.ui.started', { defaultValue: '网页服务已启动' }))
+              toast(t('modules.httpServer.ui.started', { defaultValue: 'Web service started' }))
             } else {
               setDirectory(dir)
-              toast(t('modules.httpServer.ui.startFailed', { defaultValue: '启动失败' }), 'error')
+              toast(t('modules.httpServer.ui.startFailed', { defaultValue: 'Failed to start' }), 'error')
             }
           }
           startingDirRef.current = null
@@ -162,22 +162,22 @@ export default function HttpServer() {
           const alreadyRunning = list.some((i: HttpInstanceInfo) => i.directory === dir)
           if (alreadyRunning) {
             if (list.length > 0) setInstances(list)
-            toast(t('modules.httpServer.ui.alreadyRunning', { defaultValue: '该目录的网页服务已在运行中' }), 'info')
+            toast(t('modules.httpServer.ui.alreadyRunning', { defaultValue: 'Web service is already running for this directory' }), 'info')
           } else {
             const info = await httpStartServer(dir, undefined)
             if (info) {
               addInstance(info)
               setHighlightId(info.id)
               setTimeout(() => setHighlightId(null), 2500)
-              toast(t('modules.httpServer.ui.started', { defaultValue: '网页服务已启动' }))
+              toast(t('modules.httpServer.ui.started', { defaultValue: 'Web service started' }))
             } else {
               setDirectory(dir)
-              toast(t('modules.httpServer.ui.startFailed', { defaultValue: '启动失败' }), 'error')
+              toast(t('modules.httpServer.ui.startFailed', { defaultValue: 'Failed to start' }), 'error')
             }
           }
         } catch {
           setDirectory(dir)
-          toast(t('modules.httpServer.ui.startFailed', { defaultValue: '启动失败' }), 'error')
+          toast(t('modules.httpServer.ui.startFailed', { defaultValue: 'Failed to start' }), 'error')
         }
         setStarting(false)
         startingDirRef.current = null
@@ -210,7 +210,7 @@ export default function HttpServer() {
     if (!port.trim()) return ''
     const n = Number(port)
     if (!Number.isInteger(n) || n < 1024 || n > 65535) {
-      return t('modules.httpServer.ui.portInvalid', { defaultValue: '端口范围 1024-65535' })
+      return t('modules.httpServer.ui.portInvalid', { defaultValue: 'Port range 1024-65535' })
     }
     return ''
   })()
@@ -218,7 +218,7 @@ export default function HttpServer() {
   // ── Start a new server instance ──
   const handleStart = useCallback(async () => {
     if (!directory.trim()) {
-      toast(t('modules.httpServer.ui.selectDirFirst', { defaultValue: '请先选择目录' }), 'error')
+      toast(t('modules.httpServer.ui.selectDirFirst', { defaultValue: 'Please select a directory first' }), 'error')
       return
     }
     setStarting(true)
@@ -234,13 +234,13 @@ export default function HttpServer() {
         addInstance(info)
         setDirectory('')
         setPort('')
-        toast(t('modules.httpServer.ui.started', { defaultValue: '网页服务已启动' }))
+        toast(t('modules.httpServer.ui.started', { defaultValue: 'Web service started' }))
       } else {
-        toast(t('modules.httpServer.ui.startFailed', { defaultValue: '启动失败' }), 'error')
+        toast(t('modules.httpServer.ui.startFailed', { defaultValue: 'Failed to start' }), 'error')
       }
     } catch (e) {
       console.error('[HttpServer] Start error:', e)
-      toast(t('modules.httpServer.ui.startFailed', { defaultValue: '启动失败' }), 'error')
+      toast(t('modules.httpServer.ui.startFailed', { defaultValue: 'Failed to start' }), 'error')
     }
     setStarting(false)
   }, [directory, port, portError, addInstance, toast, t])
@@ -248,11 +248,11 @@ export default function HttpServer() {
   // ── Stop an instance (with fade-out animation) ──
   const handleStop = useCallback(async (inst: HttpInstanceInfo) => {
     const ok = await confirm({
-      title: t('modules.httpServer.ui.stopServer', { defaultValue: '停止服务' }),
-      message: t('modules.httpServer.ui.stopConfirm', { defaultValue: '确定要停止此网页服务吗？' }),
+      title: t('modules.httpServer.ui.stopServer', { defaultValue: 'Stop service' }),
+      message: t('modules.httpServer.ui.stopConfirm', { defaultValue: 'Are you sure you want to stop this web service?' }),
       detail: `${inst.directory} (端口 ${inst.port})`,
-      confirmText: t('common.confirm', { defaultValue: '确认' }),
-      cancelText: t('common.cancel', { defaultValue: '取消' }),
+      confirmText: t('common.confirm', { defaultValue: 'Confirm' }),
+      cancelText: t('common.cancel', { defaultValue: 'Cancel' }),
       danger: true,
     })
     if (!ok) return
@@ -274,20 +274,20 @@ export default function HttpServer() {
       saveHistory(next)
       return next
     })
-    toast(t('modules.httpServer.ui.stopped', { defaultValue: '服务已停止' }))
+    toast(t('modules.httpServer.ui.stopped', { defaultValue: 'Service stopped' }))
   }, [confirm, removeInstance, toast, t])
 
   // ── Stop all instances ──
   const handleStopAll = useCallback(async () => {
     if (instances.length === 0) return
     const ok = await confirm({
-      title: t('modules.httpServer.ui.stopAll', { defaultValue: '停止全部' }),
+      title: t('modules.httpServer.ui.stopAll', { defaultValue: 'Stop all' }),
       message: t('modules.httpServer.ui.stopAllConfirm', {
-        defaultValue: '确定要停止全部 {{count}} 个网页服务吗？',
+        defaultValue: 'Are you sure you want to stop all {{count}} web services?',
         count: instances.length,
       }),
-      confirmText: t('common.confirm', { defaultValue: '确认' }),
-      cancelText: t('common.cancel', { defaultValue: '取消' }),
+      confirmText: t('common.confirm', { defaultValue: 'Confirm' }),
+      cancelText: t('common.cancel', { defaultValue: 'Cancel' }),
       danger: true,
     })
     if (!ok) return
@@ -322,7 +322,7 @@ export default function HttpServer() {
       })
     }
     toast(t('modules.httpServer.ui.stoppedAll', {
-      defaultValue: '已停止 {{count}} 个服务',
+      defaultValue: 'Stopped {{count}} services',
       count: newItems.length,
     }))
   }, [instances, confirm, removeInstance, toast, t])
@@ -330,7 +330,7 @@ export default function HttpServer() {
   // ── Copy URL ──
   const handleCopyUrl = useCallback(async (url: string) => {
     await navigator.clipboard.writeText(url)
-    toast(t('common.copied', { defaultValue: '已复制' }))
+    toast(t('common.copied', { defaultValue: 'Copied' }))
   }, [toast, t])
 
   // ── Dismiss guide ──
@@ -366,7 +366,7 @@ export default function HttpServer() {
           saveHistory(next)
           return next
         })
-        toast(t('modules.httpServer.ui.started', { defaultValue: '网页服务已启动' }))
+        toast(t('modules.httpServer.ui.started', { defaultValue: 'Web service started' }))
         return
       }
     } catch {
@@ -384,13 +384,13 @@ export default function HttpServer() {
           saveHistory(next)
           return next
         })
-        toast(t('modules.httpServer.ui.restartedNewPort', { defaultValue: '原端口已被占用，已使用新端口启动' }))
+        toast(t('modules.httpServer.ui.restartedNewPort', { defaultValue: 'Original port was occupied, using new port' }))
       } else {
-        toast(t('modules.httpServer.ui.startFailed', { defaultValue: '启动失败' }), 'error')
+        toast(t('modules.httpServer.ui.startFailed', { defaultValue: 'Failed to start' }), 'error')
       }
     } catch (e) {
       console.error('[HttpServer] Restart error:', e)
-      toast(t('modules.httpServer.ui.startFailed', { defaultValue: '启动失败' }), 'error')
+      toast(t('modules.httpServer.ui.startFailed', { defaultValue: 'Failed to start' }), 'error')
     }
   }, [addInstance, toast, t])
 
@@ -430,7 +430,7 @@ export default function HttpServer() {
               onClick={openGuide}
               className="text-[11px] text-primary/70 hover:text-primary cursor-pointer transition shrink-0"
             >
-              {t('modules.httpServer.ui.guide.title', { defaultValue: '快速上手' })} →
+              {t('modules.httpServer.ui.guide.title', { defaultValue: 'Quick Start' })} →
             </button>
           </div>
         </div>
@@ -441,13 +441,13 @@ export default function HttpServer() {
         <div ref={guideRef} className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-5 guide-section">
           <div className="flex items-start justify-between mb-3">
             <h3 className="text-sm font-semibold text-primary">
-              {t('modules.httpServer.ui.guide.title', { defaultValue: '快速上手' })}
+              {t('modules.httpServer.ui.guide.title', { defaultValue: 'Quick Start' })}
             </h3>
             <button onClick={dismissGuide} className="text-text-muted hover:text-text-primary text-xs cursor-pointer">✕</button>
           </div>
           <p className="text-xs text-text-secondary mb-4 leading-relaxed">
             {t('modules.httpServer.ui.guide.intro', {
-              defaultValue: '为你的任意文件夹快速创建一个局域网网站，让同事或同学通过浏览器直接访问其中的文件。适合分享 HTML 原型、项目文档或临时资料。',
+              defaultValue: 'Quickly create a LAN website for any folder, letting colleagues access files via browser. Great for sharing HTML prototypes, docs, or temporary files.',
             })}
           </p>
           <div className="space-y-3">
@@ -455,7 +455,7 @@ export default function HttpServer() {
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">1</span>
               <div>
                 <p className="text-xs font-medium text-text-primary">
-                  {t('modules.httpServer.ui.guide.step1', { defaultValue: '选择要分享的文件夹' })}
+                  {t('modules.httpServer.ui.guide.step1', { defaultValue: 'Select the folder to share' })}
                 </p>
               </div>
             </div>
@@ -463,7 +463,7 @@ export default function HttpServer() {
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">2</span>
               <div>
                 <p className="text-xs font-medium text-text-primary">
-                  {t('modules.httpServer.ui.guide.step2', { defaultValue: '点击启动服务，自动生成端口和访问地址' })}
+                  {t('modules.httpServer.ui.guide.step2', { defaultValue: 'Click start, port and URL are auto-generated' })}
                 </p>
               </div>
             </div>
@@ -471,7 +471,7 @@ export default function HttpServer() {
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">3</span>
               <div>
                 <p className="text-xs font-medium text-text-primary">
-                  {t('modules.httpServer.ui.guide.step3', { defaultValue: '把访问地址发给小伙伴，或扫码即可浏览' })}
+                  {t('modules.httpServer.ui.guide.step3', { defaultValue: 'Share the URL or scan QR to browse' })}
                 </p>
               </div>
             </div>
@@ -479,7 +479,7 @@ export default function HttpServer() {
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">4</span>
               <div>
                 <p className="text-xs font-medium text-text-primary">
-                  {t('modules.httpServer.ui.guide.step4', { defaultValue: '小技巧：在文件夹上右键可直接“开启网页服务”，无需打开应用' })}
+                  {t('modules.httpServer.ui.guide.step4', { defaultValue: 'Tip: Right-click a folder to start web service without opening the app' })}
                 </p>
               </div>
             </div>
@@ -493,7 +493,7 @@ export default function HttpServer() {
           {/* Directory picker */}
           <div className="flex-1 min-w-[200px]">
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-text-muted">
-              {t('modules.httpServer.ui.directory', { defaultValue: '目录' })}
+              {t('modules.httpServer.ui.directory', { defaultValue: 'Directory' })}
             </label>
             <button
               type="button"
@@ -506,7 +506,7 @@ export default function HttpServer() {
             >
               <FolderOpen size={16} className="shrink-0" />
               <span className="truncate">
-                {directory || t('modules.httpServer.ui.selectDir', { defaultValue: '选择文件夹...' })}
+                {directory || t('modules.httpServer.ui.selectDir', { defaultValue: 'Select folder...' })}
               </span>
             </button>
           </div>
@@ -514,7 +514,7 @@ export default function HttpServer() {
           {/* Port (optional) */}
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-text-muted">
-              {t('modules.httpServer.ui.port', { defaultValue: '端口' })}
+              {t('modules.httpServer.ui.port', { defaultValue: 'Port' })}
             </label>
             <input
               type="number"
@@ -522,7 +522,7 @@ export default function HttpServer() {
               max={65535}
               value={port}
               onChange={(e) => setPort(e.target.value)}
-              placeholder={t('modules.httpServer.ui.portAuto', { defaultValue: '自动' })}
+              placeholder={t('modules.httpServer.ui.portAuto', { defaultValue: 'Auto' })}
               className={`w-28 rounded-lg border bg-bg-base px-3 py-2 text-sm outline-none transition ${
                 portError
                   ? 'border-red-400 text-red-400 focus:border-red-500'
@@ -545,7 +545,7 @@ export default function HttpServer() {
             ) : (
               <Play size={14} />
             )}
-            {t('modules.httpServer.ui.start', { defaultValue: '启动服务' })}
+            {t('modules.httpServer.ui.start', { defaultValue: 'Start service' })}
           </button>
         </div>
       </div>
@@ -557,7 +557,7 @@ export default function HttpServer() {
             <div className="flex items-center gap-2 text-xs text-text-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
               <span>{t('modules.httpServer.ui.runningCount', {
-                defaultValue: '{{count}} 个运行中',
+                defaultValue: '{{count}} running',
                 count: instances.length,
               })}</span>
             </div>
@@ -568,7 +568,7 @@ export default function HttpServer() {
                 className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-text-muted transition hover:bg-danger/10 hover:text-danger cursor-pointer"
               >
                 <Square size={11} className="fill-current" />
-                {t('modules.httpServer.ui.stopAll', { defaultValue: '停止全部' })}
+                {t('modules.httpServer.ui.stopAll', { defaultValue: 'Stop all' })}
               </button>
             )}
           </div>
@@ -594,17 +594,17 @@ export default function HttpServer() {
           <div className="rounded-xl border-2 border-dashed border-border-subtle bg-bg-elevated/50 p-10 text-center">
             <WifiOff size={32} className="mx-auto mb-3 text-text-disabled" />
             <p className="text-sm text-text-muted">
-              {t('modules.httpServer.ui.noServers', { defaultValue: '暂无运行中的网页服务' })}
+              {t('modules.httpServer.ui.noServers', { defaultValue: 'No web services running' })}
             </p>
             <p className="mt-1 text-xs text-text-disabled">
-              {t('modules.httpServer.ui.noServersHint', { defaultValue: '选择目录并点击启动服务开始' })}
+              {t('modules.httpServer.ui.noServersHint', { defaultValue: 'Select a directory and click start' })}
             </p>
             {!showGuide && (
               <button
                 onClick={openGuide}
                 className="mt-3 text-xs text-text-muted hover:text-primary cursor-pointer transition"
               >
-                {t('modules.httpServer.ui.viewGuide', { defaultValue: '查看使用指南' })} →
+                {t('modules.httpServer.ui.viewGuide', { defaultValue: 'View guide' })} →
               </button>
             )}
           </div>
@@ -617,7 +617,7 @@ export default function HttpServer() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-                {t('modules.httpServer.ui.recentHistory', { defaultValue: '最近使用' })}
+                {t('modules.httpServer.ui.recentHistory', { defaultValue: 'Recent' })}
               </h3>
               <span className="text-[10px] text-text-disabled">({recentHistory.length})</span>
             </div>
@@ -626,7 +626,7 @@ export default function HttpServer() {
               className="flex items-center gap-1 text-[11px] text-text-disabled hover:text-red-400 cursor-pointer transition"
             >
               <Trash2 size={11} />
-              {t('modules.httpServer.ui.clearHistory', { defaultValue: '清除' })}
+              {t('modules.httpServer.ui.clearHistory', { defaultValue: 'Clear' })}
             </button>
           </div>
           <div className="space-y-2">
@@ -641,21 +641,21 @@ export default function HttpServer() {
                     {item.directory}
                   </p>
                   <p className="text-[10px] text-text-disabled">
-                    :{item.port} · {t('modules.httpServer.ui.historyStopped', { defaultValue: '已停止' })}
+                    :{item.port} · {t('modules.httpServer.ui.historyStopped', { defaultValue: 'Stopped' })}
                   </p>
                 </div>
                 <button
                   onClick={() => handleRestart(item)}
                   className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-green-500/70 hover:text-green-500 hover:bg-green-500/10 transition cursor-pointer"
-                  title={t('modules.httpServer.ui.restart', { defaultValue: '重新启动' })}
+                  title={t('modules.httpServer.ui.restart', { defaultValue: 'Restart' })}
                 >
                   <RotateCcw size={12} />
-                  <span className="hidden sm:inline">{t('modules.httpServer.ui.restart', { defaultValue: '重启' })}</span>
+                  <span className="hidden sm:inline">{t('modules.httpServer.ui.restart', { defaultValue: 'Restart' })}</span>
                 </button>
                 <button
                   onClick={() => removeHistoryItem(i)}
                   className="rounded-md p-1 text-text-disabled hover:text-red-400 hover:bg-red-500/10 transition cursor-pointer"
-                  title={t('common.delete', { defaultValue: '删除' })}
+                  title={t('common.delete', { defaultValue: 'Delete' })}
                 >
                   <Trash2 size={12} />
                 </button>
@@ -722,7 +722,7 @@ function InstanceCard({
           <div className="flex items-center gap-2 mb-1">
             <Wifi size={13} className="text-green-400 shrink-0" />
             <span className="text-xs font-semibold text-green-400">
-              {t('modules.httpServer.ui.instanceRunning', { defaultValue: '运行中' })}
+              {t('modules.httpServer.ui.instanceRunning', { defaultValue: 'Running' })}
               <span className="text-text-muted font-normal ml-1">· 端口 {inst.port}</span>
             </span>
           </div>
@@ -733,10 +733,10 @@ function InstanceCard({
         <button
           onClick={() => onStop(inst)}
           className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-text-muted hover:text-red-400 hover:bg-red-500/10 transition cursor-pointer"
-          title={t('modules.httpServer.ui.stop', { defaultValue: '停止' })}
+          title={t('modules.httpServer.ui.stop', { defaultValue: 'Stop' })}
         >
           <Square size={12} />
-          <span className="hidden sm:inline">{t('modules.httpServer.ui.stop', { defaultValue: '停止' })}</span>
+          <span className="hidden sm:inline">{t('modules.httpServer.ui.stop', { defaultValue: 'Stop' })}</span>
         </button>
       </div>
 
@@ -750,14 +750,14 @@ function InstanceCard({
           className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-text-secondary hover:text-primary transition cursor-pointer"
         >
           <Copy size={12} />
-          {t('modules.httpServer.ui.copy', { defaultValue: '复制' })}
+          {t('modules.httpServer.ui.copy', { defaultValue: 'Copy' })}
         </button>
         <button
           onClick={toggleQr}
           className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-text-secondary hover:text-primary transition cursor-pointer"
         >
           <QrCode size={12} />
-          {t('modules.httpServer.ui.qr', { defaultValue: '二维码' })}
+          {t('modules.httpServer.ui.qr', { defaultValue: 'QR Code' })}
           {isQrExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         </button>
       </div>

@@ -221,7 +221,7 @@ export default function JsonQuick() {
         }
         const trimmed = clipText.trim()
         if (!trimmed) {
-          setError(t('jsonQuick.clipboardEmpty', { defaultValue: '剪贴板为空' }))
+          setError(t('jsonQuick.clipboardEmpty', { defaultValue: 'Clipboard is empty' }))
           return
         }
         setInput(trimmed)
@@ -233,7 +233,7 @@ export default function JsonQuick() {
           setError((e as Error).message)
         }
       } catch {
-        setError(t('jsonQuick.clipboardError', { defaultValue: '无法读取剪贴板' }))
+        setError(t('jsonQuick.clipboardError', { defaultValue: 'Failed to read clipboard' }))
       }
     })()
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -337,7 +337,7 @@ export default function JsonQuick() {
         <div className="pointer-events-none flex items-center gap-2" data-tauri-drag-region>
           <Sparkles className="h-4 w-4 text-primary" />
           <span className="text-sm font-medium">
-            {t('jsonQuick.title', { defaultValue: 'JSON 快速格式化' })}
+            {t('jsonQuick.title', { defaultValue: 'JSON Quick Format' })}
           </span>
         </div>
         <button
@@ -358,7 +358,7 @@ export default function JsonQuick() {
               {error}
             </p>
             <p className="text-xs text-text-muted">
-              {t('jsonQuick.invalidHint', { defaultValue: '剪贴板内容不是有效的 JSON' })}
+              {t('jsonQuick.invalidHint', { defaultValue: 'Clipboard content is not valid JSON' })}
             </p>
           </div>
         ) : (
@@ -375,7 +375,7 @@ export default function JsonQuick() {
                   }`}
                 >
                   <Sparkles className="h-3 w-3" />
-                  {t('jsonQuick.format', { defaultValue: '格式化' })}
+                  {t('jsonQuick.format', { defaultValue: 'Format' })}
                 </button>
                 <button
                   onClick={() => setMode('compress')}
@@ -386,15 +386,15 @@ export default function JsonQuick() {
                   }`}
                 >
                   <Minimize2 className="h-3 w-3" />
-                  {t('jsonQuick.compress', { defaultValue: '压缩' })}
+                  {t('jsonQuick.compress', { defaultValue: 'Compress' })}
                 </button>
               </div>
 
               {stats && (
                 <span className="text-[11px] text-text-muted">
                   {mode === 'format'
-                    ? `${stats.formattedLines} ${t('jsonQuick.lines', { defaultValue: '行' })}`
-                    : `${stats.compressedLen} ${t('jsonQuick.chars', { defaultValue: '字符' })}`}
+                    ? `${stats.formattedLines} ${t('jsonQuick.lines', { defaultValue: 'lines' })}`
+                    : `${stats.compressedLen} ${t('jsonQuick.chars', { defaultValue: 'chars' })}`}
                 </span>
               )}
 
@@ -405,14 +405,14 @@ export default function JsonQuick() {
                   onClick={handleExpandAll}
                   className="flex items-center gap-1 rounded px-1.5 py-1 text-text-muted transition hover:bg-bg-hover hover:text-text-primary"
                   title={expandAll
-                    ? t('jsonQuick.collapseAll', { defaultValue: '全部折叠' })
-                    : t('jsonQuick.expandAll', { defaultValue: '全部展开' })}
+                    ? t('jsonQuick.collapseAll', { defaultValue: 'Collapse All' })
+                    : t('jsonQuick.expandAll', { defaultValue: 'Expand All' })}
                 >
                   {expandAll ? <ChevronsDownUp size={13} /> : <ChevronsUpDown size={13} />}
                   <span className="text-[11px]">
                     {expandAll
-                      ? t('jsonQuick.collapseAll', { defaultValue: '折叠' })
-                      : t('jsonQuick.expandAll', { defaultValue: '展开' })}
+                      ? t('jsonQuick.collapseAll', { defaultValue: 'Collapse' })
+                      : t('jsonQuick.expandAll', { defaultValue: 'Expand' })}
                   </span>
                 </button>
               )}
@@ -427,9 +427,9 @@ export default function JsonQuick() {
                 } disabled:opacity-40 disabled:cursor-not-allowed`}
               >
                 {copied ? (
-                  <><Check className="h-3.5 w-3.5" /> {t('jsonQuick.copied', { defaultValue: '已复制' })}</>
+                  <><Check className="h-3.5 w-3.5" /> {t('jsonQuick.copied', { defaultValue: 'Copied' })}</>
                 ) : (
-                  <><Copy className="h-3.5 w-3.5" /> {t('jsonQuick.copy', { defaultValue: '复制' })}</>
+                  <><Copy className="h-3.5 w-3.5" /> {t('jsonQuick.copy', { defaultValue: 'Copy' })}</>
                 )}
               </button>
             </div>

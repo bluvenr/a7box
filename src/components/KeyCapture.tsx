@@ -98,7 +98,7 @@ export function KeyCapture({ value, onChange, onCancel }: KeyCaptureProps) {
         <div className="flex items-center gap-1.5 rounded-md border border-primary bg-primary/10 px-2.5 py-1">
           <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
           <span className="text-xs font-mono text-primary">
-            {preview ? formatShortcut(preview) : t('settings.shortcutsCapture', { defaultValue: '按下组合键...' })}
+            {preview ? formatShortcut(preview) : t('settings.shortcutsCapture', { defaultValue: 'Press shortcut...' })}
           </span>
         </div>
       ) : (

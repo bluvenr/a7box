@@ -168,7 +168,7 @@ export function DecodePanel({
               {t('modules.qrCode.ui.decodeSupportedFormats')}
             </p>
             <p className="mt-1 text-xs text-text-muted">
-              {t('modules.qrCode.ui.decodePasteHint', { defaultValue: '也可按 Ctrl+V 粘贴二维码图片' })}
+              {t('modules.qrCode.ui.decodePasteHint', { defaultValue: 'Or press Ctrl+V to paste QR image' })}
             </p>
           </>
         )}
@@ -214,7 +214,7 @@ export function DecodePanel({
           <span className="text-xs">
             {t('modules.qrCode.ui.decodeShortcutHint', {
               keys: formatShortcut(shortcutKeys),
-              defaultValue: `复制二维码图片后按 ${formatShortcut(shortcutKeys)} 快速解析`,
+              defaultValue: `Press ${formatShortcut(shortcutKeys)} to quick decode after copying QR image`,
             })}
           </span>
         </div>

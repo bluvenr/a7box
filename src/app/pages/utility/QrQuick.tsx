@@ -57,13 +57,13 @@ export default function QrQuick() {
         }
         const trimmed = clipText.trim()
         if (!trimmed) {
-          setError(t('qrQuick.clipboardEmpty', { defaultValue: '剪贴板为空或包含非文本内容' }))
+          setError(t('qrQuick.clipboardEmpty', { defaultValue: 'Clipboard is empty or contains non-text content' }))
           return
         }
         setText(trimmed)
         await generateQr(trimmed)
       } catch {
-        setError(t('qrQuick.clipboardEmpty', { defaultValue: '剪贴板为空或包含非文本内容' }))
+        setError(t('qrQuick.clipboardEmpty', { defaultValue: 'Clipboard is empty or contains non-text content' }))
       }
     })()
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,7 +165,7 @@ export default function QrQuick() {
         setDecodedText(code.data)
         setError(null)
       } else {
-        setError(t('qrQuick.noQrFound', { defaultValue: '未在图片中检测到二维码' }))
+        setError(t('qrQuick.noQrFound', { defaultValue: 'No QR code detected in image' }))
       }
     } catch (e) {
       setError((e as Error).message)
@@ -233,8 +233,8 @@ export default function QrQuick() {
           )}
           <span className="text-sm font-medium text-text-primary">
             {mode === 'generate'
-              ? t('qrQuick.title', { defaultValue: '快速二维码' })
-              : t('qrQuick.decodeTitle', { defaultValue: '二维码解析' })}
+              ? t('qrQuick.title', { defaultValue: 'Quick QR Code' })
+              : t('qrQuick.decodeTitle', { defaultValue: 'QR Decode' })}
           </span>
         </div>
         <button
@@ -281,7 +281,7 @@ export default function QrQuick() {
           <button
             onClick={() => handleCopyText(mode === 'generate' ? text : decodedText!)}
             className="shrink-0 rounded p-1 text-text-disabled transition hover:text-primary"
-            title={t('qrQuick.copyText', { defaultValue: '复制文本' })}
+            title={t('qrQuick.copyText', { defaultValue: 'Copy text' })}
           >
             {copied === 'text' ? <Copy size={12} className="text-success" /> : <FileText size={12} />}
           </button>
@@ -296,14 +296,14 @@ export default function QrQuick() {
             className="flex items-center gap-1.5 rounded-lg bg-bg-base px-3 py-2 text-xs font-medium text-text-secondary transition hover:bg-bg-hover"
           >
             <Copy size={13} />
-            {copied === 'img' ? t('common.copied') : t('qrQuick.copyImage', { defaultValue: '复制图片' })}
+            {copied === 'img' ? t('common.copied') : t('qrQuick.copyImage', { defaultValue: 'Copy image' })}
           </button>
           <button
             onClick={handleDownload}
             className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary transition hover:bg-primary/20"
           >
             <Download size={13} />
-            {t('qrQuick.download', { defaultValue: '下载' })}
+            {t('qrQuick.download', { defaultValue: 'Download' })}
           </button>
         </div>
       )}
@@ -314,7 +314,7 @@ export default function QrQuick() {
             className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-4 py-2 text-xs font-medium text-primary transition hover:bg-primary/20"
           >
             <Copy size={13} />
-            {copied === 'text' ? t('common.copied') : t('qrQuick.copyResult', { defaultValue: '复制解析结果' })}
+            {copied === 'text' ? t('common.copied') : t('qrQuick.copyResult', { defaultValue: 'Copy result' })}
           </button>
         </div>
       )}
@@ -327,7 +327,7 @@ function LoadingIndicator() {
   return (
     <div className="flex items-center gap-2 text-text-muted">
       <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      <span className="text-sm">{t('common.loading', { defaultValue: '加载中...' })}</span>
+      <span className="text-sm">{t('common.loading', { defaultValue: 'Loading...' })}</span>
     </div>
   )
 }

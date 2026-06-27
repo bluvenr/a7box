@@ -553,7 +553,7 @@ export default function MarkdownPreview() {
             <span>
               {t('modules.markdownPreview.ui.shortcutHint', {
                 keys: formatShortcut(shortcutKeys),
-                defaultValue: `复制内容后按 ${formatShortcut(shortcutKeys)} 快速格式转换`,
+                defaultValue: `Press ${formatShortcut(shortcutKeys)} to quick convert`,
               })}
             </span>
           </span>

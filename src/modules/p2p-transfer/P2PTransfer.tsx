@@ -280,8 +280,8 @@ export default function P2PTransfer() {
         title: t('modules.p2p.ui.incomingFile'),
         message: `${data.filename} (${formatSize(data.size)})`,
         detail: `${data.peer_alias} (${data.peer_code})`,
-        confirmText: t('modules.p2p.ui.accept', { defaultValue: '接受' }),
-        cancelText: t('modules.p2p.ui.reject', { defaultValue: '拒绝' }),
+        confirmText: t('modules.p2p.ui.accept', { defaultValue: 'Accept' }),
+        cancelText: t('modules.p2p.ui.reject', { defaultValue: 'Reject' }),
       }).then(accepted => {
         if (accepted) p2pAcceptTransfer(data.transfer_id)
         else p2pRejectTransfer(data.transfer_id)
@@ -436,8 +436,8 @@ export default function P2PTransfer() {
   const handleToggleShared = useCallback(async (enabled: boolean) => {
     if (enabled && !sharedDir) {
       await alert({
-        title: t('modules.p2p.ui.sharedDir', { defaultValue: '共享目录' }),
-        message: t('modules.p2p.ui.selectDir', { defaultValue: '请先选择共享目录' }),
+        title: t('modules.p2p.ui.sharedDir', { defaultValue: 'Shared directory' }),
+        message: t('modules.p2p.ui.selectDir', { defaultValue: 'Please select a shared directory first' }),
         icon: 'warning',
       })
       return
@@ -530,10 +530,10 @@ export default function P2PTransfer() {
 
   const handleClearHistory = useCallback(async () => {
     const ok = await confirm({
-      title: t('modules.p2p.ui.clearHistory', { defaultValue: '清空记录' }),
-      message: t('modules.p2p.ui.clearHistoryConfirm', { defaultValue: '确定要清空所有传输记录吗？此操作不可撤销。' }),
-      confirmText: t('common.confirm', { defaultValue: '确认' }),
-      cancelText: t('common.cancel', { defaultValue: '取消' }),
+      title: t('modules.p2p.ui.clearHistory', { defaultValue: 'Clear history' }),
+      message: t('modules.p2p.ui.clearHistoryConfirm', { defaultValue: 'Are you sure to clear all transfer history? This cannot be undone.' }),
+      confirmText: t('common.confirm', { defaultValue: 'Confirm' }),
+      cancelText: t('common.cancel', { defaultValue: 'Cancel' }),
       danger: true,
     })
     if (ok) setTransfers([])
@@ -596,7 +596,7 @@ export default function P2PTransfer() {
                   }
                 }}
                   className="text-[11px] text-primary/70 hover:text-primary cursor-pointer transition shrink-0">
-                  {t('modules.p2p.ui.guide.title', { defaultValue: '快速上手' })} →
+                  {t('modules.p2p.ui.guide.title', { defaultValue: 'Quick Start' })} →
                 </button>
               </div>
             </div>
@@ -740,7 +740,7 @@ export default function P2PTransfer() {
             <button onClick={dismissGuide} className="text-xs text-text-muted hover:text-text-primary cursor-pointer">{t('modules.p2p.ui.guide.skip')}</button>
           </div>
           <p className="text-xs text-text-secondary mb-4 leading-relaxed">
-            {t('modules.p2p.ui.guide.intro', { defaultValue: '在同一网络（WiFi/网线）下的设备之间互相传输文件，无需 U 盘、无需联网。支持电脑之间、电脑与手机之间传输。' })}
+            {t('modules.p2p.ui.guide.intro', { defaultValue: 'Transfer files between devices on the same network (WiFi/Ethernet). No USB, no internet needed. Supports PC-to-PC and PC-to-phone.' })}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
@@ -962,7 +962,7 @@ export default function P2PTransfer() {
                           )}
                           <span className="text-xs font-bold text-primary">{tr.progress.toFixed(0)}%</span>
                           <button onClick={() => p2pCancelTransfer(tr.id)}
-                            className="text-text-muted hover:text-red-400 cursor-pointer" title={t('modules.p2p.ui.cancelTransfer', { defaultValue: '取消传输' })}>
+                            className="text-text-muted hover:text-red-400 cursor-pointer" title={t('modules.p2p.ui.cancelTransfer', { defaultValue: 'Cancel transfer' })}>
                             <X size={12} />
                           </button>
                         </div>
@@ -997,9 +997,9 @@ export default function P2PTransfer() {
                     }
                   }}
                   className="flex items-center gap-1 text-text-muted hover:text-primary cursor-pointer transition"
-                  title={`${t('modules.p2p.ui.downloadDir', { defaultValue: '下载目录' })}: ${downloadDir}`}>
+                  title={`${t('modules.p2p.ui.downloadDir', { defaultValue: 'Download directory' })}: ${downloadDir}`}>
                   <Download size={12} />
-                  <span className="text-[11px]">{t('modules.p2p.ui.saveTo', { defaultValue: '保存到' })}</span>
+                  <span className="text-[11px]">{t('modules.p2p.ui.saveTo', { defaultValue: 'Save to' })}</span>
                 </button>
                 {transfers.length > 0 && (
                   <button onClick={handleClearHistory} className="text-text-muted hover:text-red-400 cursor-pointer" title={t('modules.p2p.ui.clearHistory')}>
@@ -1057,7 +1057,7 @@ export default function P2PTransfer() {
                         tr.status === 'cancelled' ? 'text-orange-400' : 'text-text-muted'
                       }`}>
                         {tr.status === 'complete' ? '\u2713' :
-                         tr.status === 'cancelled' ? t('modules.p2p.ui.cancelled', { defaultValue: '已取消' }) : tr.status}
+                         tr.status === 'cancelled' ? t('modules.p2p.ui.cancelled', { defaultValue: 'Cancelled' }) : tr.status}
                       </span>
                     </div>
                   </div>
@@ -1133,7 +1133,7 @@ export default function P2PTransfer() {
               {httpServer && (
                 <button onClick={() => setShowQr(!showQr)}
                   className="text-text-muted hover:text-primary cursor-pointer"
-                  title={showQr ? t('modules.p2p.ui.hideQr', { defaultValue: '隐藏二维码' }) : t('modules.p2p.ui.showQr', { defaultValue: '显示二维码' })}>
+                  title={showQr ? t('modules.p2p.ui.hideQr', { defaultValue: 'Hide QR' }) : t('modules.p2p.ui.showQr', { defaultValue: 'Show QR' })}>
                   <QrCode size={13} />
                 </button>
               )}
@@ -1150,7 +1150,7 @@ export default function P2PTransfer() {
                 <AlertCircle size={14} className="text-yellow-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-yellow-600 dark:text-yellow-400">
                   {t('modules.p2p.ui.webShareNeedDir')}
-                  <span className="ml-1 underline">{t('modules.p2p.ui.goToSetup', { defaultValue: '点击前往设置' })}</span>
+                  <span className="ml-1 underline">{t('modules.p2p.ui.goToSetup', { defaultValue: 'Click to set up' })}</span>
                 </p>
               </div>
             ) : (
@@ -1314,7 +1314,7 @@ export default function P2PTransfer() {
                   }
                 }}
               className="mt-3 text-xs text-text-muted hover:text-primary cursor-pointer transition">
-              {t('modules.p2p.ui.guide.viewGuide', { defaultValue: '查看使用指南' })} →
+              {t('modules.p2p.ui.guide.viewGuide', { defaultValue: 'View guide' })} →
             </button>
           )}
         </div>

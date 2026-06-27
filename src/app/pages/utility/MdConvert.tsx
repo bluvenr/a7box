@@ -73,7 +73,7 @@ export default function MdConvert() {
         }
         const trimmed = clipText.trim()
         if (!trimmed) {
-          setError(t('mdQuick.clipboardEmpty', { defaultValue: '剪贴板为空' }))
+          setError(t('mdQuick.clipboardEmpty', { defaultValue: 'Clipboard is empty' }))
           return
         }
         setInput(trimmed)
@@ -91,7 +91,7 @@ export default function MdConvert() {
         }
         setError(null)
       } catch {
-        setError(t('mdQuick.clipboardError', { defaultValue: '无法读取剪贴板' }))
+        setError(t('mdQuick.clipboardError', { defaultValue: 'Failed to read clipboard' }))
       }
     })()
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -289,11 +289,11 @@ ${bodyHtml}
 
   // Output labels (i18n)
   const inputLabel = mode === 'html-to-md'
-    ? t('mdQuick.inputLabelHtml', { defaultValue: 'HTML 输入' })
-    : t('mdQuick.inputLabelMd', { defaultValue: 'Markdown 输入' })
+    ? t('mdQuick.inputLabelHtml', { defaultValue: 'HTML Input' })
+    : t('mdQuick.inputLabelMd', { defaultValue: 'Markdown Input' })
   const outputLabel = mode === 'html-to-md'
-    ? t('mdQuick.outputLabelMd', { defaultValue: 'Markdown 输出' })
-    : t('mdQuick.outputLabelHtml', { defaultValue: 'HTML 输出' })
+    ? t('mdQuick.outputLabelMd', { defaultValue: 'Markdown Output' })
+    : t('mdQuick.outputLabelHtml', { defaultValue: 'HTML Output' })
 
   return (
     <div className="flex h-screen flex-col bg-bg-elevated">
@@ -306,7 +306,7 @@ ${bodyHtml}
         <div className="pointer-events-none flex items-center gap-2" data-tauri-drag-region>
           <ArrowLeftRight size={14} className="text-primary" />
           <span className="text-sm font-medium text-text-primary">
-            {t('mdQuick.title', { defaultValue: '快速格式转换' })}
+            {t('mdQuick.title', { defaultValue: 'Quick Convert' })}
           </span>
         </div>
         <button
@@ -328,7 +328,7 @@ ${bodyHtml}
                 : 'text-text-muted hover:bg-bg-hover'
             }`}
           >
-            {t('mdQuick.htmlToMd', { defaultValue: 'HTML 转 MD' })}
+            {t('mdQuick.htmlToMd', { defaultValue: 'HTML to MD' })}
           </button>
           <button
             onClick={() => switchMode('md-to-html')}
@@ -338,11 +338,11 @@ ${bodyHtml}
                 : 'text-text-muted hover:bg-bg-hover'
             }`}
           >
-            {t('mdQuick.mdToHtml', { defaultValue: 'MD 转 HTML' })}
+            {t('mdQuick.mdToHtml', { defaultValue: 'MD to HTML' })}
           </button>
         </div>
         <span className="text-[11px] text-text-muted">
-          {lines} {t('mdQuick.lines', { defaultValue: '行' })} · {chars} {t('mdQuick.chars', { defaultValue: '字符' })}
+          {lines} {t('mdQuick.lines', { defaultValue: 'lines' })} · {chars} {t('mdQuick.chars', { defaultValue: 'chars' })}
         </span>
       </div>
 
@@ -360,8 +360,8 @@ ${bodyHtml}
                 onChange={(e) => { setInput(e.target.value); setError(null) }}
                 className="min-h-0 flex-1 resize-none bg-bg-base px-4 py-2 font-mono text-sm text-text-primary outline-none placeholder:text-text-disabled"
                 placeholder={mode === 'html-to-md'
-                  ? t('mdQuick.inputPlaceholderHtml', { defaultValue: '粘贴 HTML 内容...' })
-                  : t('mdQuick.inputPlaceholderMd', { defaultValue: '输入 Markdown...' })}
+                  ? t('mdQuick.inputPlaceholderHtml', { defaultValue: 'Paste HTML content...' })
+                  : t('mdQuick.inputPlaceholderMd', { defaultValue: 'Enter Markdown...' })}
                 spellCheck={false}
               />
             </div>
@@ -388,8 +388,8 @@ ${bodyHtml}
                 >
                   {showPreview ? <Eye size={11} /> : <Code size={11} />}
                   {showPreview
-                    ? t('mdQuick.preview', { defaultValue: '预览' })
-                    : t('mdQuick.source', { defaultValue: '源码' })}
+                    ? t('mdQuick.preview', { defaultValue: 'Preview' })
+                    : t('mdQuick.source', { defaultValue: 'Source' })}
                 </button>
               )}
               {output && (
@@ -402,13 +402,13 @@ ${bodyHtml}
                         : 'text-text-muted hover:bg-bg-hover hover:text-text-secondary'
                     }`}
                     title={outputFullscreen
-                      ? t('mdQuick.exitFullscreen', { defaultValue: '还原分栏' })
-                      : t('mdQuick.fullscreen', { defaultValue: '输出最大化' })}
+                      ? t('mdQuick.exitFullscreen', { defaultValue: 'Restore' })
+                      : t('mdQuick.fullscreen', { defaultValue: 'Maximize output' })}
                   >
                     {outputFullscreen ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
                     {outputFullscreen
-                      ? t('mdQuick.exitFullscreen', { defaultValue: '还原' })
-                      : t('mdQuick.fullscreen', { defaultValue: '最大化' })}
+                      ? t('mdQuick.exitFullscreen', { defaultValue: 'Restore' })
+                      : t('mdQuick.fullscreen', { defaultValue: 'Maximize' })}
                   </button>
                   <button
                     onClick={handleCopy}
@@ -417,14 +417,14 @@ ${bodyHtml}
                     {copied ? <Check size={11} className="text-success" /> : <Copy size={11} />}
                     {copied
                       ? t('common.copied')
-                      : t('mdQuick.copy', { defaultValue: '复制' })}
+                      : t('mdQuick.copy', { defaultValue: 'Copy' })}
                   </button>
                   <button
                     onClick={handleDownload}
                     className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-text-muted transition hover:bg-bg-hover hover:text-primary"
                   >
                     <FileDown size={11} />
-                    {t('mdQuick.download', { defaultValue: '下载' })}
+                    {t('mdQuick.download', { defaultValue: 'Download' })}
                   </button>
                 </>
               )}
@@ -439,7 +439,7 @@ ${bodyHtml}
             ) : !output ? (
               <div className="flex h-full items-center justify-center px-4">
                 <span className="text-xs text-text-disabled">
-                  {t('mdQuick.outputEmpty', { defaultValue: '转换结果将显示在这里' })}
+                  {t('mdQuick.outputEmpty', { defaultValue: 'Converted output will appear here' })}
                 </span>
               </div>
             ) : mode === 'md-to-html' && showPreview ? (

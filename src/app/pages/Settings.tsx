@@ -56,10 +56,10 @@ export default function Settings() {
       { id: 'general', label: t('settings.general'), icon: Globe },
       { id: 'appearance', label: t('settings.appearance'), icon: Palette },
       { id: 'modules', label: t('settings.modules'), icon: Box },
-      { id: 'storage', label: t('settings.storageCache', { defaultValue: '存储与缓存' }), icon: Database },
+      { id: 'storage', label: t('settings.storageCache', { defaultValue: 'Storage & Cache' }), icon: Database },
     ]
     if (isTauri()) {
-      items.push({ id: 'shortcuts', label: t('settings.shortcuts', { defaultValue: '快捷键' }), icon: Keyboard })
+      items.push({ id: 'shortcuts', label: t('settings.shortcuts', { defaultValue: 'Shortcuts' }), icon: Keyboard })
     }
     items.push({ id: 'about', label: t('common.about'), icon: Info })
     return items
@@ -706,13 +706,13 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
   }
 
   return (
-    <SettingSection title={t('settings.storageCache', { defaultValue: '存储与缓存' })} icon={Database}>
+    <SettingSection title={t('settings.storageCache', { defaultValue: 'Storage & Cache' })} icon={Database}>
       <div className="space-y-3">
         {/* Total + Clear all */}
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-text-primary">
-              {t('settings.cacheTotal', { defaultValue: '缓存总大小' })}
+              {t('settings.cacheTotal', { defaultValue: 'Total cache size' })}
             </p>
             <p className="text-xs text-text-muted">
               {loading ? '...' : formatSize(totalSize)}
@@ -721,11 +721,11 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
           <button
             onClick={async () => {
               const ok = await confirm({
-                title: t('settings.cacheClearAll', { defaultValue: '全部清理' }),
-                message: t('settings.cacheConfirmAll', { defaultValue: '将清理所有缓存数据和传输记录，此操作不可撤销。' }),
-                detail: `${(cacheSizes?.p2pFileCount ?? 0) + (cacheSizes?.screenshotFileCount ?? 0)} ${t('settings.cacheFileUnit', { defaultValue: '个文件' })}，${formatSize(totalSize)}`,
-                confirmText: t('settings.cacheConfirmBtn', { defaultValue: '确认清理' }),
-                cancelText: t('common.cancel', { defaultValue: '取消' }),
+                title: t('settings.cacheClearAll', { defaultValue: 'Clear all' }),
+                message: t('settings.cacheConfirmAll', { defaultValue: 'This will clear all cached data and transfer history. This cannot be undone.' }),
+                detail: `${(cacheSizes?.p2pFileCount ?? 0) + (cacheSizes?.screenshotFileCount ?? 0)} ${t('settings.cacheFileUnit', { defaultValue: 'files' })}, ${formatSize(totalSize)}`,
+                confirmText: t('settings.cacheConfirmBtn', { defaultValue: 'Confirm clear' }),
+                cancelText: t('common.cancel', { defaultValue: 'Cancel' }),
                 danger: true,
               })
               if (ok) handleClearAll()
@@ -734,7 +734,7 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
             className="inline-flex items-center gap-1.5 rounded-md bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-500/20 disabled:opacity-40 cursor-pointer"
           >
             {clearing === 'all' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-            {t('settings.cacheClearAll', { defaultValue: '全部清理' })}
+            {t('settings.cacheClearAll', { defaultValue: 'Clear all' })}
           </button>
         </div>
 
@@ -745,9 +745,9 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
             <div className="flex items-center gap-2 min-w-0">
               <FolderOpen size={14} className="text-primary shrink-0" />
               <div className="min-w-0">
-                <p className="text-sm text-text-primary">{t('settings.cacheDownloads', { defaultValue: '传输接收文件' })}</p>
+                <p className="text-sm text-text-primary">{t('settings.cacheDownloads', { defaultValue: 'Transfer downloads' })}</p>
                 <p className="text-[11px] text-text-muted truncate" title={cacheSizes?.p2pDownloadsPath}>
-                  {cacheSizes?.p2pFileCount != null ? `${cacheSizes.p2pFileCount} ${t('settings.cacheFileUnit', { defaultValue: '个文件' })} · ` : ''}
+                  {cacheSizes?.p2pFileCount != null ? `${cacheSizes.p2pFileCount} ${t('settings.cacheFileUnit', { defaultValue: 'files' })} · ` : ''}
                   {cacheSizes?.p2pDownloadsPath || '...'}
                 </p>
               </div>
@@ -759,18 +759,18 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
               <button
                 onClick={async () => {
                   const ok = await confirm({
-                    title: t('settings.cacheDownloads', { defaultValue: '传输接收文件' }),
-                    message: t('settings.cacheConfirmDownloads', { defaultValue: '将删除下载目录中的所有文件，此操作不可撤销。' }),
-                    detail: `${cacheSizes?.p2pFileCount ?? 0} ${t('settings.cacheFileUnit', { defaultValue: '个文件' })}，${formatSize(cacheSizes?.p2pDownloads ?? 0)}`,
-                    confirmText: t('settings.cacheConfirmBtn', { defaultValue: '确认清理' }),
-                    cancelText: t('common.cancel', { defaultValue: '取消' }),
+                    title: t('settings.cacheDownloads', { defaultValue: 'Transfer downloads' }),
+                    message: t('settings.cacheConfirmDownloads', { defaultValue: 'This will delete all files in the download directory. This cannot be undone.' }),
+                    detail: `${cacheSizes?.p2pFileCount ?? 0} ${t('settings.cacheFileUnit', { defaultValue: 'files' })}, ${formatSize(cacheSizes?.p2pDownloads ?? 0)}`,
+                    confirmText: t('settings.cacheConfirmBtn', { defaultValue: 'Confirm clear' }),
+                    cancelText: t('common.cancel', { defaultValue: 'Cancel' }),
                     danger: true,
                   })
                   if (ok) handleClear('p2pDownloads')
                 }}
                 disabled={loading || clearing !== null || (cacheSizes?.p2pDownloads ?? 0) === 0}
                 className="text-text-muted hover:text-red-400 cursor-pointer disabled:opacity-30 transition"
-                title={t('settings.cacheClear', { defaultValue: '清理' })}
+                title={t('settings.cacheClear', { defaultValue: 'Clear' })}
               >
                 {clearing === 'p2pDownloads' ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
               </button>
@@ -782,9 +782,9 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
             <div className="flex items-center gap-2 min-w-0">
               <Image size={14} className="text-primary shrink-0" />
               <div className="min-w-0">
-                <p className="text-sm text-text-primary">{t('settings.cacheScreenshots', { defaultValue: '截图文件' })}</p>
+                <p className="text-sm text-text-primary">{t('settings.cacheScreenshots', { defaultValue: 'Screenshots' })}</p>
                 <p className="text-[11px] text-text-muted truncate" title={cacheSizes?.screenshotsPath}>
-                  {cacheSizes?.screenshotFileCount != null ? `${cacheSizes.screenshotFileCount} ${t('settings.cacheFileUnit', { defaultValue: '个文件' })} · ` : ''}
+                  {cacheSizes?.screenshotFileCount != null ? `${cacheSizes.screenshotFileCount} ${t('settings.cacheFileUnit', { defaultValue: 'files' })} · ` : ''}
                   {cacheSizes?.screenshotsPath || '...'}
                 </p>
               </div>
@@ -796,18 +796,18 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
               <button
                 onClick={async () => {
                   const ok = await confirm({
-                    title: t('settings.cacheScreenshots', { defaultValue: '截图文件' }),
-                    message: t('settings.cacheConfirmScreenshots', { defaultValue: '将删除所有截图文件，此操作不可撤销。' }),
-                    detail: `${cacheSizes?.screenshotFileCount ?? 0} ${t('settings.cacheFileUnit', { defaultValue: '个文件' })}，${formatSize(cacheSizes?.screenshots ?? 0)}`,
-                    confirmText: t('settings.cacheConfirmBtn', { defaultValue: '确认清理' }),
-                    cancelText: t('common.cancel', { defaultValue: '取消' }),
+                    title: t('settings.cacheScreenshots', { defaultValue: 'Screenshots' }),
+                    message: t('settings.cacheConfirmScreenshots', { defaultValue: 'This will delete all screenshot files. This cannot be undone.' }),
+                    detail: `${cacheSizes?.screenshotFileCount ?? 0} ${t('settings.cacheFileUnit', { defaultValue: 'files' })}, ${formatSize(cacheSizes?.screenshots ?? 0)}`,
+                    confirmText: t('settings.cacheConfirmBtn', { defaultValue: 'Confirm clear' }),
+                    cancelText: t('common.cancel', { defaultValue: 'Cancel' }),
                     danger: true,
                   })
                   if (ok) handleClear('screenshots')
                 }}
                 disabled={loading || clearing !== null || (cacheSizes?.screenshots ?? 0) === 0}
                 className="text-text-muted hover:text-red-400 cursor-pointer disabled:opacity-30 transition"
-                title={t('settings.cacheClear', { defaultValue: '清理' })}
+                title={t('settings.cacheClear', { defaultValue: 'Clear' })}
               >
                 {clearing === 'screenshots' ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
               </button>
@@ -819,9 +819,9 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
             <div className="flex items-center gap-2 min-w-0">
               <RefreshCw size={14} className="text-primary shrink-0" />
               <div className="min-w-0">
-                <p className="text-sm text-text-primary">{t('settings.cacheTransferHistory', { defaultValue: '传输记录' })}</p>
+                <p className="text-sm text-text-primary">{t('settings.cacheTransferHistory', { defaultValue: 'Transfer history' })}</p>
                 <p className="text-[11px] text-text-muted">
-                  {cacheSizes?.transferCount ?? 0} {t('settings.cacheRecordUnit', { defaultValue: '条记录' })}
+                  {cacheSizes?.transferCount ?? 0} {t('settings.cacheRecordUnit', { defaultValue: 'records' })}
                 </p>
               </div>
             </div>
@@ -829,18 +829,18 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
               <button
                 onClick={async () => {
                   const ok = await confirm({
-                    title: t('settings.cacheTransferHistory', { defaultValue: '传输记录' }),
-                    message: t('settings.cacheConfirmHistory', { defaultValue: '将清空所有传输记录，此操作不可撤销。' }),
-                    detail: `${cacheSizes?.transferCount ?? 0} ${t('settings.cacheRecordUnit', { defaultValue: '条记录' })}`,
-                    confirmText: t('settings.cacheConfirmBtn', { defaultValue: '确认清理' }),
-                    cancelText: t('common.cancel', { defaultValue: '取消' }),
+                    title: t('settings.cacheTransferHistory', { defaultValue: 'Transfer history' }),
+                    message: t('settings.cacheConfirmHistory', { defaultValue: 'This will clear all transfer history. This cannot be undone.' }),
+                    detail: `${cacheSizes?.transferCount ?? 0} ${t('settings.cacheRecordUnit', { defaultValue: 'records' })}`,
+                    confirmText: t('settings.cacheConfirmBtn', { defaultValue: 'Confirm clear' }),
+                    cancelText: t('common.cancel', { defaultValue: 'Cancel' }),
                     danger: true,
                   })
                   if (ok) handleClear('transferHistory')
                 }}
                 disabled={loading || clearing !== null || (cacheSizes?.transferCount ?? 0) === 0}
                 className="text-text-muted hover:text-red-400 cursor-pointer disabled:opacity-30 transition"
-                title={t('settings.cacheClear', { defaultValue: '清理' })}
+                title={t('settings.cacheClear', { defaultValue: 'Clear' })}
               >
                 {clearing === 'transferHistory' ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
               </button>
@@ -856,7 +856,7 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
             className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-primary cursor-pointer transition"
           >
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-            {t('settings.cacheRefresh', { defaultValue: '重新扫描' })}
+            {t('settings.cacheRefresh', { defaultValue: 'Refresh' })}
           </button>
         </div>
       </div>
@@ -907,7 +907,7 @@ function ShortcutsSection({ t }: { t: (key: string, opts?: Record<string, unknow
   }
 
   return (
-    <SettingSection title={t('settings.shortcuts', { defaultValue: '快捷键' })} icon={Keyboard}>
+    <SettingSection title={t('settings.shortcuts', { defaultValue: 'Shortcuts' })} icon={Keyboard}>
       <div className="space-y-2">
         {shortcuts.map((sc: any) => {
           const moduleDisabled = sc.moduleId && !enabledModuleIds.has(sc.moduleId)
@@ -928,7 +928,7 @@ function ShortcutsSection({ t }: { t: (key: string, opts?: Record<string, unknow
                 )}
                 {moduleDisabled && (
                   <span className="text-xs text-text-disabled">
-                    ({t('settings.shortcutModuleDisabled', { defaultValue: '模块已关闭' })})
+                    ({t('settings.shortcutModuleDisabled', { defaultValue: 'Module disabled' })})
                   </span>
                 )}
               </div>
@@ -952,7 +952,7 @@ function ShortcutsSection({ t }: { t: (key: string, opts?: Record<string, unknow
             className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-primary cursor-pointer transition"
           >
             <RotateCcw size={12} />
-            {t('settings.shortcutsReset', { defaultValue: '重置默认' })}
+            {t('settings.shortcutsReset', { defaultValue: 'Reset defaults' })}
           </button>
         </div>
       </div>

@@ -137,6 +137,8 @@
     "shortcutClipboardMdDesc": "剪贴板为 HTML 时自动转 Markdown，为 Markdown 时自动转 HTML",
     "shortcutClipboardJson": "JSON 快速格式化",
     "shortcutClipboardJsonDesc": "读取剪贴板 JSON 并自动格式化或压缩",
+    "shortcutClipboardCodeMinify": "代码压缩/美化",
+    "shortcutClipboardCodeMinifyDesc": "读取剪贴板代码并打开压缩/美化浮窗",
     "shortcutModuleDisabled": "模块已关闭"
   },
   "updater": {
@@ -219,6 +221,7 @@
         "clearConfirmMsg": "将清空编辑器中的所有内容，此操作不可撤销。",
         "toastFileImported": "文件已导入",
         "dropHint": "拖放 .json 文件到此处",
+        "dragHint": "支持拖放 .json 文件",
         "floatingShortcutHint": "复制 JSON 后按 {{keys}} 快速格式化",
         "inWindowShortcuts": "Alt+F 格式化 · Alt+M 压缩"
       }
@@ -304,7 +307,7 @@
     },
     "codeMinify": {
       "name": "代码压缩/美化",
-      "description": "压缩或美化 JS、CSS、HTML 和 JSON",
+      "description": "压缩或美化 JS、TS、CSS、HTML 和 JSON",
       "commands": { "open": "代码压缩/美化" },
       "ui": {
         "loadingEditor": "编辑器加载中...",
@@ -313,11 +316,44 @@
         "inputLabel": "输入",
         "outputLabel": "输出",
         "copyTooltip": "复制输出",
+        "copyBtn": "复制",
         "downloadTooltip": "下载",
+        "downloadBtn": "下载",
+        "pasteBtn": "粘贴",
+        "pasteTooltip": "从剪贴板粘贴",
+        "historyTooltip": "历史记录",
+        "historyBtn": "历史",
+        "historyTitle": "历史记录",
+        "historyClear": "清空",
+        "historyEmpty": "暂无历史记录",
+        "historyActionCompress": "压缩",
+        "historyActionBeautify": "美化",
+        "indent2Spaces": "2 空格",
+        "indent4Spaces": "4 空格",
+        "indentTab": "Tab",
+        "statsLines": "行数",
+        "statsChars": "字符",
+        "inWindowShortcuts": "Alt+M 压缩 · Alt+B 美化",
+        "floatingShortcutHint": "复制后按 {{keys}} 快速压缩",
+        "swapBtn": "互换",
+        "swapTooltip": "互换输入/输出",
+        "dropHint": "拖放文件到此处",
+        "dragHint": "支持拖放代码文件",
+        "clearConfirmTitle": "清空内容",
+        "clearConfirmMsg": "将清空所有内容，此操作不可撤销。",
         "toastMinified": "压缩成功",
         "toastBeautified": "美化成功",
-        "toastFormatHint": "在编辑器中使用 Ctrl+Shift+I 格式化",
-        "toastCopied": "已复制到剪贴板"
+        "toastCopied": "已复制到剪贴板",
+        "toastDownloaded": "文件已保存",
+        "toastPasteImported": "已粘贴 ({{lang}})",
+        "toastPastedPlain": "已粘贴",
+        "toastFileImported": "文件已导入",
+        "toastRestored": "已恢复历史记录",
+        "toastAutoDetected": "自动检测: {{lang}}",
+        "clipboardError": "无法读取剪贴板",
+        "timeJustNow": "刚刚",
+        "timeMinutesAgo": "{{m}} 分钟前",
+        "timeHoursAgo": "{{h}} 小时前"
       }
     },
     "imageCompress": {
@@ -694,5 +730,18 @@
     "copied": "已复制",
     "expandAll": "全部展开",
     "collapseAll": "全部折叠"
+  },
+  "codeQuick": {
+    "title": "代码快捷工具",
+    "clipboardEmpty": "剪贴板为空",
+    "clipboardError": "无法读取剪贴板",
+    "unsupportedLang": "无法识别代码语言",
+    "errorHint": "复制代码到剪贴板后再次按下快捷键",
+    "minify": "压缩",
+    "beautify": "美化",
+    "copy": "复制",
+    "copied": "已复制",
+    "lines": "行",
+    "chars": "字符"
   }
 }

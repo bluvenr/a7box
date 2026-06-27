@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main", "qr-quick", "md-convert", "json-quick", "utility-*"],
+  "windows": ["main", "qr-quick", "md-convert", "json-quick", "code-quick", "utility-*"],
   "permissions": [
     "core:default",
     "opener:default",

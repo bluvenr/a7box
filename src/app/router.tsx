@@ -35,6 +35,7 @@ const P2PTransfer = lazy(() => import('../modules/p2p-transfer/P2PTransfer'))
 const QrQuick = lazy(() => import('./pages/utility/QrQuick'))
 const MdConvert = lazy(() => import('./pages/utility/MdConvert'))
 const JsonQuick = lazy(() => import('./pages/utility/JsonQuick'))
+const CodeQuick = lazy(() => import('./pages/utility/CodeQuick'))
 
 // Wrap a module component with ErrorBoundary + Suspense
 function ModuleRoute({ moduleId, children }: { moduleId: string; children: React.ReactNode }) {
@@ -71,6 +72,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <JsonQuick />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/code-quick',
+    element: (
+      <Suspense fallback={null}>
+        <CodeQuick />
       </Suspense>
     ),
   },

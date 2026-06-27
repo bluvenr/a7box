@@ -375,6 +375,14 @@ export default function JsonFormatter() {
 
       {/* Status bar */}
       <StatusBar stats={stats} error={lastError} errorPosition={errorPosition}>
+        {/* Drag hint */}
+        <span className="flex items-center gap-1 text-text-disabled">
+          <span>
+            {t('modules.jsonFormatter.ui.dragHint', {
+              defaultValue: 'Drop .json to import',
+            })}
+          </span>
+        </span>
         {/* In-window shortcut hints */}
         <span className="ml-auto flex items-center gap-1 text-text-disabled">
           <Keyboard size={11} />

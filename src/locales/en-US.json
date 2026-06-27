@@ -137,6 +137,8 @@
     "shortcutClipboardMdDesc": "Auto-convert HTML to Markdown or Markdown to HTML from clipboard",
     "shortcutClipboardJson": "JSON Quick Format",
     "shortcutClipboardJsonDesc": "Read clipboard JSON and auto-format or compress",
+    "shortcutClipboardCodeMinify": "Code Minify/Beautify",
+    "shortcutClipboardCodeMinifyDesc": "Read clipboard code and open minify/beautify window",
     "shortcutModuleDisabled": "Module disabled"
   },
   "updater": {
@@ -219,6 +221,7 @@
         "clearConfirmMsg": "This will clear all content in the editor. This action cannot be undone.",
         "toastFileImported": "File imported",
         "dropHint": "Drop .json file here",
+        "dragHint": "Drop .json to import",
         "floatingShortcutHint": "Copy JSON then press {{keys}} to quick format",
         "inWindowShortcuts": "Alt+F Format · Alt+M Compress"
       }
@@ -304,7 +307,7 @@
     },
     "codeMinify": {
       "name": "Code Minify/Beautify",
-      "description": "Minify or beautify JS, CSS, HTML and JSON",
+      "description": "Minify or beautify JS, TS, CSS, HTML and JSON",
       "commands": { "open": "Code Minify/Beautify" },
       "ui": {
         "loadingEditor": "Loading editor...",
@@ -313,11 +316,44 @@
         "inputLabel": "Input",
         "outputLabel": "Output",
         "copyTooltip": "Copy output",
+        "copyBtn": "Copy",
         "downloadTooltip": "Download",
-        "toastMinified": "Minified successfully",
-        "toastBeautified": "Beautified successfully",
-        "toastFormatHint": "Use Ctrl+Shift+I in editor to format",
-        "toastCopied": "Copied to clipboard"
+        "downloadBtn": "Download",
+        "pasteBtn": "Paste",
+        "pasteTooltip": "Paste from clipboard",
+        "historyTooltip": "History",
+        "historyBtn": "History",
+        "historyTitle": "History",
+        "historyClear": "Clear",
+        "historyEmpty": "No history yet",
+        "historyActionCompress": "Compress",
+        "historyActionBeautify": "Beautify",
+        "indent2Spaces": "2 Spaces",
+        "indent4Spaces": "4 Spaces",
+        "indentTab": "Tab",
+        "statsLines": "Lines",
+        "statsChars": "Chars",
+        "inWindowShortcuts": "Alt+M Compress · Alt+B Beautify",
+        "floatingShortcutHint": "Press {{keys}} to quick minify after copying",
+        "swapBtn": "Swap",
+        "swapTooltip": "Swap input/output",
+        "dropHint": "Drop file here",
+        "dragHint": "Drop supported code files",
+        "clearConfirmTitle": "Clear content",
+        "clearConfirmMsg": "This will clear all content. This cannot be undone.",
+        "toastMinified": "Minified",
+        "toastBeautified": "Beautified",
+        "toastCopied": "Copied to clipboard",
+        "toastDownloaded": "File saved",
+        "toastPasteImported": "Pasted ({{lang}})",
+        "toastPastedPlain": "Pasted",
+        "toastFileImported": "File imported",
+        "toastRestored": "History restored",
+        "toastAutoDetected": "Auto-detected: {{lang}}",
+        "clipboardError": "Failed to read clipboard",
+        "timeJustNow": "Just now",
+        "timeMinutesAgo": "{{m}}m ago",
+        "timeHoursAgo": "{{h}}h ago"
       }
     },
     "imageCompress": {
@@ -694,5 +730,18 @@
     "copied": "Copied",
     "expandAll": "Expand All",
     "collapseAll": "Collapse All"
+  },
+  "codeQuick": {
+    "title": "Code Quick",
+    "clipboardEmpty": "Clipboard is empty",
+    "clipboardError": "Failed to read clipboard",
+    "unsupportedLang": "Unable to detect code language",
+    "errorHint": "Copy some code to clipboard and press the shortcut again",
+    "minify": "Minify",
+    "beautify": "Beautify",
+    "copy": "Copy",
+    "copied": "Copied",
+    "lines": "lines",
+    "chars": "chars"
   }
 }

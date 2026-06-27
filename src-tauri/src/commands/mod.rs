@@ -651,6 +651,25 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                             .build()
                         {}
                     }
+                    "clipboard-to-code-minify" => {
+                        use tauri::{WebviewUrl, WebviewWindowBuilder};
+                        let label = "code-quick";
+                        if let Some(existing) = app_ref.get_webview_window(label) {
+                            let _ = existing.close();
+                        }
+                        if let Ok(_win) = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/code-quick".into()))
+                            .title("")
+                            .inner_size(560.0, 640.0)
+                            .resizable(true)
+                            .decorations(false)
+                            .always_on_top(true)
+                            .visible(true)
+                            .skip_taskbar(true)
+                            .center()
+                            .background_color(tauri::window::Color(10, 10, 11, 255))
+                            .build()
+                        {}
+                    }
                     _ => {}
                 }
                 // Also emit to frontend

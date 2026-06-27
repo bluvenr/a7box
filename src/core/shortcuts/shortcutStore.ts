@@ -64,6 +64,14 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
     enabled: true,
     moduleId: 'json-formatter',
   },
+  {
+    action: 'clipboard-to-code-minify',
+    labelI18n: 'settings.shortcutClipboardCodeMinify',
+    descriptionI18n: 'settings.shortcutClipboardCodeMinifyDesc',
+    keys: 'CommandOrControl+Shift+K',
+    enabled: true,
+    moduleId: 'code-minify',
+  },
 ]
 
 function loadShortcuts(): ShortcutConfig[] {

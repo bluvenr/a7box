@@ -46,7 +46,7 @@ export function Toolbar({
       <button
         onClick={onFormat}
         disabled={!hasContent}
-        className="flex items-center gap-1.5 rounded-md bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="flex items-center gap-1.5 rounded-md bg-bg-hover px-3 py-1.5 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-hover/80 hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <Sparkles className="h-4 w-4" />
         <span>{t('common.format')}</span>

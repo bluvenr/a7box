@@ -2,7 +2,7 @@
  * JSON Formatter Toolbar
  */
 
-import { Sparkles, Minimize2, Copy, Trash2, FileDown, History } from 'lucide-react'
+import { Sparkles, Minimize2, Copy, Trash2, FileDown, History, ChevronsDownUp, ChevronsUpDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { IndentType } from '../hooks/useJsonFormat'
 
@@ -15,6 +15,10 @@ interface ToolbarProps {
   onClear: () => void
   onExport: () => void
   onHistory: () => void
+  onFoldAll: () => void
+  onUnfoldAll: () => void
+  isCompressed: boolean
+  isAllFolded: boolean
   hasContent: boolean
   isValid: boolean
 }
@@ -28,6 +32,10 @@ export function Toolbar({
   onClear,
   onExport,
   onHistory,
+  onFoldAll,
+  onUnfoldAll,
+  isCompressed,
+  isAllFolded,
   hasContent,
   isValid,
 }: ToolbarProps) {
@@ -75,6 +83,7 @@ export function Toolbar({
         title={t('modules.jsonFormatter.ui.copyTooltip')}
       >
         <Copy className="h-4 w-4" />
+        <span className="hidden sm:inline">{t('modules.jsonFormatter.ui.copyBtn')}</span>
       </button>
 
       {/* Export button */}
@@ -85,6 +94,7 @@ export function Toolbar({
         title={t('modules.jsonFormatter.ui.exportTooltip')}
       >
         <FileDown className="h-4 w-4" />
+        <span className="hidden sm:inline">{t('modules.jsonFormatter.ui.exportBtn')}</span>
       </button>
 
       {/* History button */}
@@ -94,9 +104,30 @@ export function Toolbar({
         title={t('modules.jsonFormatter.ui.historyTooltip')}
       >
         <History className="h-4 w-4" />
+        <span className="hidden sm:inline">{t('modules.jsonFormatter.ui.historyBtn')}</span>
       </button>
 
       <div className="flex-1" />
+
+      {/* Fold/Unfold toggle — hidden in compress mode */}
+      {!isCompressed && hasContent && (
+        <button
+          onClick={isAllFolded ? onUnfoldAll : onFoldAll}
+          className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
+          title={isAllFolded
+            ? t('modules.jsonFormatter.ui.unfoldAll', { defaultValue: '全部展开' })
+            : t('modules.jsonFormatter.ui.foldAll', { defaultValue: '全部折叠' })}
+        >
+          {isAllFolded ? <ChevronsUpDown className="h-3.5 w-3.5" /> : <ChevronsDownUp className="h-3.5 w-3.5" />}
+          <span className="hidden sm:inline">
+            {isAllFolded
+              ? t('modules.jsonFormatter.ui.unfoldAll', { defaultValue: '展开' })
+              : t('modules.jsonFormatter.ui.foldAll', { defaultValue: '折叠' })}
+          </span>
+        </button>
+      )}
+
+      <div className="h-5 w-px bg-border-base" />
 
       {/* Clear button */}
       <button
@@ -106,6 +137,7 @@ export function Toolbar({
         title={t('modules.jsonFormatter.ui.clearTooltip')}
       >
         <Trash2 className="h-4 w-4" />
+        <span className="hidden sm:inline">{t('modules.jsonFormatter.ui.clearBtn')}</span>
       </button>
     </div>
   )

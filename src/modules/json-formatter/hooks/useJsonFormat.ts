@@ -1,9 +1,10 @@
 /**
  * JSON Format Hook
- * Handles JSON parsing, formatting, compression, and validation
+ * Handles JSON parsing, formatting, compression, and validation.
+ * All parse/validate/calculate functions are pure (no side effects).
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 
 export interface JsonFormatResult {
   success: boolean
@@ -28,6 +29,8 @@ const INDENT_MAP: Record<IndentType, string | number> = {
   tab: '\t',
 }
 
+// ─── Pure functions (no side effects) ───────────────────────────────────────
+
 /** Parse JSON and return error position if invalid */
 function parseJsonWithError(input: string): { data?: unknown; error?: string; position?: { line: number; column: number } } {
   try {
@@ -51,44 +54,69 @@ function parseJsonWithError(input: string): { data?: unknown; error?: string; po
   }
 }
 
-/** Calculate JSON statistics */
-function calculateStats(input: string, valid: boolean): JsonStats {
-  const lines = input.split('\n').length
-  const size = new Blob([input]).size
+/** Pure validate — returns result without touching state */
+export function validateJson(source: string): { valid: boolean; error?: string; position?: { line: number; column: number } } {
+  if (!source.trim()) return { valid: false }
+  const { error, position } = parseJsonWithError(source)
+  if (error) return { valid: false, error, position }
+  return { valid: true }
+}
 
-  if (!valid) {
-    return { valid: false, size, lines, depth: 0, keys: 0 }
+/** Calculate JSON statistics — single parse pass */
+function calculateStats(input: string): JsonStats {
+  const lines = input.split('\n').length
+  const size = input.length // character count is sufficient for display
+
+  if (!input.trim()) {
+    return { valid: false, size: 0, lines: 1, depth: 0, keys: 0 }
   }
 
+  let data: unknown
   try {
-    const data = JSON.parse(input)
-    let depth = 0
-    let keys = 0
-
-    function traverse(obj: unknown, currentDepth: number) {
-      if (currentDepth > depth) depth = currentDepth
-      if (Array.isArray(obj)) {
-        obj.forEach((item) => traverse(item, currentDepth + 1))
-      } else if (obj && typeof obj === 'object') {
-        const entries = Object.entries(obj as Record<string, unknown>)
-        keys += entries.length
-        entries.forEach(([, v]) => traverse(v, currentDepth + 1))
-      }
-    }
-
-    traverse(data, 0)
-    return { valid: true, size, lines, depth, keys }
+    data = JSON.parse(input)
   } catch {
     return { valid: false, size, lines, depth: 0, keys: 0 }
   }
+
+  let depth = 0
+  let keys = 0
+
+  function traverse(obj: unknown, currentDepth: number) {
+    if (currentDepth > depth) depth = currentDepth
+    if (Array.isArray(obj)) {
+      obj.forEach((item) => traverse(item, currentDepth + 1))
+    } else if (obj && typeof obj === 'object') {
+      const entries = Object.entries(obj as Record<string, unknown>)
+      keys += entries.length
+      entries.forEach(([, v]) => traverse(v, currentDepth + 1))
+    }
+  }
+
+  traverse(data, 0)
+  return { valid: true, size, lines, depth, keys }
 }
+
+// ─── Hook ───────────────────────────────────────────────────────────────────
 
 export function useJsonFormat(initialIndent: IndentType = '2spaces') {
   const [input, setInput] = useState('')
-  const [output, setOutput] = useState('')
   const [indent, setIndent] = useState<IndentType>(initialIndent)
   const [lastError, setLastError] = useState<string | null>(null)
   const [errorPosition, setErrorPosition] = useState<{ line: number; column: number } | null>(null)
+
+  // Debounced validation timer
+  const validateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  /** Set error state from validation result */
+  const applyValidation = useCallback((result: ReturnType<typeof validateJson>) => {
+    if (result.valid) {
+      setLastError(null)
+      setErrorPosition(null)
+    } else {
+      setLastError(result.error ?? null)
+      setErrorPosition(result.position ?? null)
+    }
+  }, [])
 
   /** Format JSON with indentation */
   const format = useCallback(
@@ -108,7 +136,6 @@ export function useJsonFormat(initialIndent: IndentType = '2spaces') {
       }
 
       const formatted = JSON.stringify(data, null, INDENT_MAP[indent])
-      setOutput(formatted)
       setInput(formatted)
       setLastError(null)
       setErrorPosition(null)
@@ -134,7 +161,6 @@ export function useJsonFormat(initialIndent: IndentType = '2spaces') {
       }
 
       const compressed = JSON.stringify(data)
-      setOutput(compressed)
       setInput(compressed)
       setLastError(null)
       setErrorPosition(null)
@@ -143,42 +169,42 @@ export function useJsonFormat(initialIndent: IndentType = '2spaces') {
     [input]
   )
 
-  /** Validate JSON syntax */
+  /** Validate JSON — updates state */
   const validate = useCallback(
     (jsonStr?: string): { valid: boolean; error?: string; position?: { line: number; column: number } } => {
       const source = jsonStr ?? input
-      if (!source.trim()) {
-        setLastError(null)
-        setErrorPosition(null)
-        return { valid: false }
-      }
-
-      const { error, position } = parseJsonWithError(source)
-      if (error) {
-        setLastError(error)
-        setErrorPosition(position ?? null)
-        return { valid: false, error, position }
-      }
-
-      setLastError(null)
-      setErrorPosition(null)
-      return { valid: true }
+      const result = validateJson(source)
+      applyValidation(result)
+      return result
     },
-    [input]
+    [input, applyValidation]
   )
 
-  /** Get JSON statistics */
+  /** Debounced validate — for use on every keystroke */
+  const debouncedValidate = useCallback(
+    (text: string, delay = 300) => {
+      if (validateTimer.current) clearTimeout(validateTimer.current)
+      validateTimer.current = setTimeout(() => {
+        const result = validateJson(text)
+        applyValidation(result)
+      }, delay)
+    },
+    [applyValidation]
+  )
+
+  // Cleanup timer on unmount
+  useEffect(() => () => {
+    if (validateTimer.current) clearTimeout(validateTimer.current)
+  }, [])
+
+  /** Get JSON statistics — pure, no side effects */
   const getStats = useCallback((): JsonStats => {
-    const source = input || output
-    const valid = validate().valid
-    return calculateStats(source, valid)
-  }, [input, output, validate])
+    return calculateStats(input)
+  }, [input])
 
   return {
     input,
     setInput,
-    output,
-    setOutput,
     indent,
     setIndent,
     lastError,
@@ -186,6 +212,7 @@ export function useJsonFormat(initialIndent: IndentType = '2spaces') {
     format,
     compress,
     validate,
+    debouncedValidate,
     getStats,
   }
 }

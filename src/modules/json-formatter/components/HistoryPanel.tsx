@@ -20,19 +20,6 @@ interface HistoryPanelProps {
   onClose: () => void
 }
 
-function formatTime(timestamp: number): string {
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const minutes = Math.floor(diff / 60000)
-
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  return date.toLocaleDateString()
-}
-
 function truncate(str: string, maxLen = 60): string {
   if (str.length <= maxLen) return str
   return str.substring(0, maxLen) + '...'
@@ -41,6 +28,18 @@ function truncate(str: string, maxLen = 60): string {
 export function HistoryPanel({ items, onRestore, onClear, onClose }: HistoryPanelProps) {
   const { t } = useTranslation()
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+
+  /** Format time using i18n keys */
+  function formatTime(timestamp: number): string {
+    const diff = Date.now() - timestamp
+    const minutes = Math.floor(diff / 60000)
+
+    if (minutes < 1) return t('modules.jsonFormatter.ui.timeJustNow', { defaultValue: 'Just now' })
+    if (minutes < 60) return t('modules.jsonFormatter.ui.timeMinutesAgo', { m: minutes, defaultValue: `${minutes}m ago` })
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return t('modules.jsonFormatter.ui.timeHoursAgo', { h: hours, defaultValue: `${hours}h ago` })
+    return new Date(timestamp).toLocaleDateString()
+  }
 
   return (
     <div className="absolute inset-0 z-10 flex flex-col bg-bg-base/95 backdrop-blur-sm">
@@ -83,7 +82,11 @@ export function HistoryPanel({ items, onRestore, onClear, onClose }: HistoryPane
           items.map((item) => (
             <div
               key={item.id}
-              className="group mb-1 rounded-lg border border-transparent p-3 transition-colors hover:border-border-base hover:bg-bg-elevated"
+              className={`group mb-1 rounded-lg border p-3 transition-colors ${
+                hoveredId === item.id
+                  ? 'border-border-base bg-bg-elevated'
+                  : 'border-transparent hover:border-border-base hover:bg-bg-elevated'
+              }`}
               onMouseEnter={() => setHoveredId(item.id)}
               onMouseLeave={() => setHoveredId(null)}
             >
@@ -105,15 +108,16 @@ export function HistoryPanel({ items, onRestore, onClear, onClose }: HistoryPane
                     {truncate(item.input)}
                   </p>
                 </div>
-                {hoveredId === item.id && (
-                  <button
-                    onClick={() => onRestore(item)}
-                    className="ml-2 flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs text-primary transition-colors hover:bg-primary/20"
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                    {t('common.restore')}
-                  </button>
-                )}
+                {/* Restore button — always rendered, visible on hover (desktop) or always on touch */}
+                <button
+                  onClick={() => onRestore(item)}
+                  className={`ml-2 flex shrink-0 items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs text-primary transition-colors hover:bg-primary/20 ${
+                    hoveredId === item.id ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'
+                  }`}
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  {t('common.restore')}
+                </button>
               </div>
             </div>
           ))

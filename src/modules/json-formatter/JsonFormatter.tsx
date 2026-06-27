@@ -1,9 +1,11 @@
 /**
  * JSON Formatter Main Component
+ * Monaco-based JSON editor with format, compress, validate, history, and drag-drop import.
  */
 
-import { useState, useCallback, useMemo, lazy, Suspense } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Keyboard } from 'lucide-react'
 import { useJsonFormat } from './hooks/useJsonFormat'
 import { Toolbar } from './components/Toolbar'
 import { StatusBar } from './components/StatusBar'
@@ -14,6 +16,24 @@ import {
   clearHistory,
   type HistoryItem,
 } from './components/HistoryPanel'
+import { useSettingsStore } from '../../core'
+import { useConfirm } from '../../components/Dialog'
+import { useShortcutStore } from '../../core/shortcuts'
+
+function isTauri(): boolean {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+}
+
+/** Format Tauri key string to human-readable display */
+function formatShortcut(keys: string): string {
+  return keys
+    .replace(/CommandOrControl/gi, 'Ctrl')
+    .replace(/Command/gi, '⌘')
+    .replace(/Control/gi, 'Ctrl')
+    .replace(/Shift/gi, 'Shift')
+    .replace(/Alt/gi, 'Alt')
+    .replace(/\+/g, ' + ')
+}
 
 // Lazy load Monaco Editor
 const Editor = lazy(() =>
@@ -32,6 +52,7 @@ function EditorSkeleton() {
 
 export default function JsonFormatter() {
   const { t } = useTranslation()
+  const confirm = useConfirm()
   const {
     input,
     setInput,
@@ -42,6 +63,7 @@ export default function JsonFormatter() {
     format,
     compress,
     validate,
+    debouncedValidate,
     getStats,
   } = useJsonFormat()
 
@@ -49,22 +71,57 @@ export default function JsonFormatter() {
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>(() => loadHistory())
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
+  // Monaco editor ref for fold/unfold commands
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const editorRef = useRef<any>(null)
+
+  const handleEditorMount = useCallback((editor: unknown) => {
+    editorRef.current = editor
+  }, [])
+
+  const handleFoldAll = useCallback(() => {
+    editorRef.current?.getAction('editor.foldLevel2')?.run()
+    setIsAllFolded(true)
+  }, [])
+
+  const handleUnfoldAll = useCallback(() => {
+    editorRef.current?.getAction('editor.unfoldAll')?.run()
+    setIsAllFolded(false)
+  }, [])
+
+  const [isAllFolded, setIsAllFolded] = useState(false)
+
+  // Theme: resolve 'system' for Monaco
+  const appTheme = useSettingsStore((s) => s.theme)
+  const monacoTheme = useMemo(() => {
+    if (appTheme === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'vs-dark' : 'vs'
+    }
+    return appTheme === 'dark' ? 'vs-dark' : 'vs'
+  }, [appTheme])
+
+  // Read shortcut keys for display
+  const floatingShortcut = useShortcutStore((s) => {
+    const sc = s.shortcuts.find((c) => c.action === 'clipboard-to-json')
+    return sc?.enabled ? sc?.keys : null
+  })
+
   // Show toast notification
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 2000)
   }, [])
 
-  // Handle editor content change
+  // Handle editor content change (debounced validation)
   const handleEditorChange = useCallback(
     (value: string | undefined) => {
       const text = value ?? ''
       setInput(text)
       if (text.trim()) {
-        validate(text)
+        debouncedValidate(text)
       }
     },
-    [setInput, validate]
+    [setInput, debouncedValidate]
   )
 
   // Format handler
@@ -77,7 +134,7 @@ export default function JsonFormatter() {
     } else {
       showToast(result.error ?? t('modules.jsonFormatter.ui.toastFormatFailed'), 'error')
     }
-  }, [format, input, showToast])
+  }, [format, input, showToast, t])
 
   // Compress handler
   const handleCompress = useCallback(() => {
@@ -89,34 +146,64 @@ export default function JsonFormatter() {
     } else {
       showToast(result.error ?? t('modules.jsonFormatter.ui.toastCompressFailed'), 'error')
     }
-  }, [compress, input, showToast])
+  }, [compress, input, showToast, t])
 
-  // Copy handler
+  // Copy handler — copies current content (valid or not)
   const handleCopy = useCallback(async () => {
     if (input) {
       await navigator.clipboard.writeText(input)
       showToast(t('modules.jsonFormatter.ui.toastCopied'))
     }
-  }, [input, showToast])
+  }, [input, showToast, t])
 
-  // Export handler
-  const handleExport = useCallback(() => {
+  // Export handler — Tauri save dialog + browser fallback
+  const handleExport = useCallback(async () => {
     if (!input) return
+    const filename = `formatted-${Date.now()}.json`
+
+    // Tauri: native save dialog
+    if (isTauri()) {
+      try {
+        const { save } = await import('@tauri-apps/plugin-dialog')
+        const { writeTextFile } = await import('@tauri-apps/plugin-fs')
+        const filePath = await save({
+          defaultPath: filename,
+          filters: [{ name: 'JSON File', extensions: ['json'] }],
+        })
+        if (filePath) {
+          await writeTextFile(filePath, input)
+          showToast(t('modules.jsonFormatter.ui.toastExported'))
+        }
+        return
+      } catch { /* fallback to browser */ }
+    }
+
+    // Browser fallback
     const blob = new Blob([input], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `formatted-${Date.now()}.json`
+    a.download = filename
     a.click()
     URL.revokeObjectURL(url)
     showToast(t('modules.jsonFormatter.ui.toastExported'))
-  }, [input, showToast])
+  }, [input, showToast, t])
 
-  // Clear handler
-  const handleClear = useCallback(() => {
-    setInput('')
-    showToast(t('modules.jsonFormatter.ui.toastCleared'))
-  }, [setInput, showToast])
+  // Clear handler — with confirmation dialog
+  const handleClear = useCallback(async () => {
+    if (!input) return
+    const ok = await confirm({
+      title: t('modules.jsonFormatter.ui.clearConfirmTitle', { defaultValue: '清空内容' }),
+      message: t('modules.jsonFormatter.ui.clearConfirmMsg', { defaultValue: '将清空编辑器中的所有内容，此操作不可撤销。' }),
+      confirmText: t('common.confirm', { defaultValue: '确认' }),
+      cancelText: t('common.cancel', { defaultValue: '取消' }),
+      danger: true,
+    })
+    if (ok) {
+      setInput('')
+      showToast(t('modules.jsonFormatter.ui.toastCleared'))
+    }
+  }, [input, confirm, setInput, showToast, t])
 
   // History restore handler
   const handleHistoryRestore = useCallback(
@@ -125,7 +212,7 @@ export default function JsonFormatter() {
       setShowHistory(false)
       showToast(t('modules.jsonFormatter.ui.toastRestored'))
     },
-    [setInput, showToast]
+    [setInput, showToast, t]
   )
 
   // History clear handler
@@ -134,13 +221,107 @@ export default function JsonFormatter() {
     setHistoryItems([])
   }, [])
 
+  // Keyboard shortcuts: Alt+F format, Alt+M compress (minimize)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        if (e.key === 'f' || e.key === 'F') {
+          e.preventDefault()
+          handleFormat()
+        } else if (e.key === 'm' || e.key === 'M') {
+          e.preventDefault()
+          handleCompress()
+        }
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [handleFormat, handleCompress])
+
+  // ─── Drag-and-drop .json file import ──────────────────────────────────────
+
+  const [isDragOver, setIsDragOver] = useState(false)
+  const dragCounterRef = useRef(0)
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    dragCounterRef.current++
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragOver(true)
+    }
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    dragCounterRef.current--
+    if (dragCounterRef.current === 0) setIsDragOver(false)
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'copy'
+  }, [])
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault()
+    dragCounterRef.current = 0
+    setIsDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file && (file.name.endsWith('.json') || file.type === 'application/json')) {
+      const text = await file.text()
+      setInput(text)
+      validate(text)
+      showToast(t('modules.jsonFormatter.ui.toastFileImported', { defaultValue: '文件已导入' }))
+    }
+  }, [setInput, validate, showToast, t])
+
+  // Tauri native file drop
+  useEffect(() => {
+    if (!isTauri()) return
+    let unlisten: (() => void) | undefined
+
+    ;(async () => {
+      try {
+        const { getCurrentWebview } = await import('@tauri-apps/api/webview')
+        const { readTextFile } = await import('@tauri-apps/plugin-fs')
+        unlisten = await getCurrentWebview().onDragDropEvent(async (event) => {
+          const ev = event.payload
+          if (ev.type === 'enter') {
+            setIsDragOver(true)
+          } else if (ev.type === 'leave') {
+            setIsDragOver(false)
+          } else if (ev.type === 'drop') {
+            setIsDragOver(false)
+            const filePath = ev.paths[0]
+            if (!filePath) return
+            if (/\.json$/i.test(filePath)) {
+              try {
+                const text = await readTextFile(filePath)
+                setInput(text)
+                validate(text)
+                showToast(t('modules.jsonFormatter.ui.toastFileImported', { defaultValue: '文件已导入' }))
+              } catch { /* file read error */ }
+            }
+          }
+        })
+      } catch { /* Tauri API not available */ }
+    })()
+
+    return () => { unlisten?.() }
+  }, [setInput, validate, showToast, t])
+
   // Statistics
   const stats = useMemo(() => getStats(), [input, getStats])
-  // Derive isValid from state instead of calling validate() during render (causes infinite loop)
   const isValid = !!input.trim() && lastError === null
 
   return (
-    <div className="relative flex h-full flex-col">
+    <div
+      className="relative flex h-full flex-col"
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {/* Toolbar */}
       <Toolbar
         indent={indent}
@@ -151,6 +332,10 @@ export default function JsonFormatter() {
         onClear={handleClear}
         onExport={handleExport}
         onHistory={() => setShowHistory(!showHistory)}
+        onFoldAll={handleFoldAll}
+        onUnfoldAll={handleUnfoldAll}
+        isCompressed={!input.includes('\n')}
+        isAllFolded={isAllFolded}
         hasContent={!!input}
         isValid={isValid}
       />
@@ -163,7 +348,8 @@ export default function JsonFormatter() {
             defaultLanguage="json"
             value={input}
             onChange={handleEditorChange}
-            theme="vs-dark"
+            onMount={handleEditorMount}
+            theme={monacoTheme}
             options={{
               minimap: { enabled: false },
               fontSize: 13,
@@ -175,6 +361,8 @@ export default function JsonFormatter() {
               wordWrap: 'on',
               padding: { top: 16 },
               renderLineHighlight: 'line',
+              folding: true,
+              showFoldingControls: 'always',
               bracketPairColorization: { enabled: true },
               guides: {
                 bracketPairs: true,
@@ -186,7 +374,28 @@ export default function JsonFormatter() {
       </div>
 
       {/* Status bar */}
-      <StatusBar stats={stats} error={lastError} errorPosition={errorPosition} />
+      <StatusBar stats={stats} error={lastError} errorPosition={errorPosition}>
+        {/* In-window shortcut hints */}
+        <span className="ml-auto flex items-center gap-1 text-text-disabled">
+          <Keyboard size={11} />
+          <span>
+            {t('modules.jsonFormatter.ui.inWindowShortcuts', {
+              defaultValue: 'Alt+F 格式化 · Alt+M 压缩',
+            })}
+          </span>
+        </span>
+        {/* Floating window shortcut hint */}
+        {floatingShortcut && (
+          <span className="flex items-center gap-1 text-text-disabled pl-2 border-l border-border-subtle">
+            <span>
+              {t('modules.jsonFormatter.ui.floatingShortcutHint', {
+                keys: formatShortcut(floatingShortcut),
+                defaultValue: `复制 JSON 后按 ${formatShortcut(floatingShortcut)} 快速格式化`,
+              })}
+            </span>
+          </span>
+        )}
+      </StatusBar>
 
       {/* History panel */}
       {showHistory && (
@@ -196,6 +405,15 @@ export default function JsonFormatter() {
           onClear={handleHistoryClear}
           onClose={() => setShowHistory(false)}
         />
+      )}
+
+      {/* Drag overlay */}
+      {isDragOver && (
+        <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center border-2 border-dashed border-primary/60 bg-primary/5">
+          <div className="rounded-lg bg-bg-elevated px-6 py-4 text-sm font-medium text-primary shadow-lg">
+            {t('modules.jsonFormatter.ui.dropHint', { defaultValue: '拖放 .json 文件到此处' })}
+          </div>
+        </div>
       )}
 
       {/* Toast notification */}

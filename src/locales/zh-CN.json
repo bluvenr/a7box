@@ -135,6 +135,8 @@
     "shortcutClipboardQrDesc": "剪贴板为文本时自动生成二维码，为图片时自动解析二维码",
     "shortcutClipboardMd": "Markdown 格式转换",
     "shortcutClipboardMdDesc": "剪贴板为 HTML 时自动转 Markdown，为 Markdown 时自动转 HTML",
+    "shortcutClipboardJson": "JSON 快速格式化",
+    "shortcutClipboardJsonDesc": "读取剪贴板 JSON 并自动格式化或压缩",
     "shortcutModuleDisabled": "模块已关闭"
   },
   "updater": {
@@ -187,9 +189,15 @@
         "indent4Spaces": "4 空格",
         "indentTab": "Tab",
         "copyTooltip": "复制到剪贴板",
+        "copyBtn": "复制",
         "exportTooltip": "导出为文件",
+        "exportBtn": "导出",
         "historyTooltip": "历史记录",
+        "historyBtn": "历史",
         "clearTooltip": "清空",
+        "clearBtn": "清空",
+        "foldAll": "折叠",
+        "unfoldAll": "展开",
         "statusValid": "JSON 有效",
         "statusAwaiting": "等待输入",
         "statsSize": "大小:",
@@ -204,7 +212,13 @@
         "timeJustNow": "刚刚",
         "timeMinutesAgo": "{{m}} 分钟前",
         "timeHoursAgo": "{{h}} 小时前",
-        "errorPosition": "第 {{line}} 行, 第 {{col}} 列"
+        "errorPosition": "第 {{line}} 行, 第 {{col}} 列",
+        "clearConfirmTitle": "清空内容",
+        "clearConfirmMsg": "将清空编辑器中的所有内容，此操作不可撤销。",
+        "toastFileImported": "文件已导入",
+        "dropHint": "拖放 .json 文件到此处",
+        "floatingShortcutHint": "复制 JSON 后按 {{keys}} 快速格式化",
+        "inWindowShortcuts": "Alt+F 格式化 · Alt+M 压缩"
       }
     },
     "qrCode": {
@@ -275,7 +289,7 @@
         "statusWords": "词数:",
         "statusChars": "字符:",
         "statusReverse": "HTML→MD 模式",
-                "shortcutHint": "复制内容后按 {{keys}} 快速格式转换",
+        "shortcutHint": "复制内容后按 {{keys}} 快速格式转换",
         "toastCopied": "HTML 已复制到剪贴板（富文本）",
         "toastMdCopied": "Markdown 已复制到剪贴板",
         "toastDownloaded": "HTML 文件已下载",
@@ -661,5 +675,21 @@
         }
       }
     }
+  },
+  "jsonQuick": {
+    "title": "JSON 快速格式化",
+    "clipboardEmpty": "剪贴板为空",
+    "clipboardError": "无法读取剪贴板",
+    "invalidHint": "剪贴板内容不是有效的 JSON",
+    "format": "格式化",
+    "compress": "压缩",
+    "formatted": "已格式化",
+    "compressed": "已压缩",
+    "lines": "行",
+    "chars": "字符",
+    "copy": "复制",
+    "copied": "已复制",
+    "expandAll": "全部展开",
+    "collapseAll": "全部折叠"
   }
 }

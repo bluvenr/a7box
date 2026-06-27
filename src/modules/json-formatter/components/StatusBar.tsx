@@ -10,6 +10,7 @@ interface StatusBarProps {
   stats: JsonStats
   error?: string | null
   errorPosition?: { line: number; column: number } | null
+  children?: React.ReactNode
 }
 
 function formatBytes(bytes: number): string {
@@ -20,7 +21,7 @@ function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
 
-export function StatusBar({ stats, error, errorPosition }: StatusBarProps) {
+export function StatusBar({ stats, error, errorPosition, children }: StatusBarProps) {
   const { t } = useTranslation()
   return (
     <div className="flex items-center gap-4 border-t border-border-subtle bg-bg-elevated px-4 py-1.5 text-xs">
@@ -68,6 +69,7 @@ export function StatusBar({ stats, error, errorPosition }: StatusBarProps) {
           </span>
         </>
       )}
+      {children}
     </div>
   )
 }

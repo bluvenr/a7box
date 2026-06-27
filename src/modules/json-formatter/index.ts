@@ -55,7 +55,7 @@ export const jsonFormatterModule: A7Module = {
             // Invalid JSON, open editor
           }
         }
-        ctx.navigate('/json-formatter?mode=compress')
+        ctx.navigate('/json-formatter')
       },
     },
   ],
@@ -87,6 +87,7 @@ export const jsonFormatterModule: A7Module = {
   ],
 
   onClipboard: async (_text: string) => {
-    // Background auto-format logic (controlled by settings toggle)
+    // Reserved for future: auto-format when JSON detected in clipboard
+    // Controlled by settings.autoFormat toggle
   },
 }

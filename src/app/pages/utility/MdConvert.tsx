@@ -5,6 +5,7 @@
  */
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import { FileDown, Copy, X, ArrowLeftRight, Check, Eye, Code, Maximize2, Minimize2 } from 'lucide-react'
 import TurndownService from 'turndown'
 import { gfm } from 'turndown-plugin-gfm'
@@ -44,7 +45,9 @@ applyMermaidPlugin(mdRenderer)
 
 // Links: click handler manages navigation (no target=_blank to interfere with preventDefault)
 
-const HTML_DETECT_RE = /<(html|head|body|div|p|span|table|form|section|article|nav|header|footer|ul|ol|li|dl|dd|dt|h[1-6]|a|img|br|em|strong|b|i|u|blockquote|pre|code|hr|figure|figcaption|details|summary|script|style|link|meta|input|button|label|select|textarea|svg|video|audio|canvas|iframe)\b/i
+const HTML_DETECT_RE = /<(html|head|body|div|p|span|table|form|section|article|nav|header|footer|ul|ol|li|dl|dd|dt|h[1-6]|a|img|br|em|strong|b|i|u|blockquote|pre|code|hr|figure|figcaption|details|summary|script|style|link|meta|input|button|label|select|textarea|svg|video|audio|canvas|iframe)\b/gi
+const MD_DETECT_RE = /(^#{1,6}\s|^```|^---$|\[.+?\]\(.+?\)|^\*\s|^\-\s|\|\s.+\s\|)/gm
+const HTML_STRUCTURE_RE = /<(html|head|body)\b/i
 
 type Mode = 'html-to-md' | 'md-to-html'
 
@@ -74,8 +77,14 @@ export default function MdConvert() {
           return
         }
         setInput(trimmed)
-        // Auto-detect mode
-        if (HTML_DETECT_RE.test(trimmed)) {
+        // Auto-detect mode: score-based heuristic
+        const htmlMatches = trimmed.match(HTML_DETECT_RE) || []
+        const mdMatches = trimmed.match(MD_DETECT_RE) || []
+        const hasHtmlStructure = HTML_STRUCTURE_RE.test(trimmed)
+        // HTML structure tags → definitely HTML
+        // More HTML tags than MD patterns → HTML
+        // Otherwise → Markdown
+        if (hasHtmlStructure || (htmlMatches.length > 3 && htmlMatches.length > mdMatches.length)) {
           setMode('html-to-md')
         } else {
           setMode('md-to-html')
@@ -95,6 +104,18 @@ export default function MdConvert() {
         await invoke('close_utility_window', { label: 'md-convert' })
       } catch { /* ignore */ }
     }
+  }, [])
+
+  // Double-click title bar to maximize/restore
+  const toggleMaximize = useCallback(async () => {
+    try {
+      const win = getCurrentWindow()
+      if (await win.isMaximized()) {
+        await win.unmaximize()
+      } else {
+        await win.maximize()
+      }
+    } catch { /* ignore in non-Tauri env */ }
   }, [])
 
   // ESC to close
@@ -280,11 +301,9 @@ ${bodyHtml}
     <div className="flex h-screen flex-col bg-bg-elevated">
       {/* Title bar — draggable */}
       <div
-        className="flex shrink-0 cursor-grab items-center justify-between px-4 pt-3 pb-2"
+        className="flex shrink-0 cursor-pointer items-center justify-between px-4 pt-3 pb-2"
         data-tauri-drag-region
-        onMouseDown={(e) => {
-          if (e.detail === 2) closeWindow()
-        }}
+        onDoubleClick={toggleMaximize}
       >
         <div className="pointer-events-none flex items-center gap-2" data-tauri-drag-region>
           <ArrowLeftRight size={14} className="text-primary" />
@@ -313,7 +332,7 @@ ${bodyHtml}
           <ArrowLeftRight className="h-3 w-3" />
           {mode === 'html-to-md' ? 'HTML → MD' : 'MD → HTML'}
         </button>
-        <span className="text-[10px] text-text-muted">
+        <span className="text-[11px] text-text-muted">
           {lines} {t('mdQuick.lines', { defaultValue: '行' })} · {chars} {t('mdQuick.chars', { defaultValue: '字符' })}
         </span>
       </div>
@@ -324,7 +343,7 @@ ${bodyHtml}
         {!outputFullscreen && (
           <>
             <div className="flex min-h-0 flex-col" style={{ flex: '0 0 40%' }}>
-              <div className="shrink-0 border-b border-border-subtle px-4 py-1 text-[10px] font-medium uppercase tracking-wider text-text-muted">
+              <div className="shrink-0 border-b border-border-subtle px-4 py-1 text-[11px] font-medium uppercase tracking-wider text-text-muted">
                 {inputLabel}
               </div>
               <textarea
@@ -344,7 +363,7 @@ ${bodyHtml}
         {/* Output — takes remaining 60% */}
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex shrink-0 items-center justify-between border-b border-border-subtle px-4 py-1">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-text-muted">
               {outputLabel}
             </span>
             <div className="flex items-center gap-1">
@@ -352,13 +371,13 @@ ${bodyHtml}
               {mode === 'md-to-html' && (
                 <button
                   onClick={() => setShowPreview(!showPreview)}
-                  className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] transition ${
+                  className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] transition ${
                     showPreview
                       ? 'bg-primary/10 text-primary'
                       : 'text-text-muted hover:bg-bg-hover hover:text-text-secondary'
                   }`}
                 >
-                  {showPreview ? <Eye size={10} /> : <Code size={10} />}
+                  {showPreview ? <Eye size={11} /> : <Code size={11} />}
                   {showPreview
                     ? t('mdQuick.preview', { defaultValue: '预览' })
                     : t('mdQuick.source', { defaultValue: '源码' })}
@@ -368,7 +387,7 @@ ${bodyHtml}
                 <>
                   <button
                     onClick={() => setOutputFullscreen(!outputFullscreen)}
-                    className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] transition ${
+                    className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] transition ${
                       outputFullscreen
                         ? 'bg-primary/10 text-primary'
                         : 'text-text-muted hover:bg-bg-hover hover:text-text-secondary'
@@ -377,22 +396,22 @@ ${bodyHtml}
                       ? t('mdQuick.exitFullscreen', { defaultValue: '退出全屏' })
                       : t('mdQuick.fullscreen', { defaultValue: '全屏查看' })}
                   >
-                    {outputFullscreen ? <Minimize2 size={10} /> : <Maximize2 size={10} />}
+                    {outputFullscreen ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
                   </button>
                   <button
                     onClick={handleCopy}
-                    className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-text-muted transition hover:bg-bg-hover hover:text-primary"
+                    className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-text-muted transition hover:bg-bg-hover hover:text-primary"
                   >
-                    {copied ? <Check size={10} className="text-success" /> : <Copy size={10} />}
+                    {copied ? <Check size={11} className="text-success" /> : <Copy size={11} />}
                     {copied
                       ? t('common.copied')
                       : t('mdQuick.copy', { defaultValue: '复制' })}
                   </button>
                   <button
                     onClick={handleDownload}
-                    className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-text-muted transition hover:bg-bg-hover hover:text-primary"
+                    className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-text-muted transition hover:bg-bg-hover hover:text-primary"
                   >
-                    <FileDown size={10} />
+                    <FileDown size={11} />
                     {t('mdQuick.download', { defaultValue: '下载' })}
                   </button>
                 </>

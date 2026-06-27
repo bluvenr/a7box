@@ -4,7 +4,9 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { CachedOutlet, VisitedProvider } from './CachedOutlet'
+import { mainAppChildren } from '../router'
 import { useTranslation } from 'react-i18next'
 import { Home, Settings, Box, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useModuleRegistry } from '../../core/registry'
@@ -169,7 +171,9 @@ export function MainLayout() {
 
         {/* Content area */}
         <main className="flex-1 overflow-auto">
-          <Outlet />
+          <VisitedProvider>
+            <CachedOutlet routes={mainAppChildren} />
+          </VisitedProvider>
         </main>
       </div>
 

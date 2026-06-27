@@ -3,6 +3,7 @@
  */
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import type { RouteObject } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { MainLayout } from './layouts/MainLayout'
 import { ErrorBoundary, ModuleSkeleton } from '../shared/components'
@@ -48,6 +49,117 @@ function ModuleRoute({ moduleId, children }: { moduleId: string; children: React
   )
 }
 
+// Main app child routes (shared between router and CachedOutlet)
+export const mainAppChildren: RouteObject[] = [
+  {
+    index: true,
+    element: (
+      <Suspense fallback={<ModuleSkeleton />}>
+        <Home />
+      </Suspense>
+    ),
+  },
+  {
+    path: 'settings',
+    element: (
+      <Suspense fallback={<ModuleSkeleton />}>
+        <Settings />
+      </Suspense>
+    ),
+  },
+  // Tool module routes
+  {
+    path: 'json-formatter',
+    handle: { moduleId: 'json-formatter' },
+    element: <ModuleRoute moduleId="json-formatter"><JsonFormatter /></ModuleRoute>,
+  },
+  {
+    path: 'qr-code',
+    handle: { moduleId: 'qr-code' },
+    element: <ModuleRoute moduleId="qr-code"><QrCode /></ModuleRoute>,
+  },
+  {
+    path: 'markdown-preview',
+    handle: { moduleId: 'markdown-preview' },
+    element: <ModuleRoute moduleId="markdown-preview"><MarkdownPreview /></ModuleRoute>,
+  },
+  {
+    path: 'code-minify',
+    handle: { moduleId: 'code-minify' },
+    element: <ModuleRoute moduleId="code-minify"><CodeMinify /></ModuleRoute>,
+  },
+  {
+    path: 'image-compress',
+    handle: { moduleId: 'image-compress' },
+    element: <ModuleRoute moduleId="image-compress"><ImageCompress /></ModuleRoute>,
+  },
+  {
+    path: 'hash-generator',
+    handle: { moduleId: 'hash-generator' },
+    element: <ModuleRoute moduleId="hash-generator"><HashGenerator /></ModuleRoute>,
+  },
+  {
+    path: 'image-convert',
+    handle: { moduleId: 'image-convert' },
+    element: <ModuleRoute moduleId="image-convert"><ImageConvert /></ModuleRoute>,
+  },
+  {
+    path: 'color-tool',
+    handle: { moduleId: 'color-tool' },
+    element: <ModuleRoute moduleId="color-tool"><ColorTool /></ModuleRoute>,
+  },
+  {
+    path: 'base64-tool',
+    handle: { moduleId: 'base64-tool' },
+    element: <ModuleRoute moduleId="base64-tool"><Base64Tool /></ModuleRoute>,
+  },
+  {
+    path: 'timestamp-converter',
+    handle: { moduleId: 'timestamp-converter' },
+    element: <ModuleRoute moduleId="timestamp-converter"><TimestampConverter /></ModuleRoute>,
+  },
+  {
+    path: 'uuid-generator',
+    handle: { moduleId: 'uuid-generator' },
+    element: <ModuleRoute moduleId="uuid-generator"><UuidGenerator /></ModuleRoute>,
+  },
+  {
+    path: 'jwt-decoder',
+    handle: { moduleId: 'jwt-decoder' },
+    element: <ModuleRoute moduleId="jwt-decoder"><JwtDecoder /></ModuleRoute>,
+  },
+  {
+    path: 'regex-tester',
+    handle: { moduleId: 'regex-tester' },
+    element: <ModuleRoute moduleId="regex-tester"><RegexTester /></ModuleRoute>,
+  },
+  {
+    path: 'text-diff',
+    handle: { moduleId: 'text-diff' },
+    element: <ModuleRoute moduleId="text-diff"><TextDiff /></ModuleRoute>,
+  },
+  {
+    path: 'screenshot',
+    handle: { moduleId: 'screenshot' },
+    element: <ModuleRoute moduleId="screenshot"><Screenshot /></ModuleRoute>,
+  },
+  {
+    path: 'http-server',
+    handle: { moduleId: 'http-server' },
+    element: <ModuleRoute moduleId="http-server"><HttpServer /></ModuleRoute>,
+  },
+  {
+    path: 'code-share',
+    handle: { moduleId: 'code-share' },
+    element: <ModuleRoute moduleId="code-share"><CodeShare /></ModuleRoute>,
+  },
+  {
+    path: 'p2p-transfer',
+    handle: { moduleId: 'p2p-transfer' },
+    element: <ModuleRoute moduleId="p2p-transfer"><P2PTransfer /></ModuleRoute>,
+  },
+]
+
 // Router configuration
 export const router = createBrowserRouter([
   // Utility windows (standalone floating windows)
@@ -87,97 +199,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <MainLayout />,
-    children: [
-      {
-        index: true,
-        element: (
-          <Suspense fallback={<ModuleSkeleton />}>
-            <Home />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'settings',
-        element: (
-          <Suspense fallback={<ModuleSkeleton />}>
-            <Settings />
-          </Suspense>
-        ),
-      },
-      // Tool module routes
-      {
-        path: 'json-formatter',
-        element: <ModuleRoute moduleId="json-formatter"><JsonFormatter /></ModuleRoute>,
-      },
-      {
-        path: 'qr-code',
-        element: <ModuleRoute moduleId="qr-code"><QrCode /></ModuleRoute>,
-      },
-      {
-        path: 'markdown-preview',
-        element: <ModuleRoute moduleId="markdown-preview"><MarkdownPreview /></ModuleRoute>,
-      },
-      {
-        path: 'code-minify',
-        element: <ModuleRoute moduleId="code-minify"><CodeMinify /></ModuleRoute>,
-      },
-      {
-        path: 'image-compress',
-        element: <ModuleRoute moduleId="image-compress"><ImageCompress /></ModuleRoute>,
-      },
-      {
-        path: 'hash-generator',
-        element: <ModuleRoute moduleId="hash-generator"><HashGenerator /></ModuleRoute>,
-      },
-      {
-        path: 'image-convert',
-        element: <ModuleRoute moduleId="image-convert"><ImageConvert /></ModuleRoute>,
-      },
-      {
-        path: 'color-tool',
-        element: <ModuleRoute moduleId="color-tool"><ColorTool /></ModuleRoute>,
-      },
-      {
-        path: 'base64-tool',
-        element: <ModuleRoute moduleId="base64-tool"><Base64Tool /></ModuleRoute>,
-      },
-      {
-        path: 'timestamp-converter',
-        element: <ModuleRoute moduleId="timestamp-converter"><TimestampConverter /></ModuleRoute>,
-      },
-      {
-        path: 'uuid-generator',
-        element: <ModuleRoute moduleId="uuid-generator"><UuidGenerator /></ModuleRoute>,
-      },
-      {
-        path: 'jwt-decoder',
-        element: <ModuleRoute moduleId="jwt-decoder"><JwtDecoder /></ModuleRoute>,
-      },
-      {
-        path: 'regex-tester',
-        element: <ModuleRoute moduleId="regex-tester"><RegexTester /></ModuleRoute>,
-      },
-      {
-        path: 'text-diff',
-        element: <ModuleRoute moduleId="text-diff"><TextDiff /></ModuleRoute>,
-      },
-      {
-        path: 'screenshot',
-        element: <ModuleRoute moduleId="screenshot"><Screenshot /></ModuleRoute>,
-      },
-      {
-        path: 'http-server',
-        element: <ModuleRoute moduleId="http-server"><HttpServer /></ModuleRoute>,
-      },
-      {
-        path: 'code-share',
-        element: <ModuleRoute moduleId="code-share"><CodeShare /></ModuleRoute>,
-      },
-      {
-        path: 'p2p-transfer',
-        element: <ModuleRoute moduleId="p2p-transfer"><P2PTransfer /></ModuleRoute>,
-      },
-    ],
+    children: mainAppChildren,
   },
 ])
 

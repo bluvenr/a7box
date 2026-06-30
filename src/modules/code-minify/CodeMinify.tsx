@@ -7,7 +7,7 @@ import { useState, useCallback, useEffect, useRef, lazy, Suspense, useMemo } fro
 import { useTranslation } from 'react-i18next'
 import {
   Minimize2, Maximize2, Copy, Trash2, Download, History, ClipboardPaste, FileUp,
-  ArrowLeftRight, Keyboard,
+  ArrowLeftRight, Keyboard, Code2,
 } from 'lucide-react'
 import {
   minifyCode, beautifyCode, detectLanguage, detectLanguageFromExt,
@@ -377,8 +377,14 @@ export default function CodeMinify() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      {/* Header */}
+      <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
+        <Code2 className="h-4 w-4 text-text-muted" />
+        <span className="text-sm font-medium text-text-primary">{t('modules.codeMinify.name')}</span>
+      </div>
+
       {/* Toolbar */}
-      <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
+      <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated/50 px-4 py-2">
         {/* Language selector */}
         <select
           value={language}

@@ -208,9 +208,14 @@ export default function ImageCompress() {
 
   return (
     <div className="relative flex h-full flex-col">
+      {/* Header */}
+      <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
+        <ImageDown className="h-4 w-4 text-text-muted" />
+        <span className="text-sm font-medium text-text-primary">{t('modules.imageCompress.name')}</span>
+      </div>
+
       {/* Controls */}
-      <div className="flex flex-wrap items-center gap-4 border-b border-border-subtle bg-bg-elevated px-4 py-3">
-        <ImageDown className="h-5 w-5 text-text-muted" />
+      <div className="flex flex-wrap items-center gap-4 border-b border-border-subtle bg-bg-elevated/50 px-4 py-3">
 
         {/* Quality slider */}
         <div className="flex items-center gap-2">

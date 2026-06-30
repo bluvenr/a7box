@@ -116,7 +116,7 @@ export default function ColorTool() {
   return (
     <div className="relative flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
+      <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
         <Palette className="h-4 w-4 text-text-muted" />
         <span className="text-sm font-medium text-text-primary">{t('modules.colorTool.name')}</span>
       </div>

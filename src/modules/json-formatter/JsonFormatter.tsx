@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Keyboard } from 'lucide-react'
+import { Keyboard, FileJson } from 'lucide-react'
 import { useJsonFormat } from './hooks/useJsonFormat'
 import { Toolbar } from './components/Toolbar'
 import { StatusBar } from './components/StatusBar'
@@ -322,6 +322,12 @@ export default function JsonFormatter() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      {/* Header */}
+      <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
+        <FileJson className="h-4 w-4 text-text-muted" />
+        <span className="text-sm font-medium text-text-primary">{t('modules.jsonFormatter.name')}</span>
+      </div>
+
       {/* Toolbar */}
       <Toolbar
         indent={indent}

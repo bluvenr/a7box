@@ -374,12 +374,14 @@ export default function MarkdownPreview() {
         onChange={handleFileChange}
       />
 
-      {/* Toolbar */}
-      <div className="flex items-center gap-1.5 border-b border-border-subtle bg-bg-elevated px-3 py-1.5">
+      {/* Header */}
+      <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
         <FileText className="h-4 w-4 text-text-muted" />
         <span className="text-sm font-medium text-text-primary">{t('modules.markdownPreview.name')}</span>
+      </div>
 
-        <div className="mx-1 h-5 w-px bg-border-base" />
+      {/* Toolbar */}
+      <div className="flex shrink-0 items-center gap-1.5 border-b border-border-subtle bg-bg-elevated/50 px-3 py-1.5">
 
         {/* Mode toggle: MD→HTML / HTML→MD */}
         <button

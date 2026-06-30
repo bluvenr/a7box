@@ -58,8 +58,14 @@ export default function QrCode() {
 
   return (
     <div className="relative flex h-full flex-col">
+      {/* Header */}
+      <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
+        <QrCodeIcon className="h-4 w-4 text-text-muted" />
+        <span className="text-sm font-medium text-text-primary">{t('modules.qrCode.name')}</span>
+      </div>
+
       {/* Tab bar */}
-      <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
+      <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated/50 px-4 py-2">
         <button
           onClick={() => setActiveTab('generate')}
           className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${

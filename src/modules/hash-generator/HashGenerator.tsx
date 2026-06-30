@@ -128,11 +128,14 @@ export default function HashGenerator() {
 
   return (
     <div className="relative flex h-full flex-col">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
+      {/* Header */}
+      <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
         <Fingerprint className="h-4 w-4 text-text-muted" />
         <span className="text-sm font-medium text-text-primary">{t('modules.hashGenerator.name')}</span>
-        <div className="mx-2 h-5 w-px bg-border-base" />
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex shrink-0 items-center gap-2 border-b border-border-subtle bg-bg-elevated/50 px-4 py-2">
         <button onClick={() => setMode('text')} className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${mode === 'text' ? 'bg-primary/10 text-primary' : 'text-text-muted hover:text-text-secondary'}`}>
           <span className="flex items-center gap-1"><FileText className="h-3.5 w-3.5" /> {t('common.text')}</span>
         </button>

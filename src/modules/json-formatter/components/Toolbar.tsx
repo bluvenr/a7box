@@ -41,7 +41,7 @@ export function Toolbar({
 }: ToolbarProps) {
   const { t } = useTranslation()
   return (
-    <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated px-4 py-2">
+    <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated/50 px-4 py-2">
       {/* Format button */}
       <button
         onClick={onFormat}

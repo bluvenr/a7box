@@ -165,20 +165,21 @@ function ConfirmModal({
         {/* Header */}
         <div className="flex items-start gap-3 mb-3">
           <Icon size={18} className={`${iconColor} shrink-0 mt-0.5`} />
-          <div className="min-w-0">
+          <div className="min-w-0 pr-6">
             <h3 className="text-sm font-semibold text-text-primary">{opts.title}</h3>
             <p className="mt-1 text-xs text-text-secondary leading-relaxed">{opts.message}</p>
             {opts.detail && (
               <p className="mt-1.5 text-[11px] text-text-muted">{opts.detail}</p>
             )}
           </div>
-          <button
-            onClick={onCancel}
-            className="shrink-0 text-text-muted hover:text-text-primary cursor-pointer -mt-1 -mr-1 p-1"
-          >
-            <X size={14} />
-          </button>
         </div>
+        {/* Close button — absolute positioned top-right */}
+        <button
+          onClick={onCancel}
+          className="absolute top-3 right-3 text-text-muted hover:text-text-primary cursor-pointer p-1"
+        >
+          <X size={14} />
+        </button>
 
         {/* Buttons */}
         <div className="flex justify-end gap-2 mt-4">
@@ -243,7 +244,7 @@ function AlertModal({
         {/* Header */}
         <div className="flex items-start gap-3">
           <Icon size={18} className={`${iconColor} shrink-0 mt-0.5`} />
-          <div className="min-w-0">
+          <div className="min-w-0 pr-6">
             <h3 className="text-sm font-semibold text-text-primary">{opts.title}</h3>
             <p className="mt-1 text-xs text-text-secondary leading-relaxed">{opts.message}</p>
             {opts.detail && (
@@ -251,6 +252,13 @@ function AlertModal({
             )}
           </div>
         </div>
+        {/* Close button — absolute positioned top-right */}
+        <button
+          onClick={onOk}
+          className="absolute top-3 right-3 text-text-muted hover:text-text-primary cursor-pointer p-1"
+        >
+          <X size={14} />
+        </button>
 
         {/* OK button */}
         <div className="flex justify-end mt-4">

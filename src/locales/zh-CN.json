@@ -281,6 +281,8 @@
       "ui": {
         "previewToggle": "预览",
         "modeToggle": "切换正向/反向转换模式",
+        "mdToHtml": "MD 转 HTML",
+        "htmlToMd": "HTML 转 MD",
         "copyTooltip": "复制渲染后的 HTML（富文本）",
         "copyMdTooltip": "复制生成的 Markdown",
         "downloadTooltip": "下载为 HTML",
@@ -294,7 +296,7 @@
         "statusLines": "行数:",
         "statusWords": "词数:",
         "statusChars": "字符:",
-        "statusReverse": "HTML→MD 模式",
+        "statusReverse": "HTML 转 MD 模式",
         "shortcutHint": "复制内容后按 {{keys}} 快速格式转换",
         "toastCopied": "HTML 已复制到剪贴板（富文本）",
         "toastMdCopied": "Markdown 已复制到剪贴板",
@@ -302,8 +304,8 @@
         "toastMdDownloaded": "Markdown 文件已下载",
         "toastCleared": "已清空",
         "toastFileImported": "文件已导入",
-        "toastAutoSwitchToMd": "已自动切换到 HTML→MD 模式",
-        "toastAutoSwitchToPreview": "已自动切换到 MD→HTML 模式"
+        "toastAutoSwitchToMd": "已自动切换到 HTML 转 MD 模式",
+        "toastAutoSwitchToPreview": "已自动切换到 MD 转 HTML 模式"
       }
     },
     "codeMinify": {
@@ -452,11 +454,27 @@
       "timestamp": "Unix 时间戳",
       "dateString": "日期字符串",
       "allFormats": "所有格式",
-      "details": "日期详情",
-      "year": "年",
-      "month": "月",
-      "day": "日",
-      "dayOfWeek": "星期"
+      "dateSummary": "{{year}}年{{month}}月{{day}}日 {{hour}}:{{minute}}:{{second}}（{{dayOfWeek}}）",
+      "formatIso": "ISO 8601",
+      "formatLocal": "本地时间",
+      "formatDate": "仅日期",
+      "formatTime": "仅时间",
+      "formatUnixSec": "Unix (s)",
+      "formatUnixMs": "Unix (ms)",
+      "dayOfWeek": "星期",
+      "invalidTimestamp": "无效的时间戳",
+      "invalidDate": "无效的日期",
+      "daySun": "周日",
+      "dayMon": "周一",
+      "dayTue": "周二",
+      "dayWed": "周三",
+      "dayThu": "周四",
+      "dayFri": "周五",
+      "daySat": "周六",
+      "modeTsToDate": "时间戳转日期",
+      "modeDateToTs": "日期转时间戳",
+      "resultTimestamp": "结果时间戳",
+      "datePlaceholder": "2024-01-01 12:00:00"
     },
     "uuidGenerator": {
       "name": "UUID 生成器",

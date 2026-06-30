@@ -281,6 +281,8 @@
       "ui": {
         "previewToggle": "Preview",
         "modeToggle": "Toggle forward/reverse conversion mode",
+        "mdToHtml": "MD to HTML",
+        "htmlToMd": "HTML to MD",
         "copyTooltip": "Copy rendered HTML (rich text)",
         "copyMdTooltip": "Copy generated Markdown",
         "downloadTooltip": "Download as HTML",
@@ -294,7 +296,7 @@
         "statusLines": "Lines:",
         "statusWords": "Words:",
         "statusChars": "Chars:",
-        "statusReverse": "HTML→MD mode",
+        "statusReverse": "HTML to MD mode",
         "shortcutHint": "Copy content then press {{keys}} for quick convert",
         "toastCopied": "HTML copied to clipboard (rich text)",
         "toastMdCopied": "Markdown copied to clipboard",
@@ -302,8 +304,8 @@
         "toastMdDownloaded": "Markdown file downloaded",
         "toastCleared": "Cleared",
         "toastFileImported": "File imported",
-        "toastAutoSwitchToMd": "Switched to HTML→MD mode",
-        "toastAutoSwitchToPreview": "Switched to MD→HTML mode"
+        "toastAutoSwitchToMd": "Switched to HTML to MD mode",
+        "toastAutoSwitchToPreview": "Switched to MD to HTML mode"
       }
     },
     "codeMinify": {
@@ -446,17 +448,33 @@
     },
     "timestampConverter": {
       "name": "Timestamp Converter",
-      "description": "Convert between Unix timestamps and human-readable dates",
+      "description": "Convert between unix timestamps and human-readable dates",
       "commands": { "open": "Timestamp Converter" },
       "now": "Now",
       "timestamp": "Unix Timestamp",
       "dateString": "Date String",
       "allFormats": "All Formats",
-      "details": "Date Details",
-      "year": "Year",
-      "month": "Month",
-      "day": "Day",
-      "dayOfWeek": "Day of Week"
+      "dateSummary": "{{month}}/{{day}}/{{year}} {{hour}}:{{minute}}:{{second}} ({{dayOfWeek}})",
+      "formatIso": "ISO 8601",
+      "formatLocal": "Local",
+      "formatDate": "Date only",
+      "formatTime": "Time only",
+      "formatUnixSec": "Unix (s)",
+      "formatUnixMs": "Unix (ms)",
+      "dayOfWeek": "Day of Week",
+      "invalidTimestamp": "Invalid timestamp",
+      "invalidDate": "Invalid date",
+      "daySun": "Sun",
+      "dayMon": "Mon",
+      "dayTue": "Tue",
+      "dayWed": "Wed",
+      "dayThu": "Thu",
+      "dayFri": "Fri",
+      "daySat": "Sat",
+      "modeTsToDate": "Timestamp to Date",
+      "modeDateToTs": "Date to Timestamp",
+      "resultTimestamp": "Result Timestamp",
+      "datePlaceholder": "2024-01-01 12:00:00"
     },
     "uuidGenerator": {
       "name": "UUID Generator",

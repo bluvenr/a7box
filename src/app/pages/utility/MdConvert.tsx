@@ -324,7 +324,7 @@ ${bodyHtml}
             onClick={() => switchMode('html-to-md')}
             className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium transition-colors ${
               mode === 'html-to-md'
-                ? 'bg-accent/10 text-accent'
+                ? 'bg-primary/10 text-primary'
                 : 'text-text-muted hover:bg-bg-hover'
             }`}
           >

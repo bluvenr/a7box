@@ -7,7 +7,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Eye, EyeOff, Copy, Download, Trash2, FileText,
-  Upload, ArrowLeftRight, Maximize2, Minimize2, FileDown, Keyboard,
+  Upload, Maximize2, Minimize2, FileDown, Keyboard,
 } from 'lucide-react'
 import { useMarkdown } from './hooks/useMarkdown'
 import { useShortcutStore } from '../../core/shortcuts'
@@ -106,10 +106,6 @@ export default function MarkdownPreview() {
       setMode('preview')
       showToast(t('modules.markdownPreview.ui.toastFileImported'))
     }
-  }
-
-  const toggleMode = () => {
-    setMode(mode === 'preview' ? 'reverse' : 'preview')
   }
 
   // ─── Drag-and-drop ──────────────────────────────────────────────────────
@@ -383,19 +379,29 @@ export default function MarkdownPreview() {
       {/* Toolbar */}
       <div className="flex shrink-0 items-center gap-1.5 border-b border-border-subtle bg-bg-elevated/50 px-3 py-1.5">
 
-        {/* Mode toggle: MD→HTML / HTML→MD */}
-        <button
-          onClick={toggleMode}
-          className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${
-            mode === 'reverse'
-              ? 'bg-accent/10 text-accent'
-              : 'text-text-muted hover:bg-bg-hover hover:text-text-secondary'
-          }`}
-          title={t('modules.markdownPreview.ui.modeToggle')}
-        >
-          <ArrowLeftRight className="h-3.5 w-3.5" />
-          {mode === 'reverse' ? 'HTML→MD' : 'MD→HTML'}
-        </button>
+        {/* Mode toggle: Segmented Control */}
+        <div className="flex overflow-hidden rounded-md border border-border-subtle">
+          <button
+            onClick={() => setMode('preview')}
+            className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+              mode === 'preview'
+                ? 'bg-primary/10 text-primary'
+                : 'text-text-muted hover:bg-bg-hover'
+            }`}
+          >
+            {t('modules.markdownPreview.ui.mdToHtml', { defaultValue: 'MD to HTML' })}
+          </button>
+          <button
+            onClick={() => setMode('reverse')}
+            className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+              mode === 'reverse'
+                ? 'bg-primary/10 text-primary'
+                : 'text-text-muted hover:bg-bg-hover'
+            }`}
+          >
+            {t('modules.markdownPreview.ui.htmlToMd', { defaultValue: 'HTML to MD' })}
+          </button>
+        </div>
 
         {/* Toggle preview pane */}
         <button
@@ -546,7 +552,7 @@ export default function MarkdownPreview() {
         <span>{t('modules.markdownPreview.ui.statusWords')} <span className="text-text-secondary">{stats.words}</span></span>
         <span>{t('modules.markdownPreview.ui.statusChars')} <span className="text-text-secondary">{stats.chars}</span></span>
         {mode === 'reverse' && (
-          <span className="text-accent">{t('modules.markdownPreview.ui.statusReverse')}</span>
+          <span className="text-primary">{t('modules.markdownPreview.ui.statusReverse')}</span>
         )}
         {/* Shortcut hint — dynamic, reads from store */}
         {shortcutKeys && (

@@ -483,10 +483,21 @@
       "type": "类型",
       "count": "数量",
       "length": "长度",
+      "case": "大小写",
+      "mixed": "混合",
+      "lowercase": "小写",
+      "uppercase": "大写",
+      "hex": "Hex",
+      "charset": "字符集",
+      "csUpper": "A-Z",
+      "csLower": "a-z",
+      "csDigits": "0-9",
+      "csSymbols": "_-~!@#$%",
       "numeric": "纯数字",
       "generate": "生成",
       "generated": "条 ID 已生成",
-      "copyAll": "复制全部"
+      "copyAll": "复制全部",
+      "emptyHint": "按 Enter 或点击生成按钮创建 ID"
     },
     "jwtDecoder": {
       "name": "JWT 解码器",

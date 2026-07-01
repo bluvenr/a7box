@@ -483,10 +483,21 @@
       "type": "Type",
       "count": "Count",
       "length": "Length",
+      "case": "Case",
+      "mixed": "Mixed",
+      "lowercase": "Lowercase",
+      "uppercase": "Uppercase",
+      "hex": "Hex",
+      "charset": "Character Set",
+      "csUpper": "A-Z",
+      "csLower": "a-z",
+      "csDigits": "0-9",
+      "csSymbols": "_-~!@#$%",
       "numeric": "Numeric",
       "generate": "Generate",
       "generated": "IDs Generated",
-      "copyAll": "Copy All"
+      "copyAll": "Copy All",
+      "emptyHint": "Press Enter or click Generate to create IDs"
     },
     "jwtDecoder": {
       "name": "JWT Decoder",

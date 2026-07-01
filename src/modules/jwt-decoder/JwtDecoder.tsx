@@ -1,10 +1,10 @@
 /**
  * A7Box JWT Decoder Module
- * Decodes and inspects JWT tokens (header, payload, expiry)
+ * Decodes and inspects JWT tokens (header, payload, expiry, signature)
  */
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { KeyRound, Copy, AlertTriangle, CheckCircle2, Clock, ShieldCheck } from 'lucide-react'
+import { KeyRound, Copy, AlertTriangle, CheckCircle2, Clock, ShieldCheck, ClipboardPaste, Fingerprint, X } from 'lucide-react'
 
 function decodeBase64Url(str: string): string {
   let base64 = str.replace(/-/g, '+').replace(/_/g, '/')
@@ -17,13 +17,18 @@ function decodeBase64Url(str: string): string {
         .join('')
     )
   } catch {
-    return atob(base64)
+    try {
+      return atob(base64)
+    } catch {
+      return ''
+    }
   }
 }
 
 interface JwtParts {
   header: Record<string, unknown> | null
   payload: Record<string, unknown> | null
+  signature: string | null
   error: string | null
 }
 
@@ -31,21 +36,26 @@ function decodeJwt(token: string): JwtParts {
   const trimmed = token.trim().replace(/^Bearer\s+/i, '')
   const parts = trimmed.split('.')
   if (parts.length !== 3) {
-    return { header: null, payload: null, error: 'Invalid JWT format (expected 3 parts)' }
+    return { header: null, payload: null, signature: null, error: '__INVALID_FORMAT__' }
   }
   try {
     const header = JSON.parse(decodeBase64Url(parts[0]))
     const payload = JSON.parse(decodeBase64Url(parts[1]))
-    return { header, payload, error: null }
+    const signature = parts[2] || null
+    return { header, payload, signature, error: null }
   } catch (e) {
-    return { header: null, payload: null, error: `Decode error: ${e}` }
+    return { header: null, payload: null, signature: null, error: `__DECODE_ERROR__:${e}` }
   }
 }
 
-function getExpiryInfo(payload: Record<string, unknown>): { expired: boolean; remaining: string; expDate: string } | null {
-  const exp = payload.exp
-  if (typeof exp !== 'number') return null
-  const expMs = exp * 1000
+interface ExpiryInfo {
+  expired: boolean
+  remaining: string
+  expDate: string
+  expMs: number
+}
+
+function computeExpiry(expMs: number): ExpiryInfo {
   const now = Date.now()
   const expired = now > expMs
   const diff = Math.abs(expMs - now)
@@ -60,22 +70,71 @@ function getExpiryInfo(payload: Record<string, unknown>): { expired: boolean; re
   else if (minutes > 0) remaining = `${minutes}m ${seconds % 60}s`
   else remaining = `${seconds}s`
 
-  return { expired, remaining, expDate: new Date(expMs).toLocaleString() }
+  return { expired, remaining, expDate: new Date(expMs).toLocaleString(), expMs }
+}
+
+function formatClaimValue(claim: string, val: unknown): string {
+  if (['exp', 'nbf', 'iat'].includes(claim) && typeof val === 'number') {
+    return new Date(val * 1000).toLocaleString()
+  }
+  if (Array.isArray(val)) return val.join(', ')
+  return String(val)
 }
 
 export default function JwtDecoder() {
   const { t } = useTranslation()
   const [token, setToken] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
+  const [now, setNow] = useState(Date.now())
 
   const decoded = useMemo(() => (token.trim() ? decodeJwt(token) : null), [token])
-  const expiry = useMemo(() => (decoded?.payload ? getExpiryInfo(decoded.payload) : null), [decoded])
+
+  // Tick every second for live expiry countdown — only when token has exp
+  const hasExp = decoded?.payload?.exp !== undefined
+  useEffect(() => {
+    if (!hasExp) return
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [hasExp])
+
+  const expiry = useMemo(() => {
+    if (!decoded?.payload) return null
+    const exp = decoded.payload.exp
+    if (typeof exp !== 'number') return null
+    return computeExpiry(exp * 1000)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decoded, now])
 
   const copy = async (key: string, text: string) => {
-    await navigator.clipboard.writeText(text)
-    setCopied(key)
-    setTimeout(() => setCopied(null), 1200)
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(key)
+      setTimeout(() => setCopied(null), 1200)
+    } catch {
+      /* clipboard write failed */
+    }
   }
+
+  const paste = useCallback(async () => {
+    try {
+      let text = ''
+      if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+        const { invoke } = await import('@tauri-apps/api/core')
+        text = await invoke<string>('get_clipboard_text')
+      } else {
+        text = await navigator.clipboard.readText()
+      }
+      if (text.trim()) setToken(text.trim())
+    } catch {
+      /* clipboard permission denied or empty */
+    }
+  }, [])
+
+  const errorMessage = decoded?.error
+    ? decoded.error === '__INVALID_FORMAT__'
+      ? t('modules.jwtDecoder.invalidFormat')
+      : `${t('modules.jwtDecoder.decodeError')}: ${decoded.error.replace('__DECODE_ERROR__:', '')}`
+    : null
 
   return (
     <div className="h-full overflow-y-auto p-6">
@@ -84,7 +143,7 @@ export default function JwtDecoder() {
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <KeyRound size={20} />
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-bold text-text-primary">
             {t('modules.jwtDecoder.name')}
           </h1>
@@ -95,24 +154,49 @@ export default function JwtDecoder() {
       </div>
 
       {/* Token Input */}
-      <div className="mb-6">
-        <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-text-muted">
-          JWT Token
-        </label>
+      <div className="relative mb-6">
         <textarea
           value={token}
           onChange={(e) => setToken(e.target.value)}
-          placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ..."
+          placeholder={t('modules.jwtDecoder.placeholder')}
           rows={4}
-          className="w-full rounded-xl border border-border-subtle bg-bg-elevated p-4 font-mono text-sm text-text-primary outline-none transition focus:border-primary resize-none"
+          className="w-full rounded-xl border border-border-subtle bg-bg-elevated p-4 pr-[120px] font-mono text-sm text-text-primary outline-none transition focus:border-primary resize-none"
         />
+        <div className="absolute right-3 bottom-3 flex items-center gap-1.5">
+          {token && (
+            <button
+              onClick={() => setToken('')}
+              className="flex items-center gap-1.5 rounded-lg bg-bg-base/80 px-2.5 py-1 text-xs text-text-muted backdrop-blur-sm transition hover:text-red-400 cursor-pointer"
+            >
+              <X size={12} />
+              {t('modules.jwtDecoder.clear')}
+            </button>
+          )}
+          <button
+            onClick={paste}
+            className="flex items-center gap-1.5 rounded-lg bg-bg-base/80 px-2.5 py-1 text-xs text-text-secondary backdrop-blur-sm transition hover:text-primary cursor-pointer"
+          >
+            <ClipboardPaste size={12} />
+            {t('modules.jwtDecoder.paste')}
+          </button>
+        </div>
       </div>
 
+      {/* Empty state */}
+      {!token.trim() && (
+        <div className="flex flex-col items-center justify-center gap-3 py-16 text-text-disabled">
+          <KeyRound size={32} strokeWidth={1.2} />
+          <p className="text-sm">
+            {t('modules.jwtDecoder.emptyHint')}
+          </p>
+        </div>
+      )}
+
       {/* Error */}
-      {decoded?.error && (
+      {errorMessage && (
         <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           <AlertTriangle size={16} />
-          {decoded.error}
+          {errorMessage}
         </div>
       )}
 
@@ -131,7 +215,9 @@ export default function JwtDecoder() {
                 : t('modules.jwtDecoder.valid')}
             </span>
             <span className="ml-2 text-text-muted">
-              {t('modules.jwtDecoder.expiresIn')}: {expiry.remaining}
+              {expiry.expired
+                ? t('modules.jwtDecoder.expiredAgo', { time: expiry.remaining })
+                : t('modules.jwtDecoder.expiresIn', { time: expiry.remaining })}
             </span>
             <span className="ml-2 text-text-muted">({expiry.expDate})</span>
           </div>
@@ -153,10 +239,10 @@ export default function JwtDecoder() {
                   onClick={() => copy('header', JSON.stringify(decoded.header, null, 2))}
                   className="rounded p-1 text-text-muted transition hover:text-primary cursor-pointer"
                 >
-                  {copied === 'header' ? <span className="text-xs text-green-400">✓</span> : <Copy size={12} />}
+                  {copied === 'header' ? <CheckCircle2 size={12} className="text-green-400" /> : <Copy size={12} />}
                 </button>
               </div>
-              <pre className="overflow-x-auto p-4 text-sm text-text-primary">
+              <pre className="max-h-[400px] overflow-auto p-4 text-sm text-text-primary">
                 {JSON.stringify(decoded.header, null, 2)}
               </pre>
             </div>
@@ -174,12 +260,36 @@ export default function JwtDecoder() {
                   onClick={() => copy('payload', JSON.stringify(decoded.payload, null, 2))}
                   className="rounded p-1 text-text-muted transition hover:text-primary cursor-pointer"
                 >
-                  {copied === 'payload' ? <span className="text-xs text-green-400">✓</span> : <Copy size={12} />}
+                  {copied === 'payload' ? <CheckCircle2 size={12} className="text-green-400" /> : <Copy size={12} />}
                 </button>
               </div>
               <pre className="max-h-[400px] overflow-auto p-4 text-sm text-text-primary">
                 {JSON.stringify(decoded.payload, null, 2)}
               </pre>
+            </div>
+          )}
+
+          {/* Signature */}
+          {decoded.signature && (
+            <div className="rounded-xl border border-border-subtle bg-bg-elevated overflow-hidden lg:col-span-2">
+              <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-text-primary">
+                  <Fingerprint size={14} className="text-purple-400" />
+                  {t('modules.jwtDecoder.signature')}
+                </h3>
+                <button
+                  onClick={() => copy('signature', decoded.signature!)}
+                  className="rounded p-1 text-text-muted transition hover:text-primary cursor-pointer"
+                >
+                  {copied === 'signature' ? <CheckCircle2 size={12} className="text-green-400" /> : <Copy size={12} />}
+                </button>
+              </div>
+              <div className="px-4 py-3">
+                <code className="block break-all font-mono text-sm text-text-primary">{decoded.signature}</code>
+                <p className="mt-2 text-xs text-text-muted">
+                  {t('modules.jwtDecoder.signatureDesc')}
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -192,17 +302,14 @@ export default function JwtDecoder() {
             {t('modules.jwtDecoder.standardClaims')}
           </h3>
           <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-4">
-            {(['iss','sub','aud','exp','nbf','iat','jti'] as const).map((claim) => {
+            {(['iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'] as const).map((claim) => {
               const val = decoded.payload![claim]
               if (val === undefined) return null
-              const isTime = ['exp','nbf','iat'].includes(claim)
               return (
                 <div key={claim} className="flex items-center gap-2">
-                  <code className="rounded bg-bg-base px-2 py-0.5 text-xs text-primary">{claim}</code>
-                  <span className="text-text-secondary">
-                    {isTime && typeof val === 'number'
-                      ? new Date(val * 1000).toLocaleString()
-                      : String(val)}
+                  <code className="shrink-0 rounded bg-bg-base px-2 py-0.5 text-xs text-primary">{claim}</code>
+                  <span className="truncate text-text-secondary">
+                    {formatClaimValue(claim, val)}
                   </span>
                 </div>
               )

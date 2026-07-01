@@ -575,6 +575,9 @@ export default function Base64Tool() {
           </span>
         )}
         <div className="flex-1" />
+        <span className="flex items-center gap-1 text-text-disabled">
+          {t('modules.base64Tool.ui.dragHint')}
+        </span>
         <span className="ml-auto flex items-center gap-1 text-text-disabled">
           <Keyboard size={11} />
           <span>

@@ -5,6 +5,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { KeyRound, Copy, AlertTriangle, CheckCircle2, Clock, ShieldCheck, ClipboardPaste, Fingerprint, X } from 'lucide-react'
+import { usePageActive } from '../../app/layouts/CachedOutlet'
 
 function decodeBase64Url(str: string): string {
   let base64 = str.replace(/-/g, '+').replace(/_/g, '/')
@@ -83,19 +84,20 @@ function formatClaimValue(claim: string, val: unknown): string {
 
 export default function JwtDecoder() {
   const { t } = useTranslation()
+  const pageActive = usePageActive()
   const [token, setToken] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
   const [now, setNow] = useState(Date.now())
 
   const decoded = useMemo(() => (token.trim() ? decodeJwt(token) : null), [token])
 
-  // Tick every second for live expiry countdown — only when token has exp
+  // Tick every second for live expiry countdown — only when token has exp and page is active
   const hasExp = decoded?.payload?.exp !== undefined
   useEffect(() => {
-    if (!hasExp) return
+    if (!hasExp || !pageActive) return
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
-  }, [hasExp])
+  }, [hasExp, pageActive])
 
   const expiry = useMemo(() => {
     if (!decoded?.payload) return null

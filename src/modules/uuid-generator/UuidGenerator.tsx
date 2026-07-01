@@ -5,6 +5,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Binary, Copy, Check, RefreshCw, Hash } from 'lucide-react'
+import { usePageActive } from '../../app/layouts/CachedOutlet'
 
 // ── Crypto-secure helpers ───────────────────────────────────────────────────────
 
@@ -63,6 +64,7 @@ type CaseMode = 'mixed' | 'lower' | 'upper'
 
 export default function UuidGenerator() {
   const { t } = useTranslation()
+  const pageActive = usePageActive()
   const [idType, setIdType] = useState<IDType>('uuid')
   const [count, setCount] = useState(10)
   const [nanoidLen, setNanoidLen] = useState(21)
@@ -103,8 +105,9 @@ export default function UuidGenerator() {
     if (!csUpper && !csLower && !csDigits && !csSymbols) setCsLower(true)
   }, [csUpper, csLower, csDigits, csSymbols])
 
-  // Keyboard shortcut: Enter to regenerate
+  // Keyboard shortcut: Enter to regenerate (only when page is active)
   useEffect(() => {
+    if (!pageActive) return
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && !e.ctrlKey && !e.altKey && !e.metaKey) {
         const tag = (e.target as HTMLElement)?.tagName
@@ -114,7 +117,7 @@ export default function UuidGenerator() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [generate])
+  }, [generate, pageActive])
 
   const copyOne = async (idx: number, val: string) => {
     await navigator.clipboard.writeText(val)

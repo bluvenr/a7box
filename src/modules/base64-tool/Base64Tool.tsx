@@ -7,6 +7,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Binary, ArrowLeftRight, Copy, Upload, Download, X, File, Trash2, Keyboard } from 'lucide-react'
 import { useConfirm } from '../../components/Dialog'
+import { usePageActive } from '../../app/layouts/CachedOutlet'
 
 function encodeText(text: string): string {
   const bytes = new TextEncoder().encode(text)
@@ -110,6 +111,7 @@ export default function Base64Tool() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const lastInputRef = useRef<{ input: string; action: 'encode' | 'decode' } | null>(null)
   const confirm = useConfirm()
+  const pageActive = usePageActive()
 
   // Stable refs for keyboard shortcuts (avoid re-registering listener on every keystroke)
   const encodeRef = useRef<() => void>(() => {})
@@ -271,13 +273,16 @@ export default function Base64Tool() {
 
   // Tauri native file drag-and-drop (OS file manager → app)
   useEffect(() => {
-    if (!isTauri()) return
-    let unlisten: (() => void) | undefined
+    if (!pageActive || !isTauri()) return
+    let unlistenFn: (() => void) | undefined
+    let cleanedUp = false
     ;(async () => {
       try {
         const { getCurrentWebview } = await import('@tauri-apps/api/webview')
         const { readTextFile, readFile } = await import('@tauri-apps/plugin-fs')
-        unlisten = await getCurrentWebview().onDragDropEvent(async (event) => {
+        if (cleanedUp) return
+        unlistenFn = await getCurrentWebview().onDragDropEvent(async (event) => {
+          if (cleanedUp) return
           const ev = event.payload
           if (ev.type === 'enter') {
             setIsDragOver(true)
@@ -319,10 +324,14 @@ export default function Base64Tool() {
             }
           }
         })
+        if (cleanedUp) { unlistenFn?.(); unlistenFn = undefined }
       } catch { /* Tauri API not available */ }
     })()
-    return () => { unlisten?.() }
-  }, [showToast])
+    return () => {
+      cleanedUp = true
+      if (unlistenFn) { unlistenFn(); unlistenFn = undefined }
+    }
+  }, [showToast, pageActive])
 
   const handleDownload = useCallback(async () => {
     if (!output) return
@@ -382,8 +391,9 @@ export default function Base64Tool() {
     }
   }, [output, showToast, t, importedFile])
 
-  // Keyboard shortcuts — register once on mount, use refs for stable identity
+  // Keyboard shortcuts: Alt+E encode, Alt+D decode (only when page active)
   useEffect(() => {
+    if (!pageActive) return
     const handler = (e: KeyboardEvent) => {
       if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
         if (e.key === 'e' || e.key === 'E') {
@@ -397,7 +407,7 @@ export default function Base64Tool() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [pageActive])
 
   const imageMime = output ? detectImageMime(output) : null
 

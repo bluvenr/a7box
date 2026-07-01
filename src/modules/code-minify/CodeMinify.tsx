@@ -22,6 +22,7 @@ import {
 import { useSettingsStore } from '../../core'
 import { useShortcutStore } from '../../core/shortcuts'
 import { useConfirm } from '../../components/Dialog'
+import { usePageActive } from '../../app/layouts/CachedOutlet'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -65,6 +66,7 @@ function EditorSkeleton() {
 export default function CodeMinify() {
   const { t } = useTranslation()
   const confirm = useConfirm()
+  const pageActive = usePageActive()
 
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
@@ -270,6 +272,7 @@ export default function CodeMinify() {
 
   // ─── Keyboard shortcuts: Alt+M compress, Alt+B beautify ────────────────
   useEffect(() => {
+    if (!pageActive) return
     const handler = (e: KeyboardEvent) => {
       if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
         if (e.key === 'm' || e.key === 'M') {
@@ -283,7 +286,7 @@ export default function CodeMinify() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [handleMinify, handleBeautify])
+  }, [handleMinify, handleBeautify, pageActive])
 
   // ─── Drag-and-drop file import ─────────────────────────────────────────
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -323,14 +326,17 @@ export default function CodeMinify() {
 
   // Tauri native file drop
   useEffect(() => {
-    if (!isTauri()) return
-    let unlisten: (() => void) | undefined
+    if (!pageActive || !isTauri()) return
+    let unlistenFn: (() => void) | undefined
+    let cleanedUp = false
 
     ;(async () => {
       try {
         const { getCurrentWebview } = await import('@tauri-apps/api/webview')
         const { readTextFile } = await import('@tauri-apps/plugin-fs')
-        unlisten = await getCurrentWebview().onDragDropEvent(async (event) => {
+        if (cleanedUp) return
+        unlistenFn = await getCurrentWebview().onDragDropEvent(async (event) => {
+          if (cleanedUp) return
           const ev = event.payload
           if (ev.type === 'enter') {
             setIsDragOver(true)
@@ -351,11 +357,15 @@ export default function CodeMinify() {
             }
           }
         })
+        if (cleanedUp) { unlistenFn?.(); unlistenFn = undefined }
       } catch { /* Tauri API not available */ }
     })()
 
-    return () => { unlisten?.() }
-  }, [showToast, t])
+    return () => {
+      cleanedUp = true
+      if (unlistenFn) { unlistenFn(); unlistenFn = undefined }
+    }
+  }, [showToast, t, pageActive])
 
   // ─── Stats ─────────────────────────────────────────────────────────────
   const inputLines = useMemo(() => input ? input.split('\n').length : 0, [input])

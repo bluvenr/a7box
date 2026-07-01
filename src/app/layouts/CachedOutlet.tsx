@@ -12,6 +12,17 @@ import { useMatch } from 'react-router-dom'
 import type { RouteObject } from 'react-router-dom'
 import { useModuleRegistry } from '../../core/registry'
 
+// ── Page-active context ─────────────────────────────────────────────────────
+// Lets deeply-nested components know whether their CachedRoute is currently
+// the active route.  Default `true` so components outside CachedRoute still work.
+
+const PageActiveContext = createContext(true)
+
+/** Returns `true` when the enclosing CachedRoute is the active route. */
+export function usePageActive(): boolean {
+  return useContext(PageActiveContext)
+}
+
 // ── Visited-paths context ───────────────────────────────────────────────────
 
 const VisitedContext = createContext<{
@@ -81,7 +92,9 @@ function CachedRoute({ path, index, moduleId, children }: {
 
   return (
     <div style={{ display: isActive ? 'contents' : 'none', height: '100%' }}>
-      {children}
+      <PageActiveContext.Provider value={isActive}>
+        {children}
+      </PageActiveContext.Provider>
     </div>
   )
 }

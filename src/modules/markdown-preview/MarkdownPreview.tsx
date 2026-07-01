@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { useMarkdown } from './hooks/useMarkdown'
 import { useShortcutStore } from '../../core/shortcuts'
+import { usePageActive } from '../../app/layouts/CachedOutlet'
 
 /** Format Tauri key string to human-readable display */
 function formatShortcut(keys: string): string {
@@ -31,6 +32,8 @@ export default function MarkdownPreview() {
     importFile, htmlToMarkdown,
     mode, setMode,
   } = useMarkdown()
+
+  const pageActive = usePageActive()
 
   const [showPreview, setShowPreview] = useState(true)
   const [fullscreen, setFullscreen] = useState(false)
@@ -153,14 +156,17 @@ export default function MarkdownPreview() {
   // ─── Tauri native file drop ────────────────────────────────────────────
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !('__TAURI_INTERNALS__' in window)) return
-    let unlisten: (() => void) | undefined
+    if (!pageActive || typeof window === 'undefined' || !('__TAURI_INTERNALS__' in window)) return
+    let unlistenFn: (() => void) | undefined
+    let cleanedUp = false
 
-    (async () => {
+    ;(async () => {
       try {
         const { getCurrentWebview } = await import('@tauri-apps/api/webview')
         const { readTextFile } = await import('@tauri-apps/plugin-fs')
-        unlisten = await getCurrentWebview().onDragDropEvent(async (event) => {
+        if (cleanedUp) return
+        unlistenFn = await getCurrentWebview().onDragDropEvent(async (event) => {
+          if (cleanedUp) return
           const ev = event.payload
           if (ev.type === 'enter') {
             setIsDragOver(true)
@@ -182,11 +188,15 @@ export default function MarkdownPreview() {
             }
           }
         })
+        if (cleanedUp) { unlistenFn?.(); unlistenFn = undefined }
       } catch { /* Tauri API not available */ }
     })()
 
-    return () => { unlisten?.() }
-  }, [setContent, setMode, showToast, t])
+    return () => {
+      cleanedUp = true
+      if (unlistenFn) { unlistenFn(); unlistenFn = undefined }
+    }
+  }, [setContent, setMode, showToast, t, pageActive])
 
   // ─── Paste HTML/MD detection + auto-switch ────────────────────────────────
 

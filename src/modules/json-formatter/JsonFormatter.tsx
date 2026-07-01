@@ -19,6 +19,7 @@ import {
 import { useSettingsStore } from '../../core'
 import { useConfirm } from '../../components/Dialog'
 import { useShortcutStore } from '../../core/shortcuts'
+import { usePageActive } from '../../app/layouts/CachedOutlet'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -53,6 +54,7 @@ function EditorSkeleton() {
 export default function JsonFormatter() {
   const { t } = useTranslation()
   const confirm = useConfirm()
+  const pageActive = usePageActive()
   const {
     input,
     setInput,
@@ -223,6 +225,7 @@ export default function JsonFormatter() {
 
   // Keyboard shortcuts: Alt+F format, Alt+M compress (minimize)
   useEffect(() => {
+    if (!pageActive) return
     const handler = (e: KeyboardEvent) => {
       if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
         if (e.key === 'f' || e.key === 'F') {
@@ -236,7 +239,7 @@ export default function JsonFormatter() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [handleFormat, handleCompress])
+  }, [handleFormat, handleCompress, pageActive])
 
   // ─── Drag-and-drop .json file import ──────────────────────────────────────
 
@@ -277,14 +280,17 @@ export default function JsonFormatter() {
 
   // Tauri native file drop
   useEffect(() => {
-    if (!isTauri()) return
-    let unlisten: (() => void) | undefined
+    if (!pageActive || !isTauri()) return
+    let unlistenFn: (() => void) | undefined
+    let cleanedUp = false
 
     ;(async () => {
       try {
         const { getCurrentWebview } = await import('@tauri-apps/api/webview')
         const { readTextFile } = await import('@tauri-apps/plugin-fs')
-        unlisten = await getCurrentWebview().onDragDropEvent(async (event) => {
+        if (cleanedUp) return
+        unlistenFn = await getCurrentWebview().onDragDropEvent(async (event) => {
+          if (cleanedUp) return
           const ev = event.payload
           if (ev.type === 'enter') {
             setIsDragOver(true)
@@ -304,11 +310,15 @@ export default function JsonFormatter() {
             }
           }
         })
+        if (cleanedUp) { unlistenFn?.(); unlistenFn = undefined }
       } catch { /* Tauri API not available */ }
     })()
 
-    return () => { unlisten?.() }
-  }, [setInput, validate, showToast, t])
+    return () => {
+      cleanedUp = true
+      if (unlistenFn) { unlistenFn(); unlistenFn = undefined }
+    }
+  }, [setInput, validate, showToast, t, pageActive])
 
   // Statistics
   const stats = useMemo(() => getStats(), [input, getStats])

@@ -8,6 +8,7 @@ import {
   FileDiff, Copy, Check, ArrowRightLeft, X, FileUp, Trash2,
 } from 'lucide-react'
 import { useToast } from '../../components/Toast'
+import { usePageActive } from '../../app/layouts/CachedOutlet'
 
 const MAX_DIFF_LINES = 2000
 
@@ -143,6 +144,7 @@ export default function TextDiff() {
   const [copiedDiff, setCopiedDiff] = useState(false)
   const [dragSide, setDragSide] = useState<'left' | 'right' | null>(null)
   const toast = useToast()
+  const pageActive = usePageActive()
   const leftFileRef = useRef<HTMLInputElement>(null)
   const rightFileRef = useRef<HTMLInputElement>(null)
   const leftPanelRef = useRef<HTMLDivElement>(null)
@@ -163,10 +165,31 @@ export default function TextDiff() {
 
   const copyResult = async () => {
     const text = viewMode === 'unified' ? formatUnified(diffs) : formatSplit(diffs)
-    await navigator.clipboard.writeText(text)
+    try {
+      if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+        const { invoke } = await import('@tauri-apps/api/core')
+        await invoke('set_clipboard_text', { text })
+      } else {
+        await navigator.clipboard.writeText(text)
+      }
+    } catch { /* clipboard error */ }
     setCopiedDiff(true)
     setTimeout(() => setCopiedDiff(false), 1500)
   }
+
+  const handlePaste = useCallback(async (side: 'left' | 'right') => {
+    try {
+      let text: string
+      if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+        const { invoke } = await import('@tauri-apps/api/core')
+        text = await invoke<string>('get_clipboard_text')
+      } else {
+        text = await navigator.clipboard.readText()
+      }
+      if (side === 'left') setLeft(text)
+      else setRight(text)
+    } catch { /* clipboard error */ }
+  }, [])
 
   const TEXT_FILE_RE = /\.(txt|md|json|js|jsx|ts|tsx|css|html|xml|yaml|yml|csv|log|py|java|c|cpp|h|hpp|rs|go|rb|sh|bat|sql|ini|cfg|toml|env)$/i
 
@@ -231,13 +254,16 @@ export default function TextDiff() {
 
   // Tauri native file drag-and-drop
   useEffect(() => {
-    if (typeof window === 'undefined' || !('__TAURI_INTERNALS__' in window)) return
-    let unlisten: (() => void) | undefined
+    if (!pageActive || typeof window === 'undefined' || !('__TAURI_INTERNALS__' in window)) return
+    let unlistenFn: (() => void) | undefined
+    let cleanedUp = false
 
     ;(async () => {
       try {
         const { getCurrentWebview } = await import('@tauri-apps/api/webview')
-        unlisten = await getCurrentWebview().onDragDropEvent((event) => {
+        if (cleanedUp) return
+        unlistenFn = await getCurrentWebview().onDragDropEvent((event) => {
+          if (cleanedUp) return
           const ev = event.payload
           if (ev.type === 'enter') {
             const side = getDropSide(ev.position.x, ev.position.y)
@@ -254,11 +280,15 @@ export default function TextDiff() {
             if (filePath) handleTauriFileImport(filePath, side)
           }
         })
+        if (cleanedUp) { unlistenFn?.(); unlistenFn = undefined }
       } catch { /* Tauri API not available */ }
     })()
 
-    return () => { unlisten?.() }
-  }, [getDropSide, handleTauriFileImport])
+    return () => {
+      cleanedUp = true
+      if (unlistenFn) { unlistenFn(); unlistenFn = undefined }
+    }
+  }, [getDropSide, handleTauriFileImport, pageActive])
 
   return (
     <div className="flex h-full flex-col overflow-hidden p-6">
@@ -323,7 +353,7 @@ export default function TextDiff() {
               <button onClick={() => leftFileRef.current?.click()} className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-text-muted transition hover:text-primary cursor-pointer">
                 <FileUp size={10} /> {t('modules.textDiff.import', { defaultValue: 'Import' })}
               </button>
-              <button onClick={() => navigator.clipboard.readText().then(text => setLeft(text)).catch(() => {})} className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-text-muted transition hover:text-primary cursor-pointer">
+              <button onClick={() => handlePaste('left')} className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-text-muted transition hover:text-primary cursor-pointer">
                 <Copy size={10} /> {t('modules.textDiff.paste')}
               </button>
               <button onClick={() => setLeft('')} className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-text-muted transition hover:text-primary cursor-pointer">
@@ -376,7 +406,7 @@ export default function TextDiff() {
               <button onClick={() => rightFileRef.current?.click()} className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-text-muted transition hover:text-primary cursor-pointer">
                 <FileUp size={10} /> {t('modules.textDiff.import', { defaultValue: 'Import' })}
               </button>
-              <button onClick={() => navigator.clipboard.readText().then(text => setRight(text)).catch(() => {})} className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-text-muted transition hover:text-primary cursor-pointer">
+              <button onClick={() => handlePaste('right')} className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-text-muted transition hover:text-primary cursor-pointer">
                 <Copy size={10} /> {t('modules.textDiff.paste')}
               </button>
               <button onClick={() => setRight('')} className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-text-muted transition hover:text-primary cursor-pointer">

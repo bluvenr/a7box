@@ -389,7 +389,12 @@
         "textPlaceholder": "Enter text to hash...",
         "generateBtn": "Generate Hashes",
         "toastGenerated": "Hashes generated",
-        "toastGeneratedForFile": "Hashes generated for {{name}}"
+        "toastGeneratedForFile": "Hashes generated for {{name}}",
+        "copy": "Copy",
+        "copyAll": "Copy All",
+        "clear": "Clear",
+        "uppercase": "Uppercase",
+        "computing": "Computing..."
       }
     },
     "imageConvert": {

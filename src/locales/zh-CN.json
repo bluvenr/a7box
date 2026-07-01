@@ -389,7 +389,12 @@
         "textPlaceholder": "输入要计算哈希的文本...",
         "generateBtn": "生成哈希",
         "toastGenerated": "哈希已生成",
-        "toastGeneratedForFile": "已生成 {{name}} 的哈希"
+        "toastGeneratedForFile": "已生成 {{name}} 的哈希",
+        "copy": "复制",
+        "copyAll": "复制全部",
+        "clear": "清空",
+        "uppercase": "大写",
+        "computing": "计算中..."
       }
     },
     "imageConvert": {

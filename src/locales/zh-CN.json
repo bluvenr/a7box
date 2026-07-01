@@ -703,20 +703,6 @@
         "restartedNewPort": "原端口已被占用，已使用新端口启动"
       }
     },
-    "codeShare": {
-      "name": "代码分享",
-      "description": "通过粘贴服务分享代码片段",
-      "commands": { "open": "代码分享" },
-      "ui": {
-        "language": "语言",
-        "expiry": "过期时间",
-        "share": "分享",
-        "shared": "分享成功",
-        "enterCode": "请输入要分享的代码",
-        "codePlaceholder": "在此粘贴代码...",
-        "history": "分享历史"
-      }
-    },
     "p2p": {
       "name": "局域网传输",
       "description": "在局域网内与其他 A7Box 设备互传文件",

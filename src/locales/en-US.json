@@ -703,20 +703,6 @@
         "restartedNewPort": "Original port was occupied, started with a new port"
       }
     },
-    "codeShare": {
-      "name": "Code Share",
-      "description": "Share code snippets via paste service",
-      "commands": { "open": "Code Share" },
-      "ui": {
-        "language": "Language",
-        "expiry": "Expires",
-        "share": "Share",
-        "shared": "Shared Successfully",
-        "enterCode": "Please enter some code to share",
-        "codePlaceholder": "Paste your code here...",
-        "history": "Share History"
-      }
-    },
     "p2p": {
       "name": "LAN Transfer",
       "description": "Transfer files with other A7Box devices on LAN",

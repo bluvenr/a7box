@@ -18,7 +18,6 @@ import { regexTesterModule } from './regex-tester'
 import { textDiffModule } from './text-diff'
 import { screenshotModule } from './screenshot'
 import { httpServerModule } from './http-server'
-import { codeShareModule } from './code-share'
 import { p2pTransferModule } from './p2p-transfer'
 import type { A7Module } from '../core/types'
 
@@ -40,7 +39,6 @@ export const allModules: A7Module[] = [
   textDiffModule,
   screenshotModule,
   httpServerModule,
-  codeShareModule,
   p2pTransferModule,
 ]
 
@@ -62,6 +60,5 @@ export {
   textDiffModule,
   screenshotModule,
   httpServerModule,
-  codeShareModule,
   p2pTransferModule,
 }

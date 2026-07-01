@@ -19,6 +19,7 @@ import { DialogContainer } from '../../components/Dialog'
 import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
 import { useHttpServiceStatus } from '../../modules/http-server/httpServiceStore'
 import { useSettingsStore } from '../../core/settings'
+import { recordUsage } from '../../shared/utils'
 import type { LucideIcon } from 'lucide-react'
 
 function isTauri(): boolean {
@@ -142,7 +143,7 @@ export function MainLayout() {
                     fallbackName={mod.meta.name}
                     collapsed={collapsed}
                     moduleId={mod.meta.id}
-                    onClick={() => navigate(`/${mod.meta.id}`)}
+                    onClick={() => { recordUsage(mod.meta.id); navigate(`/${mod.meta.id}`) }}
                   />
                 ))}
             </div>

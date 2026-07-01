@@ -6,6 +6,7 @@ import { create } from 'zustand'
 import type { CommandSearchItem } from '../types'
 import { searchEngine } from './SearchEngine'
 import { useModuleRegistry } from '../registry'
+import { recordUsage as recordUsageShared, getAllHistory } from '../../shared/utils'
 
 interface CommandPaletteState {
   /** Is the palette open */
@@ -16,8 +17,6 @@ interface CommandPaletteState {
   results: CommandSearchItem[]
   /** Selected item index */
   selectedIndex: number
-  /** Usage history */
-  usageHistory: Record<string, number>
 
   /** Open command palette */
   open: () => void
@@ -37,8 +36,6 @@ interface CommandPaletteState {
   execute: (context?: { navigate?: (path: string) => void }) => Promise<void>
   /** Refresh command list from registry */
   refreshCommands: () => void
-  /** Record command usage */
-  recordUsage: (commandId: string) => void
 }
 
 export const useCommandPalette = create<CommandPaletteState>((set, get) => ({
@@ -46,7 +43,6 @@ export const useCommandPalette = create<CommandPaletteState>((set, get) => ({
   query: '',
   results: [],
   selectedIndex: 0,
-  usageHistory: {},
 
   open: () => {
     get().refreshCommands()
@@ -96,7 +92,7 @@ export const useCommandPalette = create<CommandPaletteState>((set, get) => ({
     const command = results[selectedIndex]
     if (!command) return
 
-    get().recordUsage(command.id)
+    recordUsageShared(command.id)
     get().close()
 
     await command.run({
@@ -106,37 +102,24 @@ export const useCommandPalette = create<CommandPaletteState>((set, get) => ({
 
   refreshCommands: () => {
     const commands = useModuleRegistry.getState().getAllCommands()
-    const { usageHistory } = get()
+
+    // Build usage map from shared history
+    const usageMap: Record<string, number> = {}
+    for (const record of getAllHistory()) {
+      usageMap[record.moduleId] = record.timestamp
+    }
 
     const commandsWithHistory = commands.map((cmd) => ({
       ...cmd,
-      lastUsedAt: usageHistory[cmd.id],
+      lastUsedAt: usageMap[cmd.id],
     }))
 
     searchEngine.setItems(commandsWithHistory)
     set({ results: searchEngine.search('') })
   },
-
-  recordUsage: (commandId) => {
-    set((state) => ({
-      usageHistory: {
-        ...state.usageHistory,
-        [commandId]: Date.now(),
-      },
-    }))
-    const history = get().usageHistory
-    localStorage.setItem('a7box-usage-history', JSON.stringify(history))
-  },
 }))
 
-// Initialize usage history from localStorage
+// Initialize (kept as no-op for backward compatibility)
 export function initUsageHistory() {
-  try {
-    const saved = localStorage.getItem('a7box-usage-history')
-    if (saved) {
-      useCommandPalette.setState({ usageHistory: JSON.parse(saved) })
-    }
-  } catch {
-    // Ignore parse errors
-  }
+  // Usage history is now managed by shared/utils/usageHistory.ts
 }

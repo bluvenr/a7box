@@ -14,6 +14,7 @@ import { useState, useEffect } from 'react'
 import type { A7Module } from '../../core/types'
 import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
 import { useHttpServiceStatus } from '../../modules/http-server/httpServiceStore'
+import { usePageActive } from '../layouts/CachedOutlet'
 
 export default function Home() {
   const { t } = useTranslation()
@@ -23,6 +24,7 @@ export default function Home() {
   const enabledModuleIds = useModuleRegistry((state) => state.enabledModuleIds)
   const moduleOrder = useSettingsStore((s) => s.moduleOrder)
   const [recentIds, setRecentIds] = useState<string[]>([])
+  const pageActive = usePageActive()
 
   // Stable selector: derive enabled modules sorted by persisted order
   const enabledModules = Array.from(modules.values())
@@ -36,10 +38,12 @@ export default function Home() {
       return idxA - idxB
     })
 
-  // Load recent history
+  // Load recent history on mount and when page becomes active
   useEffect(() => {
-    setRecentIds(getRecentModuleIds(5))
-  }, [])
+    if (pageActive) {
+      setRecentIds(getRecentModuleIds(5))
+    }
+  }, [pageActive])
 
   // Recently used modules (filter to only enabled ones)
   const recentModules = recentIds

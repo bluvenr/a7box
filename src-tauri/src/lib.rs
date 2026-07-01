@@ -99,6 +99,7 @@ pub fn run() {
             commands::start_clipboard_watcher,
             commands::stop_clipboard_watcher,
             commands::get_clipboard_text,
+            commands::set_clipboard_text,
             commands::get_clipboard_image,
             // Screenshot
             commands::capture_full_screen,

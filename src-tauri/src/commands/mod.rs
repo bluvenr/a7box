@@ -31,6 +31,14 @@ pub fn get_clipboard_text() -> Result<String, String> {
         .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+pub fn set_clipboard_text(text: String) -> Result<(), String> {
+    arboard::Clipboard::new()
+        .map_err(|e| e.to_string())?
+        .set_text(text)
+        .map_err(|e| e.to_string())
+}
+
 /// Returns clipboard image as { base64, width, height } or error if no image
 #[tauri::command]
 pub fn get_clipboard_image() -> Result<serde_json::Value, String> {

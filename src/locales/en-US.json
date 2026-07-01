@@ -532,7 +532,61 @@
       "textPlaceholder": "Enter text to test against...",
       "highlighted": "Highlighted Matches",
       "matches": "matches",
-      "matchDetails": "Match Details"
+      "matchDetails": "Match Details",
+      "mode": {
+        "match": "Match",
+        "replace": "Replace"
+      },
+      "ui": {
+        "clear": "Clear",
+        "paste": "Paste",
+        "quickRef": "Templates:",
+        "replaceWith": "Replace with",
+        "replaceResult": "Replace Result",
+        "noMatches": "No matches found",
+        "emptyResult": "(empty)",
+        "truncated": "Display limited to first {{count}} matches.",
+        "showMore": "More",
+        "showLess": "Less"
+      },
+      "flags": {
+        "global": "Global",
+        "caseInsensitive": "Case-insensitive",
+        "multiline": "Multiline",
+        "dotall": "Dotall",
+        "unicode": "Unicode"
+      },
+      "patterns": {
+        "email": "Email",
+        "url": "URL",
+        "ipv4": "IPv4",
+        "phone": "Phone (Intl)",
+        "date": "Date",
+        "hexColor": "Hex Color",
+        "number": "Number",
+        "htmlTag": "HTML Tag",
+        "word": "Word",
+        "uuid": "UUID",
+        "creditCard": "Credit Card",
+        "mac": "MAC Address",
+        "semver": "SemVer",
+        "mention": "@mention",
+        "fileExt": "File Ext",
+        "time": "Time",
+        "base64": "Base64",
+        "jwt": "JWT",
+        "hash": "MD5/SHA",
+        "hexNumber": "0x Hex",
+        "cssRgb": "CSS rgb()",
+        "ipPort": "IP:Port",
+        "gitHash": "Git Hash",
+        "sqlComment": "SQL Comment",
+        "cnPhone": "CN Phone",
+        "idCard": "CN ID Card",
+        "chinese": "Chinese Chars",
+        "dateSlash": "Date (Slash)"
+      },
+      "replacePlaceholder": "$1, $2, or replacement text..."
     },
     "textDiff": {
       "name": "Text Diff",

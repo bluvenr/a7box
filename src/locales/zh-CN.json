@@ -532,7 +532,61 @@
       "textPlaceholder": "输入要测试的文本...",
       "highlighted": "匹配高亮",
       "matches": "个匹配",
-      "matchDetails": "匹配详情"
+      "matchDetails": "匹配详情",
+      "mode": {
+        "match": "匹配",
+        "replace": "替换"
+      },
+      "ui": {
+        "clear": "清空",
+        "paste": "粘贴",
+        "quickRef": "模板:",
+        "replaceWith": "替换为",
+        "replaceResult": "替换结果",
+        "noMatches": "无匹配结果",
+        "emptyResult": "(空)",
+        "truncated": "显示已限制为前 {{count}} 个匹配。",
+        "showMore": "更多",
+        "showLess": "收起"
+      },
+      "flags": {
+        "global": "全局",
+        "caseInsensitive": "忽略大小写",
+        "multiline": "多行",
+        "dotall": "点号匹配全部",
+        "unicode": "Unicode"
+      },
+      "patterns": {
+        "email": "邮箱",
+        "url": "网址",
+        "ipv4": "IPv4",
+        "phone": "国际手机号",
+        "date": "日期",
+        "hexColor": "十六进制颜色",
+        "number": "数字",
+        "htmlTag": "HTML标签",
+        "word": "单词",
+        "uuid": "UUID",
+        "creditCard": "信用卡号",
+        "mac": "MAC地址",
+        "semver": "语义化版本",
+        "mention": "@提及",
+        "fileExt": "文件后缀",
+        "time": "时间",
+        "base64": "Base64",
+        "jwt": "JWT",
+        "hash": "MD5/SHA",
+        "hexNumber": "0x 十六进制",
+        "cssRgb": "CSS rgb()",
+        "ipPort": "IP:端口",
+        "gitHash": "Git Hash",
+        "sqlComment": "SQL注释",
+        "cnPhone": "中国手机号",
+        "idCard": "中国身份证号",
+        "chinese": "中文字符",
+        "dateSlash": "日期 (斜杠)"
+      },
+      "replacePlaceholder": "$1, $2, 或替换文本..."
     },
     "textDiff": {
       "name": "文本对比",

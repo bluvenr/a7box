@@ -211,7 +211,7 @@ export default function ImageConvert() {
                         <span className="mx-1 text-text-disabled">→</span>
                         <span className="font-medium text-text-primary">{formatBytes(item.convertedSize)}</span>
                       </div>
-                      <button onClick={() => downloadItem(item)} className="rounded-md bg-bg-hover p-1.5 text-text-secondary hover:text-text-primary" title="Download">
+                      <button onClick={() => downloadItem(item)} className="rounded-md bg-bg-hover p-1.5 text-text-secondary hover:text-text-primary" title={t('common.download')}>
                         <Download className="h-3.5 w-3.5" />
                       </button>
                     </div>

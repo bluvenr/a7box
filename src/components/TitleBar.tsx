@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Minus, Square, X, Maximize2 } from 'lucide-react'
 
 function isTauri(): boolean {
@@ -21,6 +22,7 @@ function detectPlatform(): Platform {
 }
 
 export function TitleBar() {
+  const { t } = useTranslation()
   const [platform] = useState<Platform>(detectPlatform)
   const [isMaximized, setIsMaximized] = useState(false)
 
@@ -66,24 +68,12 @@ export function TitleBar() {
     getCurrentWindow().hide()
   }, [])
 
-  const handleDragStart = useCallback(async (e: React.MouseEvent) => {
-    // Only drag on left click, and not on buttons
-    if (e.button !== 0) return
-    if (!isTauri()) return
-    try {
-      const { getCurrentWindow } = await import('@tauri-apps/api/window')
-      await getCurrentWindow().startDragging()
-    } catch { /* ignore */ }
-  }, [])
-
   const isMac = platform === 'macos'
 
   return (
     <div
       className="flex h-8 shrink-0 select-none items-center bg-bg-elevated"
       data-tauri-drag-region
-      onMouseDown={handleDragStart}
-      onDoubleClick={handleMaximize}
     >
       {/* macOS: left padding for traffic light buttons */}
       {isMac && <div className="w-[78px] shrink-0" />}
@@ -94,17 +84,17 @@ export function TitleBar() {
       {/* Windows/Linux: window control buttons on the right */}
       {!isMac && (
         <div className="flex h-full shrink-0 items-center" onMouseDown={(e) => e.stopPropagation()}>
-          <TitleBarButton onClick={handleMinimize} title="Minimize">
+          <TitleBarButton onClick={handleMinimize} title={t('common.minimize')}>
             <Minus className="h-3.5 w-3.5" />
           </TitleBarButton>
-          <TitleBarButton onClick={handleMaximize} title="Maximize">
+          <TitleBarButton onClick={handleMaximize} title={isMaximized ? t('common.restore') : t('common.maximize')}>
             {isMaximized ? (
               <Maximize2 className="h-3 w-3" />
             ) : (
               <Square className="h-3 w-3" />
             )}
           </TitleBarButton>
-          <TitleBarButton onClick={handleClose} title="Close" danger>
+          <TitleBarButton onClick={handleClose} title={t('common.close')} danger>
             <X className="h-3.5 w-3.5" />
           </TitleBarButton>
         </div>

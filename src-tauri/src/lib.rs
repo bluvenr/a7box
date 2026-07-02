@@ -28,12 +28,23 @@ pub struct ShortcutRegistry(pub Mutex<HashMap<String, String>>);
 /// The frontend consumes this via `get_pending_http_serve_dir` command.
 pub struct PendingHttpServeDir(pub Mutex<Option<String>>);
 
+/// State to buffer image file paths from right-click context menu.
+/// Supports multiple files (multi-select right-click). Frontend consumes via
+/// `get_pending_image_file` which returns and clears all queued paths.
+pub struct PendingImageFile(pub Mutex<Vec<String>>);
+
+/// State to buffer image file paths from right-click "Convert Format" context menu.
+/// Frontend consumes via `get_pending_convert_file` which returns and clears all queued paths.
+pub struct PendingConvertFile(pub Mutex<Vec<String>>);
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let clipboard_state = Arc::new(ClipboardState::new());
     let http_server_state = Arc::new(HttpServerState::new());
     let http_service_state = Arc::new(HttpServiceState::new());
     let pending_http_serve_dir = PendingHttpServeDir(Mutex::new(None));
+    let pending_image_file = PendingImageFile(Mutex::new(Vec::new()));
+    let pending_convert_file = PendingConvertFile(Mutex::new(Vec::new()));
     let shortcut_registry = ShortcutRegistry(Mutex::new(HashMap::new()));
 
     // P2P state: use app data dir for persistence
@@ -83,6 +94,25 @@ pub fn run() {
                     }
                     break;
                 }
+                if args[i] == "--compress-image" {
+                    if let Some(file) = args.get(i + 1) {
+                        // Store in state so frontend can poll even if event is missed
+                        if let Ok(mut g) = app.state::<PendingImageFile>().0.lock() {
+                            g.push(file.clone());
+                        }
+                        let _ = app.emit("compress-image-received", file);
+                    }
+                    break;
+                }
+                if args[i] == "--convert-image" {
+                    if let Some(file) = args.get(i + 1) {
+                        if let Ok(mut g) = app.state::<PendingConvertFile>().0.lock() {
+                            g.push(file.clone());
+                        }
+                        let _ = app.emit("convert-image-received", file);
+                    }
+                    break;
+                }
                 i += 1;
             }
         }))
@@ -92,6 +122,8 @@ pub fn run() {
         .manage(http_service_state)
         .manage(p2p_state)
         .manage(pending_http_serve_dir)
+        .manage(pending_image_file)
+        .manage(pending_convert_file)
         .manage(shortcut_registry)
         // Commands
         .invoke_handler(tauri::generate_handler![
@@ -150,6 +182,10 @@ pub fn run() {
             commands::close_utility_window,
             // Deep Link: pending HTTP serve directory
             get_pending_http_serve_dir,
+            // Deep Link: pending image file for compression
+            get_pending_image_file,
+            read_local_image,
+            get_pending_convert_file,
         ])
         // Setup: tray + global shortcuts + window close behavior
         .setup(|app| {
@@ -173,6 +209,22 @@ pub fn run() {
                     if let Some(dir) = args.get(i + 1) {
                         if let Ok(mut g) = app.state::<PendingHttpServeDir>().0.lock() {
                             *g = Some(dir.clone());
+                        }
+                    }
+                    break;
+                }
+                if args[i] == "--compress-image" {
+                    if let Some(file) = args.get(i + 1) {
+                        if let Ok(mut g) = app.state::<PendingImageFile>().0.lock() {
+                            g.push(file.clone());
+                        }
+                    }
+                    break;
+                }
+                if args[i] == "--convert-image" {
+                    if let Some(file) = args.get(i + 1) {
+                        if let Ok(mut g) = app.state::<PendingConvertFile>().0.lock() {
+                            g.push(file.clone());
                         }
                     }
                     break;
@@ -370,4 +422,35 @@ fn parse_deep_link_url(url: &str) -> String {
 fn get_pending_http_serve_dir(state: tauri::State<'_, PendingHttpServeDir>) -> Option<String> {
     let mut guard = state.0.lock().ok()?;
     guard.take()
+}
+
+/// Tauri command: returns and clears ALL pending image file paths.
+/// Returns Vec<String> (empty if none). Supports multi-file right-click.
+/// Populated by both cold start (setup arg parsing) and warm start (single_instance callback).
+#[tauri::command]
+fn get_pending_image_file(state: tauri::State<'_, PendingImageFile>) -> Vec<String> {
+    let mut guard = match state.0.lock() {
+        Ok(g) => g,
+        Err(_) => return Vec::new(),
+    };
+    std::mem::take(&mut *guard)
+}
+
+/// Tauri command: reads a local image file, bypassing fs plugin scope restrictions.
+/// Used for right-click context menu where the file path is arbitrary.
+/// Returns raw bytes as Vec<u8> (serialized as JSON number array).
+#[tauri::command]
+fn read_local_image(path: String) -> Result<Vec<u8>, String> {
+    std::fs::read(&path).map_err(|e| format!("Failed to read '{}': {}", path, e))
+}
+
+/// Tauri command: returns and clears ALL pending convert image file paths.
+/// Returns Vec<String> (empty if none). Supports multi-file right-click.
+#[tauri::command]
+fn get_pending_convert_file(state: tauri::State<'_, PendingConvertFile>) -> Vec<String> {
+    let mut guard = match state.0.lock() {
+        Ok(g) => g,
+        Err(_) => return Vec::new(),
+    };
+    std::mem::take(&mut *guard)
 }

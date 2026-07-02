@@ -1,5 +1,6 @@
 // A7Box Windows Context Menu Registration
 // Adds "Open HTTP Server with A7Box" to the folder right-click menu.
+// Adds "Compress with A7Box" to image file right-click menu.
 // Writes to HKCU (no admin required). Idempotent — safe to call repeatedly.
 //
 // Note: On Windows 11, the custom context menu entry appears under
@@ -29,6 +30,16 @@ pub fn setup_context_menu(_app: &tauri::AppHandle) {
         match write_registry_entries(&exe_str, is_zh) {
             Ok(()) => println!("[A7Box Registry] Context menu registered successfully (zh={})", is_zh),
             Err(e) => eprintln!("[A7Box Registry] Failed to write registry: {}", e),
+        }
+
+        match write_image_registry_entries(&exe_str, is_zh) {
+            Ok(()) => println!("[A7Box Registry] Image compress menu registered successfully (zh={})", is_zh),
+            Err(e) => eprintln!("[A7Box Registry] Failed to write image registry: {}", e),
+        }
+
+        match write_image_convert_registry_entries(&exe_str, is_zh) {
+            Ok(()) => println!("[A7Box Registry] Image convert menu registered successfully (zh={})", is_zh),
+            Err(e) => eprintln!("[A7Box Registry] Failed to write image convert registry: {}", e),
         }
     }
 }
@@ -102,6 +113,88 @@ fn write_registry_entries(exe_path: &str, is_zh: bool) -> Result<(), String> {
             &format!("\"{}\" --http-serve \"%V\"", exe_path),
         )
         .map_err(|e| format!("Set bg command: {}", e))?;
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn write_image_registry_entries(exe_path: &str, is_zh: bool) -> Result<(), String> {
+    use winreg::enums::*;
+    use winreg::RegKey;
+
+    let label = if is_zh { "用 A7Box 压缩图片" } else { "Compress Image with A7Box" };
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+
+    // Supported image extensions
+    let extensions = ["png", "jpg", "jpeg", "webp", "bmp"];
+
+    for ext in &extensions {
+        let key_path = format!(r"Software\Classes\SystemFileAssociations\.{}\shell\A7BoxCompress", ext);
+        let cmd_path = format!(r"Software\Classes\SystemFileAssociations\.{}\shell\A7BoxCompress\command", ext);
+
+        // Create menu entry
+        let (ctx_key, _) = hkcu
+            .create_subkey(&key_path)
+            .map_err(|e| format!("Create {} menu key: {}", ext, e))?;
+        ctx_key
+            .set_value("", &label)
+            .map_err(|e| format!("Set {} menu label: {}", ext, e))?;
+        ctx_key
+            .set_value("Icon", &exe_path)
+            .map_err(|e| format!("Set {} menu icon: {}", ext, e))?;
+
+        // Create command
+        let (ctx_cmd, _) = hkcu
+            .create_subkey(&cmd_path)
+            .map_err(|e| format!("Create {} command key: {}", ext, e))?;
+        ctx_cmd
+            .set_value(
+                "",
+                &format!("\"{}\" --compress-image \"%1\"", exe_path),
+            )
+            .map_err(|e| format!("Set {} command: {}", ext, e))?;
+    }
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn write_image_convert_registry_entries(exe_path: &str, is_zh: bool) -> Result<(), String> {
+    use winreg::enums::*;
+    use winreg::RegKey;
+
+    let label = if is_zh { "用 A7Box 转换图片格式" } else { "Convert Image Format with A7Box" };
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+
+    // Supported image extensions
+    let extensions = ["png", "jpg", "jpeg", "webp", "bmp"];
+
+    for ext in &extensions {
+        let key_path = format!(r"Software\Classes\SystemFileAssociations\.{}\shell\A7BoxConvert", ext);
+        let cmd_path = format!(r"Software\Classes\SystemFileAssociations\.{}\shell\A7BoxConvert\command", ext);
+
+        // Create menu entry
+        let (ctx_key, _) = hkcu
+            .create_subkey(&key_path)
+            .map_err(|e| format!("Create {} convert key: {}", ext, e))?;
+        ctx_key
+            .set_value("", &label)
+            .map_err(|e| format!("Set {} convert label: {}", ext, e))?;
+        ctx_key
+            .set_value("Icon", &exe_path)
+            .map_err(|e| format!("Set {} convert icon: {}", ext, e))?;
+
+        // Create command
+        let (ctx_cmd, _) = hkcu
+            .create_subkey(&cmd_path)
+            .map_err(|e| format!("Create {} convert command: {}", ext, e))?;
+        ctx_cmd
+            .set_value(
+                "",
+                &format!("\"{}\" --convert-image \"%1\"", exe_path),
+            )
+            .map_err(|e| format!("Set {} convert command: {}", ext, e))?;
+    }
 
     Ok(())
 }

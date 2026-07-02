@@ -386,6 +386,8 @@
         "toastDownloaded": "Saved successfully",
         "toastRecompressed": "Recompressed all images",
         "statsCount": "{{count}} images",
+        "progressLabel": "Compressing {{done}}/{{total}}",
+        "progressRemaining": "remaining",
         "paramsChanged": "Parameters changed, click 'Re-compress' to apply new settings",
         "previewOriginal": "Original",
         "previewCompressed": "Compressed",
@@ -398,7 +400,8 @@
         "featureFormatTitle": "Format Conversion",
         "featureFormatDesc": "Convert between PNG, JPEG, and WebP formats for any use case",
         "featureControlTitle": "Fine-grained Control",
-        "featureControlDesc": "Adjust quality, max width, and max size with real-time preview"
+        "featureControlDesc": "Adjust quality, max width, and max size with real-time preview",
+        "rightClickHint": "Right-click images in Explorer → \"Compress Image with A7Box\" for quick import"
       }
     },
     "hashGenerator": {
@@ -419,14 +422,38 @@
     },
     "imageConvert": {
       "name": "Image Convert",
-      "description": "Convert images between PNG, JPG, WebP and BMP",
+      "description": "Convert images between PNG, JPG and WebP formats",
       "commands": { "open": "Image Convert" },
       "ui": {
         "outputLabel": "Output",
         "qualityLabel": "Quality",
         "clearAllBtn": "Clear All",
+        "downloadAllBtn": "Download All",
         "dropText": "Drop images here or click to upload",
-        "toastConverted": "Converted {{count}} image(s) to {{format}}"
+        "dropHint": "Supports batch processing — drop or select multiple images. PNG, JPG, WebP supported",
+        "statusConverting": "Converting...",
+        "convertFailed": "Conversion failed",
+        "toastConverted": "Converted {{success}}/{{total}} images to {{format}}",
+        "toastDownloaded": "Saved successfully",
+        "toastDownloading": "Downloading all converted images",
+        "statsCount": "{{count}} images",
+        "previewOriginal": "Original",
+        "previewConverted": "Converted",
+        "previewReset": "Reset",
+        "featureLocalTitle": "100% Local",
+        "featureLocalDesc": "All processing happens on your device. Nothing is uploaded, your privacy is guaranteed",
+        "featureBatchTitle": "Batch Processing",
+        "featureBatchDesc": "Drop multiple images at once, automatically converted in parallel",
+        "featureFormatTitle": "Format Conversion",
+        "featureFormatDesc": "Convert between PNG, JPEG, and WebP formats for any use case",
+        "featureQualityTitle": "Quality Control",
+        "featureQualityDesc": "Fine-tune output quality for JPEG and WebP to balance size and clarity",
+        "paramsChanged": "Format or quality changed, click to re-convert",
+        "reconvertBtn": "Re-convert",
+        "toastReconverted": "Re-converted all images",
+        "rightClickHint": "Right-click an image in folder, select \"Convert Image Format with A7Box\" to import",
+        "progressLabel": "Converting {{done}}/{{total}}",
+        "progressRemaining": "remaining"
       }
     },
     "colorTool": {

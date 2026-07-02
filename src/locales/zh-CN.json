@@ -386,6 +386,8 @@
         "toastDownloaded": "保存成功",
         "toastRecompressed": "已重新压缩所有图片",
         "statsCount": "{{count}} 张图片",
+        "progressLabel": "压缩中 {{done}}/{{total}}",
+        "progressRemaining": "张待处理",
         "paramsChanged": "参数已修改，点击「重新压缩」应用新设置",
         "previewOriginal": "原图",
         "previewCompressed": "压缩后",
@@ -398,7 +400,8 @@
         "featureFormatTitle": "格式互转",
         "featureFormatDesc": "支持 PNG、JPEG、WebP 格式互转，灵活适配不同场景",
         "featureControlTitle": "精细调控",
-        "featureControlDesc": "质量、最大宽度、最大尺寸多维可调，压缩效果实时可见"
+        "featureControlDesc": "质量、最大宽度、最大尺寸多维可调，压缩效果实时可见",
+        "rightClickHint": "在文件夹中右键图片，选择「用 A7Box 压缩图片」可快速导入"
       }
     },
     "hashGenerator": {
@@ -419,14 +422,38 @@
     },
     "imageConvert": {
       "name": "图片转格式",
-      "description": "图片格式互转（PNG、JPG、WebP、BMP）",
+      "description": "图片格式互转（PNG、JPG、WebP）",
       "commands": { "open": "图片转格式" },
       "ui": {
         "outputLabel": "输出格式",
         "qualityLabel": "质量",
         "clearAllBtn": "全部清空",
+        "downloadAllBtn": "全部下载",
         "dropText": "拖放图片到此处或点击上传",
-        "toastConverted": "已转换 {{count}} 张图片为 {{format}}"
+        "dropHint": "支持批量处理 — 可拖入或选择多张图片。支持 PNG、JPG、WebP",
+        "statusConverting": "转换中...",
+        "convertFailed": "转换失败",
+        "toastConverted": "已转换 {{success}}/{{total}} 张图片为 {{format}}",
+        "toastDownloaded": "保存成功",
+        "toastDownloading": "正在下载所有转换图片",
+        "statsCount": "{{count}} 张图片",
+        "previewOriginal": "原图",
+        "previewConverted": "转换后",
+        "previewReset": "复位",
+        "featureLocalTitle": "纯本地处理",
+        "featureLocalDesc": "图片全程在你的电脑上处理，不上传任何服务器，隐私零泄露",
+        "featureBatchTitle": "批量高效",
+        "featureBatchDesc": "一次拖入多张图片，自动并行转换，无需逐张操作",
+        "featureFormatTitle": "格式互转",
+        "featureFormatDesc": "支持 PNG、JPEG、WebP 格式互转，灵活适配不同场景",
+        "featureQualityTitle": "质量调控",
+        "featureQualityDesc": "JPEG 和 WebP 输出质量可调，在清晰度和文件大小之间灵活取舍",
+        "paramsChanged": "格式或质量已更改，点击重新转换应用新设置",
+        "reconvertBtn": "重新转换",
+        "toastReconverted": "已重新转换所有图片",
+        "rightClickHint": "在文件夹中右键图片，选择「用 A7Box 转换图片格式」可快速导入",
+        "progressLabel": "转换中 {{done}}/{{total}}",
+        "progressRemaining": "张待处理"
       }
     },
     "colorTool": {

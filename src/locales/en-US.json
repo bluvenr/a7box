@@ -379,6 +379,7 @@
         "downloadAllBtn": "Download All",
         "dropText": "Drop images here or click to upload",
         "dropHint": "Supports batch processing — drop or select multiple images. PNG, JPG, WebP, BMP supported (GIF loses animation)",
+                "defaultSettingsPrefix": "Default: ",
         "statusCompressing": "Compressing...",
         "compressFailed": "Compression failed",
         "toastCompressed": "Compressed {{success}}/{{total}} images",
@@ -431,6 +432,7 @@
         "downloadAllBtn": "Download All",
         "dropText": "Drop images here or click to upload",
         "dropHint": "Supports batch processing — drop or select multiple images. PNG, JPG, WebP supported",
+                
         "statusConverting": "Converting...",
         "convertFailed": "Conversion failed",
         "toastConverted": "Converted {{success}}/{{total}} images to {{format}}",

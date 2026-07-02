@@ -379,6 +379,7 @@
         "downloadAllBtn": "全部下载",
         "dropText": "拖放图片到此处或点击上传",
         "dropHint": "支持批量处理 — 可拖入或选择多张图片。支持 PNG、JPG、WebP、BMP（GIF 将丢失动画）",
+                "defaultSettingsPrefix": "默认设置：",
         "statusCompressing": "压缩中...",
         "compressFailed": "压缩失败",
         "toastCompressed": "已压缩 {{success}}/{{total}} 张图片",
@@ -431,6 +432,7 @@
         "downloadAllBtn": "全部下载",
         "dropText": "拖放图片到此处或点击上传",
         "dropHint": "支持批量处理 — 可拖入或选择多张图片。支持 PNG、JPG、WebP",
+                
         "statusConverting": "转换中...",
         "convertFailed": "转换失败",
         "toastConverted": "已转换 {{success}}/{{total}} 张图片为 {{format}}",

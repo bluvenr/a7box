@@ -1,7 +1,7 @@
 /**
  * Image Convert Module Registration
  */
-import { Image } from 'lucide-react'
+import { ImageIcon } from 'lucide-react'
 import type { A7Module } from '../../core/types'
 
 export const imageConvertModule: A7Module = {
@@ -9,11 +9,11 @@ export const imageConvertModule: A7Module = {
     id: 'image-convert',
     name: 'Image Convert',
     nameI18n: 'modules.imageConvert.name',
-    description: 'Convert images between PNG, JPG, WebP, BMP and ICO formats',
+    description: 'Convert images between PNG, JPG and WebP formats',
     descriptionI18n: 'modules.imageConvert.description',
-    icon: Image,
+    icon: ImageIcon,
     category: 'image',
-    tags: ['image', 'convert', 'png', 'jpg', 'webp', 'bmp', 'ico', 'format'],
+    tags: ['image', 'convert', 'png', 'jpg', 'webp', 'format'],
     version: '1.0.0',
     enabledByDefault: true,
   },
@@ -23,7 +23,7 @@ export const imageConvertModule: A7Module = {
       label: 'Image Convert',
       labelI18n: 'modules.imageConvert.commands.open',
       description: 'Convert image formats',
-      icon: Image,
+      icon: ImageIcon,
       run: async (ctx) => { ctx.navigate('/image-convert') },
     },
   ],

@@ -50,15 +50,27 @@ export function MainLayout() {
   useEffect(() => {
     if (!isTauri()) return
 
-    let unlisten: (() => void) | undefined
+    let unlistenHttp: (() => void) | undefined
+    let unlistenImage: (() => void) | undefined
+    let unlistenConvert: (() => void) | undefined
     ;(async () => {
       try {
         const { listen } = await import('@tauri-apps/api/event')
-        unlisten = await listen<string>('deep-link-received', (event) => {
+        unlistenHttp = await listen<string>('deep-link-received', (event) => {
           const dir = event.payload
           if (dir) {
             setPendingDirectory(dir)
             navigate('/http-server')
+          }
+        })
+        unlistenImage = await listen<string>('compress-image-received', (event) => {
+          if (event.payload) {
+            navigate('/image-compress')
+          }
+        })
+        unlistenConvert = await listen<string>('convert-image-received', (event) => {
+          if (event.payload) {
+            navigate('/image-convert')
           }
         })
       } catch {
@@ -66,7 +78,11 @@ export function MainLayout() {
       }
     })()
 
-    return () => { unlisten?.() }
+    return () => {
+      unlistenHttp?.()
+      unlistenImage?.()
+      unlistenConvert?.()
+    }
   }, [navigate, setPendingDirectory])
 
   // Sidebar collapsed state (persisted)

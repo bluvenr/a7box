@@ -5,15 +5,64 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Upload, Download, X, ImageDown, RotateCcw, AlertCircle, ZoomIn, ZoomOut, Shield, Layers, RefreshCw, SlidersHorizontal } from 'lucide-react'
+import { Upload, Download, X, ImageDown, RotateCcw, AlertCircle, ZoomIn, ZoomOut, Shield, Layers, RefreshCw, SlidersHorizontal, MousePointerClick } from 'lucide-react'
 import imageCompression from 'browser-image-compression'
 import { useToast } from '../../components/Toast'
+import { usePageActive } from '../../app/layouts/CachedOutlet'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 }
 
 export type OutputFormat = 'original' | 'jpeg' | 'png' | 'webp'
+
+// ── Right-click context menu: single-channel poll architecture ─────────
+// Rust stores the file path in PendingImageFile state (both cold & warm start)
+// and emits an event for navigation only. This module polls the Rust state
+// via get_pending_image_file (which atomically reads + clears the path).
+//
+// Triggers: pageActive change, window focus, and periodic timer (300ms)
+//   while the page is active. Dedup prevents the same path from loading twice.
+
+const _POLL_MS = 300
+const _DEDUP_MS = 2000
+const _consumedPathTimes = new Map<string, number>()
+
+// Cross-poll file buffer: collects files from multiple polls into one batch
+// so that multi-file right-click (where single_instance callbacks may be
+// spread across several poll cycles) produces a single addFiles() call.
+const _FILE_BUFFER_MS = 600
+let _fileBuffer: File[] = []
+let _fileBufferTimer: ReturnType<typeof setTimeout> | null = null
+let _fileBufferFlushFn: ((files: File[]) => void) | null = null
+
+function _enqueueFiles(files: File[]) {
+  _fileBuffer.push(...files)
+  if (_fileBufferFlushFn) {
+    if (_fileBufferTimer) clearTimeout(_fileBufferTimer)
+    _fileBufferTimer = setTimeout(() => {
+      const batch = _fileBuffer.splice(0)
+      _fileBufferTimer = null
+      _fileBufferFlushFn?.(batch)
+    }, _FILE_BUFFER_MS)
+  }
+}
+
+function _setFileBufferFlushFn(fn: ((files: File[]) => void) | null) {
+  _fileBufferFlushFn = fn
+}
+
+function isRecentlyConsumed(path: string): boolean {
+  const now = Date.now()
+  const last = _consumedPathTimes.get(path)
+  if (last && now - last < _DEDUP_MS) return true
+  _consumedPathTimes.set(path, now)
+  // Evict old entries
+  for (const [p, t] of _consumedPathTimes) {
+    if (now - t > 5000) _consumedPathTimes.delete(p)
+  }
+  return false
+}
 
 interface CompressedImage {
   id: string
@@ -57,6 +106,9 @@ function savingsPercent(orig: number, comp: number): string {
 
 export default function ImageCompress() {
   const { t } = useTranslation()
+  const pageActive = usePageActive()
+  const pageActiveRef = useRef(pageActive)
+  pageActiveRef.current = pageActive
   const [images, setImages] = useState<CompressedImage[]>([])
   const [quality, setQuality] = useState(70)
   const [maxWidth, setMaxWidth] = useState(1920)
@@ -73,15 +125,20 @@ export default function ImageCompress() {
   const lastCompressedParamsRef = useRef<string | null>(null)
   const paramsChanged = images.some((i) => i.status === 'done') && lastCompressedParamsRef.current !== null && lastCompressedParamsRef.current !== paramsSnapshot
 
-  // Cleanup all Object URLs on unmount
+  const imagesRef = useRef<CompressedImage[]>([])
+  imagesRef.current = images
+
+  // Cleanup all Object URLs on unmount only.
+  // NOTE: Individual URL revocation is handled by removeImage() and clearAll().
+  // This effect handles the rare unmount case (CachedOutlet keeps component alive).
   useEffect(() => {
     return () => {
-      images.forEach((img) => {
+      imagesRef.current.forEach((img) => {
         if (img.originalUrl) URL.revokeObjectURL(img.originalUrl)
         if (img.compressedUrl) URL.revokeObjectURL(img.compressedUrl)
       })
     }
-  }, [images])
+  }, [])
 
   /** Compress a single image */
   const compressImage = useCallback(
@@ -171,7 +228,7 @@ export default function ImageCompress() {
         const { getCurrentWebview } = await import('@tauri-apps/api/webview')
         if (cleanedUp) return
         unlistenFn = await getCurrentWebview().onDragDropEvent(async (event) => {
-          if (cleanedUp) return
+          if (cleanedUp || !pageActiveRef.current) return
           if (event.payload.type === 'over') {
             setIsDragging(true)
           } else if (event.payload.type === 'drop') {
@@ -179,13 +236,17 @@ export default function ImageCompress() {
             const paths = event.payload.paths
             if (paths.length > 0) {
               const files: File[] = []
+              const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif'])
+              const MIME: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', bmp: 'image/bmp', gif: 'image/gif' }
               const { readFile } = await import('@tauri-apps/plugin-fs')
               for (const p of paths) {
                 try {
+                  const name = p.split(/[\\/]/).pop() || ''
+                  const ext = name.split('.').pop()?.toLowerCase() || ''
+                  if (!IMAGE_EXTS.has(ext)) continue // skip non-image files
                   const data = await readFile(p)
-                  const name = p.split(/[\\/]/).pop() || 'image'
-                  const blob = new Blob([data])
-                  files.push(new File([blob], name, { type: blob.type || 'image/png' }))
+                  const blob = new Blob([data], { type: MIME[ext] })
+                  files.push(new File([blob], name, { type: blob.type }))
                 } catch { /* skip unreadable files */ }
               }
               if (files.length > 0) addFilesRef.current(files)
@@ -208,6 +269,68 @@ export default function ImageCompress() {
       }
     }
   }, [])
+
+  // ── Right-click context menu: poll Rust state for pending images ──
+  // Single-channel architecture: polls get_pending_image_file which returns ALL
+  // queued paths atomically (read+clear). Supports multi-file right-click.
+  // Files are buffered across polls (600ms debounce) to handle the case where
+  // single_instance callbacks arrive in separate poll cycles.
+  // Active while page is visible; triggers on pageActive change, window focus, and 300ms timer.
+  useEffect(() => {
+    if (!isTauri() || !pageActive) return
+
+    // Connect file buffer flush to addFiles
+    _setFileBufferFlushFn((files) => { addFilesRef.current(files) })
+
+    const MIME_MAP: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', bmp: 'image/bmp' }
+
+    const pollAndLoad = async () => {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core')
+        const paths = await invoke<string[]>('get_pending_image_file')
+        if (!paths || paths.length === 0) return
+
+        // Filter out recently consumed paths (dedup)
+        const fresh = paths.filter((p) => !isRecentlyConsumed(p))
+        if (fresh.length === 0) return
+
+        const files: File[] = []
+        for (const path of fresh) {
+          try {
+            const data = await invoke<number[]>('read_local_image', { path })
+            const name = path.split(/[\\/]/).pop() || 'image'
+            const ext = name.split('.').pop()?.toLowerCase() || ''
+            const mime = MIME_MAP[ext] || 'image/png'
+            const blob = new Blob([new Uint8Array(data)], { type: mime })
+            files.push(new File([blob], name, { type: mime }))
+          } catch (err) {
+            console.error('[ImageCompress] Failed to load image:', path, err)
+          }
+        }
+        if (files.length > 0) {
+          _enqueueFiles(files) // buffer across polls, flush after 600ms
+        }
+      } catch { /* no pending file or read error */ }
+    }
+
+    pollAndLoad() // immediate check on page activation
+    const onFocus = () => { pollAndLoad() }
+    window.addEventListener('focus', onFocus)
+    const timer = setInterval(pollAndLoad, _POLL_MS)
+
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      clearInterval(timer)
+      // Flush any buffered files immediately before disconnecting,
+      // so files aren't silently lost when navigating away.
+      if (_fileBuffer.length > 0 && _fileBufferFlushFn) {
+        const batch = _fileBuffer.splice(0)
+        _fileBufferFlushFn(batch)
+      }
+      if (_fileBufferTimer) { clearTimeout(_fileBufferTimer); _fileBufferTimer = null }
+      _setFileBufferFlushFn(null)
+    }
+  }, [pageActive])
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -329,8 +452,13 @@ export default function ImageCompress() {
   }, [images, compressImage, toast, quality, maxWidth, maxSizeMB, outputFormat])
 
   const doneImages = images.filter((i) => i.status === 'done')
+  const activeImages = images.filter((i) => i.status === 'pending' || i.status === 'compressing')
   const totalOriginal = doneImages.reduce((acc, img) => acc + img.originalSize, 0)
   const totalCompressed = doneImages.reduce((acc, img) => acc + (img.compressedSize ?? 0), 0)
+
+  // Progress: track total batch for progress bar (total active + done from current batch)
+  const batchTotal = activeImages.length + doneImages.length
+  const isBatchCompressing = activeImages.length > 1
 
   return (
     <div className="relative flex h-full flex-col">
@@ -349,7 +477,8 @@ export default function ImageCompress() {
         </div>
       </div>
 
-      {/* Controls */}
+      {/* Controls — hidden when no images to keep initial view clean */}
+      {images.length > 0 && (
       <div className="flex flex-wrap items-center gap-4 border-b border-border-subtle bg-bg-elevated/50 px-4 py-3">
 
         {/* Quality slider */}
@@ -408,14 +537,18 @@ export default function ImageCompress() {
           </select>
         </div>
 
+        {/* Recompress button – only when params changed, placed next to parameter controls */}
+        {paramsChanged && (
+          <button onClick={recompressAll} className="flex cursor-pointer items-center gap-1 rounded-md bg-yellow-500/10 px-2 py-1 text-xs text-yellow-600 hover:bg-yellow-500/20 dark:text-yellow-400">
+            <RotateCcw className="h-3.5 w-3.5" /> {t('modules.imageCompress.ui.recompressBtn')}
+          </button>
+        )}
+
         <div className="flex-1" />
 
         {/* Batch actions */}
         {doneImages.length > 0 && (
           <div className="flex items-center gap-2">
-            <button onClick={recompressAll} className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-text-secondary hover:bg-bg-hover hover:text-text-primary" title={t('modules.imageCompress.ui.recompressBtn')}>
-              <RotateCcw className="h-3.5 w-3.5" /> {t('modules.imageCompress.ui.recompressBtn')}
-            </button>
             <button onClick={downloadAll} className="flex cursor-pointer items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20">
               <Download className="h-3.5 w-3.5" /> {t('modules.imageCompress.ui.downloadAllBtn')}
             </button>
@@ -425,13 +558,14 @@ export default function ImageCompress() {
           </div>
         )}
       </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
         {/* Upload area */}
         <div
-          className={`mb-4 flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer ${
-            isDragging ? 'border-primary bg-primary/5' : 'border-border-subtle hover:border-border-base'
+          className={`mb-4 flex min-h-[180px] flex-col items-center justify-center rounded-xl border-2 border-dashed bg-bg-elevated/30 p-8 transition-colors cursor-pointer ${
+            isDragging ? 'border-primary bg-primary/5' : 'border-border-subtle hover:border-border-base hover:bg-bg-elevated/50'
           }`}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
@@ -442,7 +576,7 @@ export default function ImageCompress() {
           <p className="text-sm text-text-secondary">
             {t('modules.imageCompress.ui.dropText')}
           </p>
-          <p className="mt-1 text-xs text-text-muted">
+          <p className="mt-1.5 text-xs text-text-muted">
             {t('modules.imageCompress.ui.dropHint')}
           </p>
           <input
@@ -457,8 +591,15 @@ export default function ImageCompress() {
 
         {/* Landing features – shown when no images */}
         {images.length === 0 && (
-          <div className="pointer-events-none mt-16 select-none">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-6 lg:grid-cols-4">
+          <div className="pointer-events-none mt-12 select-none">
+            {/* Right-click hint – Tauri desktop only, placed above feature cards */}
+            {isTauri() && (
+              <p className="mb-16 flex items-center justify-center gap-1.5 text-[11px] text-text-disabled">
+                <MousePointerClick size={12} />
+                {t('modules.imageCompress.ui.rightClickHint')}
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-x-8 gap-y-5 lg:grid-cols-4">
               {[
                 { Icon: Shield, title: t('modules.imageCompress.ui.featureLocalTitle'), desc: t('modules.imageCompress.ui.featureLocalDesc') },
                 { Icon: Layers, title: t('modules.imageCompress.ui.featureBatchTitle'), desc: t('modules.imageCompress.ui.featureBatchDesc') },
@@ -492,20 +633,6 @@ export default function ImageCompress() {
           </div>
         )}
 
-        {/* Params changed notification */}
-        {paramsChanged && (
-          <div className="mb-3 flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-400">
-            <AlertCircle size={14} className="shrink-0" />
-            <span>{t('modules.imageCompress.ui.paramsChanged')}</span>
-            <button
-              onClick={recompressAll}
-              className="ml-auto flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-yellow-400 hover:bg-yellow-500/20"
-            >
-              <RotateCcw size={12} /> {t('modules.imageCompress.ui.recompressBtn')}
-            </button>
-          </div>
-        )}
-
         {/* Image grid */}
         {images.length > 0 && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
@@ -515,6 +642,42 @@ export default function ImageCompress() {
           </div>
         )}
       </div>
+
+      {/* Floating batch compression progress bar */}
+      {isBatchCompressing && (
+        <div className="pointer-events-none fixed bottom-6 left-1/2 z-40 w-72 -translate-x-1/2">
+          <div className="rounded-xl border border-border-subtle bg-bg-elevated/95 px-4 py-2.5 shadow-lg shadow-black/20 backdrop-blur-sm">
+            <div className="mb-1.5 flex items-center justify-between text-xs">
+              <span className="font-medium text-text-primary">
+                {t('modules.imageCompress.ui.progressLabel', { done: batchTotal - activeImages.length, total: batchTotal })}
+              </span>
+              <span className="text-text-disabled">
+                {activeImages.length} {t('modules.imageCompress.ui.progressRemaining')}
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-border-subtle">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
+                style={{ width: `${((batchTotal - activeImages.length) / batchTotal) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating params-changed pill – clickable to re-compress */}
+      {!isBatchCompressing && paramsChanged && (
+        <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2">
+          <button
+            onClick={recompressAll}
+            className="flex cursor-pointer items-center gap-2.5 rounded-full border border-yellow-500/30 bg-bg-elevated/95 px-4 py-2 shadow-lg shadow-black/20 backdrop-blur-sm transition-colors hover:border-yellow-500/50 hover:bg-bg-elevated"
+          >
+            <AlertCircle size={14} className="shrink-0 text-yellow-400" />
+            <span className="text-xs text-text-secondary">{t('modules.imageCompress.ui.paramsChanged')}</span>
+            <RotateCcw size={12} className="text-yellow-500" />
+          </button>
+        </div>
+      )}
 
       {/* Preview Modal */}
       {previewImage ? <PreviewModal img={previewImage} onClose={() => setPreviewImage(null)} onDownload={downloadImage} /> : null}

@@ -477,89 +477,6 @@ export default function ImageCompress() {
         </div>
       </div>
 
-      {/* Controls — hidden when no images to keep initial view clean */}
-      {images.length > 0 && (
-      <div className="flex flex-wrap items-center gap-4 border-b border-border-subtle bg-bg-elevated/50 px-4 py-3">
-
-        {/* Quality slider */}
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-text-secondary">{t('modules.imageCompress.ui.qualityLabel')}</label>
-          <input
-            type="range" min="10" max="100" value={quality}
-            onChange={(e) => setQuality(parseInt(e.target.value))}
-            className="w-24"
-          />
-          <span className="w-8 text-right text-xs text-text-muted">{quality}%</span>
-        </div>
-
-        {/* Max width */}
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-text-secondary">{t('modules.imageCompress.ui.maxWidthLabel')}</label>
-          <select
-            value={maxWidth}
-            onChange={(e) => setMaxWidth(parseInt(e.target.value))}
-            className="rounded border border-border-base bg-bg-base px-2 py-1 text-xs text-text-primary focus:border-border-focus focus:outline-none cursor-pointer"
-          >
-            <option value={9999}>{t('modules.imageCompress.ui.widthOriginal')}</option>
-            <option value={3840}>3840px</option>
-            <option value={1920}>1920px</option>
-            <option value={1280}>1280px</option>
-            <option value={800}>800px</option>
-            <option value={400}>400px</option>
-          </select>
-        </div>
-
-        {/* Max size */}
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-text-secondary">{t('modules.imageCompress.ui.maxSizeLabel')}</label>
-          <select
-            value={maxSizeMB}
-            onChange={(e) => setMaxSizeMB(Number(e.target.value))}
-            className="rounded border border-border-base bg-bg-base px-2 py-1 text-xs text-text-primary focus:border-border-focus focus:outline-none cursor-pointer"
-          >
-            {MAX_SIZE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.labelKey ? t(opt.labelKey) : opt.label}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Output format */}
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-text-secondary">{t('modules.imageCompress.ui.formatLabel')}</label>
-          <select
-            value={outputFormat}
-            onChange={(e) => setOutputFormat(e.target.value as OutputFormat)}
-            className="rounded border border-border-base bg-bg-base px-2 py-1 text-xs text-text-primary focus:border-border-focus focus:outline-none cursor-pointer"
-          >
-            {FORMAT_OPTIONS.map((f) => (
-              <option key={f.value} value={f.value}>{f.labelKey ? t(f.labelKey) : f.label}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Recompress button – only when params changed, placed next to parameter controls */}
-        {paramsChanged && (
-          <button onClick={recompressAll} className="flex cursor-pointer items-center gap-1 rounded-md bg-yellow-500/10 px-2 py-1 text-xs text-yellow-600 hover:bg-yellow-500/20 dark:text-yellow-400">
-            <RotateCcw className="h-3.5 w-3.5" /> {t('modules.imageCompress.ui.recompressBtn')}
-          </button>
-        )}
-
-        <div className="flex-1" />
-
-        {/* Batch actions */}
-        {doneImages.length > 0 && (
-          <div className="flex items-center gap-2">
-            <button onClick={downloadAll} className="flex cursor-pointer items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20">
-              <Download className="h-3.5 w-3.5" /> {t('modules.imageCompress.ui.downloadAllBtn')}
-            </button>
-            <button onClick={clearAll} className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-text-muted hover:text-error">
-              <X className="h-3.5 w-3.5" /> {t('common.clear')}
-            </button>
-          </div>
-        )}
-      </div>
-      )}
-
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
         {/* Upload area */}
@@ -579,6 +496,11 @@ export default function ImageCompress() {
           <p className="mt-1.5 text-xs text-text-muted">
             {t('modules.imageCompress.ui.dropHint')}
           </p>
+          {images.length === 0 && (
+            <p className="mt-4 rounded-md bg-bg-hover/60 px-3 py-1.5 text-[11px] text-text-muted">
+              {t('modules.imageCompress.ui.defaultSettingsPrefix')}{outputFormat === 'original' ? t('modules.imageCompress.ui.formatOriginal') : outputFormat.toUpperCase()} · {t('modules.imageCompress.ui.qualityLabel')} {quality}% · {t('modules.imageCompress.ui.maxWidthLabel')} {maxWidth === 0 ? t('modules.imageCompress.ui.widthOriginal') : `${maxWidth}px`}
+            </p>
+          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -588,6 +510,89 @@ export default function ImageCompress() {
             onChange={handleFileChange}
           />
         </div>
+
+        {/* Controls — shown when images exist, below upload zone */}
+        {images.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-4 rounded-lg border border-border-subtle bg-bg-elevated/50 px-4 py-3">
+
+          {/* Quality slider */}
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-text-secondary">{t('modules.imageCompress.ui.qualityLabel')}</label>
+            <input
+              type="range" min="10" max="100" value={quality}
+              onChange={(e) => setQuality(parseInt(e.target.value))}
+              className="w-24"
+            />
+            <span className="w-8 text-right text-xs text-text-muted">{quality}%</span>
+          </div>
+
+          {/* Max width */}
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-text-secondary">{t('modules.imageCompress.ui.maxWidthLabel')}</label>
+            <select
+              value={maxWidth}
+              onChange={(e) => setMaxWidth(parseInt(e.target.value))}
+              className="rounded border border-border-base bg-bg-base px-2 py-1 text-xs text-text-primary focus:border-border-focus focus:outline-none cursor-pointer"
+            >
+              <option value={9999}>{t('modules.imageCompress.ui.widthOriginal')}</option>
+              <option value={3840}>3840px</option>
+              <option value={1920}>1920px</option>
+              <option value={1280}>1280px</option>
+              <option value={800}>800px</option>
+              <option value={400}>400px</option>
+            </select>
+          </div>
+
+          {/* Max size */}
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-text-secondary">{t('modules.imageCompress.ui.maxSizeLabel')}</label>
+            <select
+              value={maxSizeMB}
+              onChange={(e) => setMaxSizeMB(Number(e.target.value))}
+              className="rounded border border-border-base bg-bg-base px-2 py-1 text-xs text-text-primary focus:border-border-focus focus:outline-none cursor-pointer"
+            >
+              {MAX_SIZE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.labelKey ? t(opt.labelKey) : opt.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Output format */}
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-text-secondary">{t('modules.imageCompress.ui.formatLabel')}</label>
+            <select
+              value={outputFormat}
+              onChange={(e) => setOutputFormat(e.target.value as OutputFormat)}
+              className="rounded border border-border-base bg-bg-base px-2 py-1 text-xs text-text-primary focus:border-border-focus focus:outline-none cursor-pointer"
+            >
+              {FORMAT_OPTIONS.map((f) => (
+                <option key={f.value} value={f.value}>{f.labelKey ? t(f.labelKey) : f.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Recompress button – only when params changed */}
+          {paramsChanged && (
+            <button onClick={recompressAll} className="flex cursor-pointer items-center gap-1 rounded-md bg-yellow-500/10 px-2 py-1 text-xs text-yellow-600 hover:bg-yellow-500/20 dark:text-yellow-400">
+              <RotateCcw className="h-3.5 w-3.5" /> {t('modules.imageCompress.ui.recompressBtn')}
+            </button>
+          )}
+
+          <div className="flex-1" />
+
+          {/* Batch actions */}
+          {doneImages.length > 0 && (
+            <div className="flex items-center gap-2">
+              <button onClick={downloadAll} className="flex cursor-pointer items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20">
+                <Download className="h-3.5 w-3.5" /> {t('modules.imageCompress.ui.downloadAllBtn')}
+              </button>
+              <button onClick={clearAll} className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-text-muted hover:text-error">
+                <X className="h-3.5 w-3.5" /> {t('common.clear')}
+              </button>
+            </div>
+          )}
+        </div>
+        )}
 
         {/* Landing features – shown when no images */}
         {images.length === 0 && (
@@ -606,11 +611,11 @@ export default function ImageCompress() {
                 { Icon: RefreshCw, title: t('modules.imageCompress.ui.featureFormatTitle'), desc: t('modules.imageCompress.ui.featureFormatDesc') },
                 { Icon: SlidersHorizontal, title: t('modules.imageCompress.ui.featureControlTitle'), desc: t('modules.imageCompress.ui.featureControlDesc') },
               ].map(({ Icon, title, desc }) => (
-                <div key={title} className="flex items-start gap-2.5 px-1">
-                  <Icon size={15} className="mt-0.5 shrink-0 text-text-disabled" />
+                <div key={title} className="flex items-start gap-3 rounded-lg bg-bg-elevated/40 px-3 py-2.5">
+                  <Icon size={16} className="mt-0.5 shrink-0 text-text-muted" />
                   <div>
-                    <p className="text-[11px] font-medium text-text-muted">{title}</p>
-                    <p className="mt-0.5 text-[10px] leading-relaxed text-text-disabled">{desc}</p>
+                    <p className="text-xs font-medium text-text-secondary">{title}</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-text-muted">{desc}</p>
                   </div>
                 </div>
               ))}

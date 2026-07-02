@@ -426,49 +426,6 @@ export default function ImageConvert() {
         </div>
       </div>
 
-      {/* Controls — hidden when no results */}
-      {results.length > 0 && (
-      <div className="flex flex-wrap items-center gap-4 border-b border-border-subtle bg-bg-elevated/50 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-text-secondary">{t('modules.imageConvert.ui.outputLabel')}</label>
-          <select
-            value={outputFormat}
-            onChange={(e) => setOutputFormat(e.target.value as OutputFormat)}
-            className="rounded border border-border-base bg-bg-base px-2 py-1 text-xs text-text-primary focus:border-border-focus focus:outline-none cursor-pointer"
-          >
-            {FORMATS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
-          </select>
-        </div>
-        {(outputFormat === 'image/jpeg' || outputFormat === 'image/webp') && (
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-text-secondary">{t('modules.imageConvert.ui.qualityLabel')}</label>
-            <input type="range" min="10" max="100" value={quality} onChange={(e) => setQuality(parseInt(e.target.value))} className="w-24" />
-            <span className="w-8 text-right text-xs text-text-muted">{quality}%</span>
-          </div>
-        )}
-
-        {/* Reconvert button – only when params changed, placed next to parameter controls */}
-        {paramsChanged && (
-          <button onClick={reconvertAll} className="flex cursor-pointer items-center gap-1 rounded-md bg-yellow-500/10 px-2 py-1 text-xs text-yellow-600 hover:bg-yellow-500/20 dark:text-yellow-400">
-            <RotateCcw className="h-3.5 w-3.5" /> {t('modules.imageConvert.ui.reconvertBtn')}
-          </button>
-        )}
-
-        <div className="flex-1" />
-
-        {doneItems.length > 0 && (
-          <div className="flex items-center gap-2">
-            <button onClick={downloadAll} className="flex cursor-pointer items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20">
-              <Download className="h-3.5 w-3.5" /> {t('modules.imageConvert.ui.downloadAllBtn')}
-            </button>
-            <button onClick={clearAll} className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-text-muted hover:text-error">
-              <X className="h-3.5 w-3.5" /> {t('common.clear')}
-            </button>
-          </div>
-        )}
-      </div>
-      )}
-
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
         {/* Upload zone */}
@@ -483,6 +440,48 @@ export default function ImageConvert() {
           <p className="text-sm text-text-secondary">{t('modules.imageConvert.ui.dropText')}</p>
           <p className="mt-1 text-xs text-text-muted">{t('modules.imageConvert.ui.dropHint')}</p>
           <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+        </div>
+
+        {/* Controls — always visible below upload zone */}
+        <div className="mb-4 flex flex-wrap items-center gap-4 rounded-lg border border-border-subtle bg-bg-elevated/50 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-text-secondary">{t('modules.imageConvert.ui.outputLabel')}</label>
+            <select
+              value={outputFormat}
+              onChange={(e) => setOutputFormat(e.target.value as OutputFormat)}
+              className="rounded border border-border-base bg-bg-base px-2 py-1 text-xs text-text-primary focus:border-border-focus focus:outline-none cursor-pointer"
+            >
+              {FORMATS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+            </select>
+          </div>
+          {(outputFormat === 'image/jpeg' || outputFormat === 'image/webp') && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-text-secondary">{t('modules.imageConvert.ui.qualityLabel')}</label>
+              <input type="range" min="10" max="100" value={quality} onChange={(e) => setQuality(parseInt(e.target.value))} className="w-24" />
+              <span className="w-8 text-right text-xs text-text-muted">{quality}%</span>
+            </div>
+          )}
+
+          {/* Reconvert button – only when params changed */}
+          {paramsChanged && (
+            <button onClick={reconvertAll} className="flex cursor-pointer items-center gap-1 rounded-md bg-yellow-500/10 px-2 py-1 text-xs text-yellow-600 hover:bg-yellow-500/20 dark:text-yellow-400">
+              <RotateCcw className="h-3.5 w-3.5" /> {t('modules.imageConvert.ui.reconvertBtn')}
+            </button>
+          )}
+
+          <div className="flex-1" />
+
+          {/* Batch actions – only when results exist */}
+          {doneItems.length > 0 && (
+            <div className="flex items-center gap-2">
+              <button onClick={downloadAll} className="flex cursor-pointer items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20">
+                <Download className="h-3.5 w-3.5" /> {t('modules.imageConvert.ui.downloadAllBtn')}
+              </button>
+              <button onClick={clearAll} className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-text-muted hover:text-error">
+                <X className="h-3.5 w-3.5" /> {t('common.clear')}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Landing features – shown when no images */}
@@ -502,11 +501,11 @@ export default function ImageConvert() {
                 { Icon: RefreshCw, title: t('modules.imageConvert.ui.featureFormatTitle'), desc: t('modules.imageConvert.ui.featureFormatDesc') },
                 { Icon: ZoomIn, title: t('modules.imageConvert.ui.featureQualityTitle'), desc: t('modules.imageConvert.ui.featureQualityDesc') },
               ].map(({ Icon, title, desc }) => (
-                <div key={title} className="flex items-start gap-2.5 px-1">
-                  <Icon size={15} className="mt-0.5 shrink-0 text-text-disabled" />
+                <div key={title} className="flex items-start gap-3 rounded-lg bg-bg-elevated/40 px-3 py-2.5">
+                  <Icon size={16} className="mt-0.5 shrink-0 text-text-muted" />
                   <div>
-                    <p className="text-[11px] font-medium text-text-muted">{title}</p>
-                    <p className="mt-0.5 text-[10px] leading-relaxed text-text-disabled">{desc}</p>
+                    <p className="text-xs font-medium text-text-secondary">{title}</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-text-muted">{desc}</p>
                   </div>
                 </div>
               ))}

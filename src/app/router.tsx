@@ -36,6 +36,9 @@ const QrQuick = lazy(() => import('./pages/utility/QrQuick'))
 const MdConvert = lazy(() => import('./pages/utility/MdConvert'))
 const JsonQuick = lazy(() => import('./pages/utility/JsonQuick'))
 const CodeQuick = lazy(() => import('./pages/utility/CodeQuick'))
+const ColorQuick = lazy(() => import('./pages/utility/ColorQuick'))
+const LivePicker = lazy(() => import('./pages/utility/LivePicker'))
+const Palette = lazy(() => import('./pages/utility/Palette'))
 
 // Wrap a module component with ErrorBoundary + Suspense
 function ModuleRoute({ moduleId, children }: { moduleId: string; children: React.ReactNode }) {
@@ -186,6 +189,30 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <CodeQuick />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/color-quick',
+    element: (
+      <Suspense fallback={null}>
+        <ColorQuick />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/live-picker',
+    element: (
+      <Suspense fallback={null}>
+        <LivePicker />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/palette',
+    element: (
+      <Suspense fallback={null}>
+        <Palette />
       </Suspense>
     ),
   },

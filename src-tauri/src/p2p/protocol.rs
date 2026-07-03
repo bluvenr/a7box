@@ -77,12 +77,6 @@ pub struct RejectMsg {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ChunkReqMsg {
-    pub transfer_id: String,
-    pub chunk_index: u32,
-}
-
-#[derive(Serialize, Deserialize)]
 pub struct CompleteMsg {
     pub transfer_id: String,
     pub sha256: String,
@@ -170,11 +164,4 @@ pub fn sha256_file(path: &std::path::Path) -> std::io::Result<String> {
         hasher.update(&buf[..n]);
     }
     Ok(format!("{:x}", hasher.finalize()))
-}
-
-/// Compute SHA-256 of a byte slice
-pub fn sha256_bytes(data: &[u8]) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(data);
-    format!("{:x}", hasher.finalize())
 }

@@ -7,6 +7,7 @@ mod http_server;
 mod http_service;
 mod p2p;
 mod registry;
+mod color_picker;
 mod screenshot;
 mod tray;
 
@@ -18,6 +19,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
 use tauri::Emitter;
+use tauri::Listener;
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
@@ -37,6 +39,27 @@ pub struct PendingImageFile(pub Mutex<Vec<String>>);
 /// Frontend consumes via `get_pending_convert_file` which returns and clears all queued paths.
 pub struct PendingConvertFile(pub Mutex<Vec<String>>);
 
+/// Shared app language state (synced from frontend when user changes language).
+/// Used to pass language to utility windows via initialization script.
+pub struct AppLanguage(pub Mutex<String>);
+
+/// Get the current language for the given app handle.
+fn current_lang(app_ref: &tauri::AppHandle<tauri::Wry>) -> &'static str {
+    let lang = app_ref
+        .state::<AppLanguage>()
+        .0
+        .lock()
+        .map(|g| g.clone())
+        .unwrap_or_else(|_| "en".to_string());
+    if lang.starts_with("zh") { "zh-CN" } else { "en-US" }
+}
+
+/// JavaScript snippet injected via `initialization_script` into utility webviews.
+/// Runs BEFORE any page scripts, so `getInitialLanguage()` can read `window.__A7BOX_LANG__`.
+fn lang_init_script(app_ref: &tauri::AppHandle<tauri::Wry>) -> String {
+    format!("window.__A7BOX_LANG__='{}';", current_lang(app_ref))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let clipboard_state = Arc::new(ClipboardState::new());
@@ -46,6 +69,9 @@ pub fn run() {
     let pending_image_file = PendingImageFile(Mutex::new(Vec::new()));
     let pending_convert_file = PendingConvertFile(Mutex::new(Vec::new()));
     let shortcut_registry = ShortcutRegistry(Mutex::new(HashMap::new()));
+    let app_language = AppLanguage(Mutex::new(
+        sys_locale::get_locale().unwrap_or_else(|| "en".to_string()),
+    ));
 
     // P2P state: use app data dir for persistence
     let data_dir = dirs::data_local_dir()
@@ -125,6 +151,7 @@ pub fn run() {
         .manage(pending_image_file)
         .manage(pending_convert_file)
         .manage(shortcut_registry)
+        .manage(app_language)
         // Commands
         .invoke_handler(tauri::generate_handler![
             // Clipboard
@@ -150,6 +177,7 @@ pub fn run() {
             commands::http_list_servers,
             // Tray
             commands::update_tray_language,
+            commands::sync_app_language,
             // P2P LAN Transfer
             commands::p2p_get_identity,
             commands::p2p_set_alias,
@@ -186,6 +214,10 @@ pub fn run() {
             get_pending_image_file,
             read_local_image,
             get_pending_convert_file,
+            // Color Picker
+            commands::start_screen_pick,
+            commands::get_last_picked_color,
+            commands::get_pick_source,
         ])
         // Setup: tray + global shortcuts + window close behavior
         .setup(|app| {
@@ -240,10 +272,12 @@ pub fn run() {
             let handle = app.handle().clone();
             let default_shortcuts = vec![
                 ("toggle-command-palette", "CommandOrControl+Shift+A"),
+                ("toggle-window", "CommandOrControl+Shift+H"),
                 ("open-screenshot", "CommandOrControl+Shift+S"),
                 ("clipboard-to-qr", "CommandOrControl+Shift+Q"),
                 ("clipboard-to-md", "CommandOrControl+Shift+M"),
                 ("clipboard-to-json", "CommandOrControl+Shift+J"),
+                ("open-color-picker", "CommandOrControl+Shift+C"),
             ];
             let registry = &app.state::<ShortcutRegistry>().0;
             {
@@ -260,11 +294,41 @@ pub fn run() {
                         // Handle actions directly in Rust (no frontend roundtrip needed)
                         match action_emit.as_str() {
                             "toggle-command-palette" => {
-                                // Bring main window to front
+                                // Create standalone Spotlight-style palette window
+                                use tauri::{WebviewUrl, WebviewWindowBuilder};
+                                let label = "utility-palette";
+                                // Close existing if any (toggle behavior)
+                                if let Some(existing) = app_ref.get_webview_window(label) {
+                                    let _ = existing.close();
+                                    // Don't create a new one — this is toggle off
+                                } else {
+                                    if let Ok(win) = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
+                                        .title("A7Box")
+                                        .inner_size(520.0, 420.0)
+                                        .resizable(false)
+                                        .decorations(false)
+                                        .transparent(true)
+                                        .always_on_top(true)
+                                        .visible(true)
+                                        .skip_taskbar(true)
+                                        .center()
+                                        .background_color(tauri::window::Color(0, 0, 0, 0))
+                                        .initialization_script(crate::lang_init_script(app_ref))
+                                        .build()
+                                    {
+                                        let _ = win.set_focus();
+                                    }
+                                }
+                            }
+                            "toggle-window" => {
                                 if let Some(w) = app_ref.get_webview_window("main") {
-                                    let _ = w.show();
-                                    let _ = w.unminimize();
-                                    let _ = w.set_focus();
+                                    if w.is_visible().unwrap_or(false) {
+                                        let _ = w.hide();
+                                    } else {
+                                        let _ = w.show();
+                                        let _ = w.unminimize();
+                                        let _ = w.set_focus();
+                                    }
                                 }
                             }
                             "open-screenshot" => {
@@ -288,10 +352,11 @@ pub fn run() {
                                     .resizable(false)
                                     .decorations(false)
                                     .always_on_top(true)
-                                    .visible(true)
+                                    .visible(false) // hidden until React emits util-window-ready
                                     .skip_taskbar(true)
                                     .center()
                                     .background_color(tauri::window::Color(10, 10, 11, 255))
+                                    .initialization_script(crate::lang_init_script(app_ref))
                                     .build()
                                 {
                                     // Window stays open; user closes via X button, ESC, or double-click title bar
@@ -309,10 +374,11 @@ pub fn run() {
                                     .resizable(true)
                                     .decorations(false)
                                     .always_on_top(true)
-                                    .visible(true)
+                                    .visible(false) // hidden until React emits util-window-ready
                                     .skip_taskbar(true)
                                     .center()
                                     .background_color(tauri::window::Color(10, 10, 11, 255))
+                                    .initialization_script(crate::lang_init_script(app_ref))
                                     .build()
                                 {}
                             }
@@ -328,10 +394,11 @@ pub fn run() {
                                     .resizable(true)
                                     .decorations(false)
                                     .always_on_top(true)
-                                    .visible(true)
+                                    .visible(false) // hidden until React emits util-window-ready
                                     .skip_taskbar(true)
                                     .center()
                                     .background_color(tauri::window::Color(10, 10, 11, 255))
+                                    .initialization_script(crate::lang_init_script(app_ref))
                                     .build()
                                 {}
                             }
@@ -347,17 +414,52 @@ pub fn run() {
                                     .resizable(true)
                                     .decorations(false)
                                     .always_on_top(true)
-                                    .visible(true)
+                                    .visible(false) // hidden until React emits util-window-ready
                                     .skip_taskbar(true)
                                     .center()
                                     .background_color(tauri::window::Color(10, 10, 11, 255))
+                                    .initialization_script(crate::lang_init_script(app_ref))
                                     .build()
                                 {}
+                            }
+                            "open-color-picker" => {
+                                // Hide main window so the picker overlay can see the screen
+                                // (hide instead of minimize so is_visible() returns false = global mode)
+                                if let Some(main_win) = app_ref.get_webview_window("main") {
+                                    let _ = main_win.hide();
+                                }
+                                // Also hide ColorQuick if it's open (user triggered from global shortcut)
+                                if let Some(cq) = app_ref.get_webview_window("color-quick") {
+                                    let _ = cq.hide();
+                                }
+                                // Spawn thread: wait for minimize, then start live picker
+                                let app_clone = app_ref.clone();
+                                std::thread::spawn(move || {
+                                    std::thread::sleep(std::time::Duration::from_millis(250));
+                                    if let Ok(mut src) = crate::commands::PICK_SOURCE.lock() {
+                                        *src = "global".into();
+                                    }
+                                    if let Err(e) = crate::commands::start_screen_pick(app_clone, None) {
+                                        eprintln!("[WARN] Failed to start screen pick: {}", e);
+                                    }
+                                });
                             }
                             _ => {}
                         }
                         // Also emit event to frontend for any additional handling
-                        let _ = handle_clone.emit("global-shortcut", &action_emit);
+                        // For actions that bring the window from hidden/minimized state,
+                        // delay the emit so the webview has time to become active.
+                        let needs_delay = matches!(action_emit.as_str(), "open-screenshot");
+                        if needs_delay {
+                            let h = handle_clone.clone();
+                            let a = action_emit.clone();
+                            std::thread::spawn(move || {
+                                std::thread::sleep(std::time::Duration::from_millis(150));
+                                let _ = h.emit("global-shortcut", &a);
+                            });
+                        } else {
+                            let _ = handle_clone.emit("global-shortcut", &action_emit);
+                        }
                     }) {
                         eprintln!("[WARN] Failed to register shortcut {}: {}", action_str, e);
                     }
@@ -374,6 +476,216 @@ pub fn run() {
                     let _ = w.hide();
                 }
             });
+
+            // Listen for picker-ready: frontend signals CSS is applied, now safe to show overlay.
+            // Also re-emit pick-source so the overlay's listener (registered after load) receives it.
+            {
+                let app_handle = app.handle().clone();
+                app.listen("picker-ready", move |_event| {
+                    // Re-emit the stored pick-source (the original emit may have been lost
+                    // because it fired before the overlay's React component mounted)
+                    let source = crate::commands::PICK_SOURCE.lock()
+                        .map(|s| if s.is_empty() { "global".to_string() } else { s.clone() })
+                        .unwrap_or_else(|_| "global".to_string());
+                    let _ = app_handle.emit("pick-source", &source);
+                    if let Some(overlay) = app_handle.get_webview_window("pick-overlay") {
+                        let _ = overlay.show();
+                        let _ = overlay.set_focus();
+                    }
+                });
+            }
+
+            // Listen for color-quick-ready: ColorQuick signals it's mounted, safe to show + send color.
+            {
+                let app_handle = app.handle().clone();
+                app.listen("color-quick-ready", move |_event| {
+                    // Show the window now that React is ready (avoids black flash)
+                    if let Some(cq) = app_handle.get_webview_window("color-quick") {
+                        let _ = cq.show();
+                        let _ = cq.set_focus();
+                    }
+                    // Re-emit screen-color-picked so ColorQuick's listener receives the correct color
+                    let color = crate::commands::LAST_PICKED_COLOR.lock()
+                        .map(|s| s.clone())
+                        .unwrap_or_default();
+                    if !color.is_empty() {
+                        let _ = app_handle.emit("screen-color-picked", &color);
+                    }
+                });
+            }
+
+            // Listen for util-window-ready: utility windows signal React has mounted, safe to show (avoids flicker)
+            {
+                let app_handle = app.handle().clone();
+                app.listen("util-window-ready", move |event| {
+                    let label = event.payload().trim_matches('"').to_string();
+                    if !label.is_empty() {
+                        if let Some(win) = app_handle.get_webview_window(&label) {
+                            let _ = win.show();
+                            let _ = win.set_focus();
+                        }
+                    }
+                });
+            }
+
+            // Listen for pick-confirm from the overlay (left-click / Enter / Space)
+            // Payload: { color: string, mode: string }
+            // mode="quick": copy color, close overlay; restore main if page mode
+            {
+                let app_handle = app.handle().clone();
+                app.listen("pick-confirm", move |event| {
+                    if let Some(overlay) = app_handle.get_webview_window("pick-overlay") {
+                        let _ = overlay.hide();
+                        let _ = overlay.close();
+                    }
+                    // Parse mode: try as object first, then as JSON-encoded string
+                    let payload_str = event.payload();
+                    let mode = serde_json::from_str::<serde_json::Value>(payload_str)
+                        .ok()
+                        .and_then(|v| {
+                            if let Some(m) = v.get("mode").and_then(|m| m.as_str()) {
+                                return Some(m.to_string());
+                            }
+                            if let Some(s) = v.as_str() {
+                                return serde_json::from_str::<serde_json::Value>(s)
+                                    .ok()
+                                    .and_then(|inner| inner.get("mode").and_then(|m| m.as_str()).map(String::from));
+                            }
+                            None
+                        })
+                        .unwrap_or_default();
+
+                    let from_page = crate::commands::PICK_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst);
+                    // Restore main if: quick mode from page (user was in app)
+                    if mode == "quick" && from_page {
+                        if let Some(main) = app_handle.get_webview_window("main") {
+                            let _ = main.unminimize();
+                            let _ = main.show();
+                            let _ = main.set_focus();
+                        }
+                    }
+                });
+            }
+
+            // Listen for repick-from-float: user clicked "取色" in ColorQuick
+            // Same approach as global shortcut: wait for hide, then start pick
+            {
+                let app_handle = app.handle().clone();
+                app.listen("repick-from-float", move |_event| {
+                    // Close existing overlay if any
+                    if let Some(existing) = app_handle.get_webview_window("pick-overlay") {
+                        let _ = existing.hide();
+                        let _ = existing.close();
+                    }
+                    let app_clone = app_handle.clone();
+                    std::thread::spawn(move || {
+                        std::thread::sleep(std::time::Duration::from_millis(250));
+                        if let Ok(mut src) = crate::commands::PICK_SOURCE.lock() {
+                            *src = "float".into();
+                        }
+                        if let Err(e) = crate::commands::start_screen_pick(app_clone, Some(false)) {
+                            eprintln!("[WARN] Failed to start screen pick from float: {}", e);
+                        }
+                    });
+                });
+            }
+
+            // Listen for pick-from-page: user clicked pipette button in ColorTool page
+            {
+                let app_handle = app.handle().clone();
+                app.listen("pick-from-page", move |_event| {
+                    // Close existing overlay if any
+                    if let Some(existing) = app_handle.get_webview_window("pick-overlay") {
+                        let _ = existing.hide();
+                        let _ = existing.close();
+                    }
+                    let app_clone = app_handle.clone();
+                    std::thread::spawn(move || {
+                        std::thread::sleep(std::time::Duration::from_millis(250));
+                        if let Ok(mut src) = crate::commands::PICK_SOURCE.lock() {
+                            *src = "page".into();
+                        }
+                        if let Err(e) = crate::commands::start_screen_pick(app_clone, Some(true)) {
+                            eprintln!("[WARN] Failed to start screen pick from page: {}", e);
+                        }
+                    });
+                });
+            }
+
+            // Listen for right-click-pick: close overlay, show ColorQuick float (global) or restore main (page)
+            {
+                let app_handle = app.handle().clone();
+                app.listen("right-click-pick", move |event| {
+                    if let Some(overlay) = app_handle.get_webview_window("pick-overlay") {
+                        let _ = overlay.hide();
+                        let _ = overlay.close();
+                    }
+
+                    // Extract hex from event payload and store in LAST_PICKED_COLOR
+                    // (ensures exact picked color is preserved for late-joining windows)
+                    let picked_hex = event.payload().trim_matches('"').to_string();
+                    if !picked_hex.is_empty() {
+                        if let Ok(mut stored) = crate::commands::LAST_PICKED_COLOR.lock() {
+                            *stored = picked_hex.clone();
+                        }
+                    }
+
+                    let from_page = crate::commands::PICK_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst);
+                    if from_page {
+                        // Page mode: restore main window (user was working in ColorTool)
+                        if let Some(main) = app_handle.get_webview_window("main") {
+                            let _ = main.unminimize();
+                            let _ = main.show();
+                            let _ = main.set_focus();
+                        }
+                    } else {
+                        // Global mode: show or create ColorQuick float window
+                        if let Some(cq) = app_handle.get_webview_window("color-quick") {
+                            let _ = cq.show();
+                            let _ = cq.unminimize();
+                            let _ = cq.set_focus();
+                        } else {
+                            // Window doesn't exist yet — create it hidden
+                            // (avoids black flash; React emits "color-quick-ready" when mounted)
+                            use tauri::{WebviewUrl, WebviewWindowBuilder};
+                            let _ = WebviewWindowBuilder::new(
+                                &app_handle, "color-quick",
+                                WebviewUrl::App("/utility/color-quick".into()),
+                            )
+                                .title("")
+                                .inner_size(360.0, 500.0)
+                                .resizable(false)
+                                .decorations(false)
+                                .always_on_top(true)
+                                .visible(false)
+                                .skip_taskbar(true)
+                                .center()
+                                .background_color(tauri::window::Color(10, 10, 11, 255))
+                                .initialization_script(crate::lang_init_script(&app_handle))
+                                .build();
+                        }
+                    }
+                });
+            }
+
+            // Listen for pick-cancel from the overlay: close overlay, conditionally restore main
+            {
+                let app_handle = app.handle().clone();
+                app.listen("pick-cancel", move |_event| {
+                    if let Some(overlay) = app_handle.get_webview_window("pick-overlay") {
+                        let _ = overlay.hide();
+                        let _ = overlay.close();
+                    }
+                    // Only restore main if pick was started from page (not global shortcut)
+                    if crate::commands::PICK_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst) {
+                        if let Some(main) = app_handle.get_webview_window("main") {
+                            let _ = main.unminimize();
+                            let _ = main.show();
+                            let _ = main.set_focus();
+                        }
+                    }
+                });
+            }
 
             Ok(())
         })

@@ -7,9 +7,36 @@ use crate::http_service::{self, HttpServiceState};
 use crate::p2p::{self, PeerInfo, P2PStateArc};
 use crate::screenshot;
 use std::path::PathBuf;
+use tauri::Emitter;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 use tauri::AppHandle;
 use tauri::Manager;
+
+// Tracks whether the current pick session was started from within the app (page mode)
+// vs from global shortcut (global mode). Affects ESC/cancel behavior.
+pub static PICK_FROM_PAGE: AtomicBool = AtomicBool::new(false);
+/// Stores the last color picked from the screen overlay (for late-joining windows)
+pub static LAST_PICKED_COLOR: Mutex<String> = Mutex::new(String::new());
+/// Stores the pick source for the current session ("global", "float", "page").
+/// Re-emitted on "picker-ready" so the overlay receives it after loading.
+pub static PICK_SOURCE: Mutex<String> = Mutex::new(String::new());
+
+/// Get the last color picked from the screen overlay.
+#[tauri::command]
+pub fn get_last_picked_color() -> String {
+    LAST_PICKED_COLOR.lock().unwrap().clone()
+}
+
+/// Get the current pick source ("global", "float", "page").
+/// Called by LivePicker on mount to reliably determine the entry point.
+#[tauri::command]
+pub fn get_pick_source() -> String {
+    PICK_SOURCE.lock()
+        .map(|s| if s.is_empty() { "global".to_string() } else { s.clone() })
+        .unwrap_or_else(|_| "global".to_string())
+}
 
 // ============ Clipboard Commands ============
 
@@ -150,8 +177,20 @@ pub fn http_list_servers(
 // ============ Tray Commands ============
 
 #[tauri::command]
-pub fn update_tray_language(app: AppHandle, lang: String) {
+pub fn update_tray_language(app: AppHandle, lang: String, app_lang: tauri::State<'_, crate::AppLanguage>) {
+    // Update shared language state so utility windows can read it
+    if let Ok(mut g) = app_lang.0.lock() {
+        *g = lang.clone();
+    }
     crate::tray::update_tray_language(&app, &lang);
+}
+
+/// Sync app language from frontend (called on app startup to restore user preference)
+#[tauri::command]
+pub fn sync_app_language(lang: String, app_lang: tauri::State<'_, crate::AppLanguage>) {
+    if let Ok(mut g) = app_lang.0.lock() {
+        *g = lang;
+    }
 }
 
 // ============ P2P LAN Transfer Commands ============
@@ -337,7 +376,7 @@ pub fn p2p_manual_connect(
     let port: u16 = parts[0].trim().parse().map_err(|_| "Invalid port number".to_string())?;
 
     // Try to connect and get identity via Hello
-    use std::io::{BufReader, BufWriter, Read, Write};
+    use std::io::{BufReader, BufWriter};
     use std::net::TcpStream;
     let stream = TcpStream::connect_timeout(
         &format!("{}:{}", ip, port).parse().map_err(|e| format!("Parse addr: {}", e))?,
@@ -541,10 +580,6 @@ fn walkdir_count(path: &std::path::Path) -> std::io::Result<(u64, u32)> {
     Ok((total, count))
 }
 
-fn dir_size(path: &std::path::Path) -> u64 {
-    dir_size_and_count(path).0
-}
-
 fn clear_dir_contents(path: &std::path::Path) -> Result<(), String> {
     if !path.exists() { return Ok(()); }
     let entries = std::fs::read_dir(path).map_err(|e| e.to_string())?;
@@ -561,15 +596,6 @@ fn clear_dir_contents(path: &std::path::Path) -> Result<(), String> {
 }
 
 // ============ Shortcut Management Commands ============
-
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ShortcutConfig {
-    pub action: String,
-    pub keys: String,
-    pub enabled: bool,
-}
 
 #[tauri::command]
 pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bool) -> Result<(), String> {
@@ -593,11 +619,47 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                 if event.state != ShortcutState::Pressed { return; }
                 // Handle actions directly in Rust
                 match action_clone.as_str() {
-                    "toggle-command-palette" | "open-screenshot" => {
+                    "toggle-command-palette" => {
+                        // Create standalone Spotlight-style palette window
+                        use tauri::{WebviewUrl, WebviewWindowBuilder};
+                        let label = "utility-palette";
+                        if let Some(existing) = app_ref.get_webview_window(label) {
+                            let _ = existing.close();
+                        } else {
+                            if let Ok(_win) = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
+                                .title("A7Box")
+                                .inner_size(520.0, 420.0)
+                                .resizable(false)
+                                .decorations(false)
+                                .transparent(true)
+                                .always_on_top(true)
+                                .visible(false) // hidden until React emits util-window-ready
+                                .skip_taskbar(true)
+                                .center()
+                                .background_color(tauri::window::Color(0, 0, 0, 0))
+                                .initialization_script(crate::lang_init_script(app_ref))
+                                .build()
+                            {
+                                // Window shown by util-window-ready listener
+                            }
+                        }
+                    }
+                    "open-screenshot" => {
                         if let Some(w) = app_ref.get_webview_window("main") {
                             let _ = w.show();
                             let _ = w.unminimize();
                             let _ = w.set_focus();
+                        }
+                    }
+                    "toggle-window" => {
+                        if let Some(w) = app_ref.get_webview_window("main") {
+                            if w.is_visible().unwrap_or(false) {
+                                let _ = w.hide();
+                            } else {
+                                let _ = w.show();
+                                let _ = w.unminimize();
+                                let _ = w.set_focus();
+                            }
                         }
                     }
                     "clipboard-to-qr" => {
@@ -612,10 +674,11 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                             .resizable(false)
                             .decorations(false)
                             .always_on_top(true)
-                            .visible(true)
+                            .visible(false) // hidden until React emits util-window-ready
                             .skip_taskbar(true)
                             .center()
                             .background_color(tauri::window::Color(10, 10, 11, 255))
+                            .initialization_script(crate::lang_init_script(app_ref))
                             .build()
                         {
                             // Window stays open; user closes via X button, ESC, or double-click title bar
@@ -633,10 +696,11 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                             .resizable(true)
                             .decorations(false)
                             .always_on_top(true)
-                            .visible(true)
+                            .visible(false) // hidden until React emits util-window-ready
                             .skip_taskbar(true)
                             .center()
                             .background_color(tauri::window::Color(10, 10, 11, 255))
+                            .initialization_script(crate::lang_init_script(app_ref))
                             .build()
                         {}
                     }
@@ -652,10 +716,11 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                             .resizable(true)
                             .decorations(false)
                             .always_on_top(true)
-                            .visible(true)
+                            .visible(false) // hidden until React emits util-window-ready
                             .skip_taskbar(true)
                             .center()
                             .background_color(tauri::window::Color(10, 10, 11, 255))
+                            .initialization_script(crate::lang_init_script(app_ref))
                             .build()
                         {}
                     }
@@ -671,12 +736,33 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                             .resizable(true)
                             .decorations(false)
                             .always_on_top(true)
-                            .visible(true)
+                            .visible(false) // hidden until React emits util-window-ready
                             .skip_taskbar(true)
                             .center()
                             .background_color(tauri::window::Color(10, 10, 11, 255))
+                            .initialization_script(crate::lang_init_script(app_ref))
                             .build()
                         {}
+                    }
+                    "open-color-picker" => {
+                        // Hide main window so the picker can see the screen
+                        if let Some(main_win) = app_ref.get_webview_window("main") {
+                            let _ = main_win.hide();
+                        }
+                        // Also hide ColorQuick if it's open
+                        if let Some(cq) = app_ref.get_webview_window("color-quick") {
+                            let _ = cq.hide();
+                        }
+                        let app_clone = app_ref.clone();
+                        std::thread::spawn(move || {
+                            std::thread::sleep(std::time::Duration::from_millis(250));
+                            if let Ok(mut src) = crate::commands::PICK_SOURCE.lock() {
+                                *src = "global".into();
+                            }
+                            if let Err(e) = crate::commands::start_screen_pick(app_clone, None) {
+                                eprintln!("[WARN] Failed to start screen pick: {}", e);
+                            }
+                        });
                     }
                     _ => {}
                 }
@@ -715,7 +801,7 @@ pub fn create_utility_window(
         .resizable(false)
         .decorations(false)
         .always_on_top(true)
-        .visible(true)
+        .visible(false) // hidden until React emits util-window-ready
         .skip_taskbar(true)
         .center()
         .background_color(tauri::window::Color(10, 10, 11, 255));
@@ -732,3 +818,179 @@ pub fn close_utility_window(app: AppHandle, label: String) -> Result<(), String>
     }
     Ok(())
 }
+
+// ============ Color Picker Commands ============
+
+/// Start live screen color picking: create a full-screen transparent overlay
+/// that covers all monitors. The overlay captures all mouse/keyboard input
+/// and shows a crosshair cursor. A floating card displays real-time pixel color.
+/// Start the full-screen transparent color picker overlay.
+/// `page_mode`: if Some, forces PICK_FROM_PAGE to the given value (for event-driven entries).
+///              if None, auto-detects from main window visibility (for direct calls like global shortcut).
+#[tauri::command]
+pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), String> {
+    use tauri::{WebviewUrl, WebviewWindowBuilder};
+
+    // Close existing overlay if any
+    if let Some(existing) = app.get_webview_window("pick-overlay") {
+        let _ = existing.close();
+    }
+
+    // Calculate virtual screen bounds covering ALL monitors
+    let screens = screenshots::Screen::all().unwrap_or_default();
+    let (vx, vy, vw, vh) = if screens.is_empty() {
+        (0, 0, 1920u32, 1080u32)
+    } else {
+        let mut min_x = i32::MAX;
+        let mut min_y = i32::MAX;
+        let mut max_x = i32::MIN;
+        let mut max_y = i32::MIN;
+        for s in &screens {
+            let di = &s.display_info;
+            min_x = min_x.min(di.x);
+            min_y = min_y.min(di.y);
+            max_x = max_x.max(di.x + di.width as i32);
+            max_y = max_y.max(di.y + di.height as i32);
+        }
+        (min_x, min_y, (max_x - min_x) as u32, (max_y - min_y) as u32)
+    };
+
+    // Check if main window was visible when pick started (page mode vs global mode)
+    let main_was_visible = app.get_webview_window("main")
+        .map(|w| w.is_visible().unwrap_or(false))
+        .unwrap_or(false);
+
+    // Build full-screen transparent overlay covering all monitors
+    let _overlay = WebviewWindowBuilder::new(
+        &app,
+        "pick-overlay",
+        WebviewUrl::App("/utility/live-picker".into()),
+    )
+    .title("")
+    .inner_size(vw as f64, vh as f64)
+    .position(vx as f64, vy as f64)
+    .resizable(false)
+    .decorations(false)
+    .shadow(false) // Disable window shadow to prevent visible edge flicker
+    .always_on_top(true)
+    .visible(false) // Start hidden to avoid black flash
+    .skip_taskbar(true)
+    .transparent(true)
+    .initialization_script(crate::lang_init_script(&app))
+    .background_color(tauri::window::Color(0, 0, 0, 0))
+    .build()
+    .map_err(|e| format!("Failed to create overlay: {}", e))?;
+
+    // Disable Windows show/hide animation via Win32 API (prevents zoom-in/out edge effect)
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(hwnd) = _overlay.hwnd().ok().map(|h| h.0) {
+            #[link(name = "user32")]
+            extern "system" {
+                fn GetWindowLongPtrW(hwnd: *mut std::ffi::c_void, index: i32) -> isize;
+                fn SetWindowLongPtrW(hwnd: *mut std::ffi::c_void, index: i32, new: isize) -> isize;
+            }
+            const GWL_STYLE: i32 = -16;
+            const WS_BORDER: isize = 0x00800000;
+            const WS_DLGFRAME: isize = 0x00400000;
+            unsafe {
+                let style = GetWindowLongPtrW(hwnd, GWL_STYLE);
+                SetWindowLongPtrW(hwnd, GWL_STYLE, style & !(WS_BORDER | WS_DLGFRAME));
+            }
+        }
+    }
+
+    // Overlay stays hidden until frontend emits "picker-ready" (CSS applied)
+    // This prevents the black flash entirely
+
+    // Store pick mode: use explicit value if provided, otherwise auto-detect
+    PICK_FROM_PAGE.store(page_mode.unwrap_or(main_was_visible), Ordering::SeqCst);
+
+    // Spawn polling thread: polls pixel color + cursor position + magnifier region
+    let app_clone = app.clone();
+    std::thread::spawn(move || {
+        let mut last_color = String::new();
+        let mut last_x = -1i32;
+        let mut last_y = -1i32;
+        const MAG_SIZE: i32 = 15; // magnifier capture region: 15x15 pixels (larger pixels = easier targeting)
+
+        loop {
+            if app_clone.get_webview_window("pick-overlay").is_none() {
+                break;
+            }
+
+            if let Ok((x, y)) = crate::color_picker::get_cursor_pos() {
+                // Emit color update
+                let color = crate::color_picker::capture_pixel_color(x, y)
+                    .unwrap_or_else(|_| last_color.clone());
+                if color != last_color {
+                    let _ = app_clone.emit("cursor-color", &color);
+                    // Store for late-joining windows (e.g. ColorQuick created after pick)
+                    if let Ok(mut stored) = LAST_PICKED_COLOR.lock() {
+                        *stored = color.clone();
+                    }
+                    last_color = color;
+                }
+
+                // Emit cursor position for card + magnifier tracking
+                if x != last_x || y != last_y {
+                    let scale = screenshots::Screen::all()
+                        .ok()
+                        .and_then(|screens| {
+                            screens.iter().find(|s| {
+                                let di = &s.display_info;
+                                x >= di.x && x < di.x + di.width as i32
+                                    && y >= di.y && y < di.y + di.height as i32
+                            }).map(|s| s.display_info.scale_factor as f64)
+                        })
+                        .unwrap_or(1.0);
+
+                    let rel_x = ((x - vx) as f64 / scale) as i32;
+                    let rel_y = ((y - vy) as f64 / scale) as i32;
+                    let _ = app_clone.emit("cursor-position", serde_json::json!({
+                        "x": rel_x, "y": rel_y, "color": last_color
+                    }));
+                    last_x = x;
+                    last_y = y;
+
+                    // Capture magnifier region every frame cursor moves (sync with color/position)
+                    if let Ok(screens) = screenshots::Screen::all() {
+                        let half = MAG_SIZE / 2;
+                        // Find the screen containing the cursor
+                        if let Some(screen) = screens.iter().find(|s| {
+                            let di = &s.display_info;
+                            x >= di.x && x < di.x + di.width as i32
+                                && y >= di.y && y < di.y + di.height as i32
+                        }).or(screens.first()) {
+                            let sx = screen.display_info.x;
+                            let sy = screen.display_info.y;
+                            let sw = screen.display_info.width as i32;
+                            let sh = screen.display_info.height as i32;
+                            let cx = (x - sx - half).max(0).min(sw - 1);
+                            let cy = (y - sy - half).max(0).min(sh - 1);
+                            let cw = MAG_SIZE.min(sw - cx);
+                            let ch = MAG_SIZE.min(sh - cy);
+                            if cw > 0 && ch > 0 {
+                                if let Ok(img) = screen.capture_area(cx, cy, cw as u32, ch as u32) {
+                                    let pixels: Vec<u8> = img.into_raw();
+                                    let _ = app_clone.emit("cursor-region", serde_json::json!({
+                                        "data": pixels,
+                                        "w": cw, "h": ch,
+                                        "offX": (x - sx) - cx,
+                                        "offY": (y - sy) - cy,
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            std::thread::sleep(std::time::Duration::from_millis(33));
+        }
+    });
+
+    Ok(())
+}
+
+

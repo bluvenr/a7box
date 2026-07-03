@@ -99,15 +99,13 @@ export function useGlobalShortcuts() {
     if (!isTauri()) return
 
     let unlisten: (() => void) | undefined
+    let unlistenPalette: (() => void) | undefined
 
     (async () => {
       try {
         const { listen } = await import('@tauri-apps/api/event')
         unlisten = await listen<string>('global-shortcut', (event) => {
           switch (event.payload) {
-            case 'toggle-command-palette':
-              toggle()
-              break
             case 'open-screenshot':
               navigate('/screenshot')
               import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
@@ -120,13 +118,29 @@ export function useGlobalShortcuts() {
               break
           }
         })
+
+        // Listen for palette navigation events (from standalone palette window)
+        unlistenPalette = await listen<{ path: string }>('palette-navigate', (event) => {
+          const { path } = event.payload
+          if (path) {
+            // Show and focus main window
+            import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+              const win = getCurrentWindow()
+              win.show()
+              win.unminimize()
+              win.setFocus()
+            }).catch(() => {})
+            // Navigate to the selected path
+            navigate(path)
+          }
+        })
       } catch {
         // Tauri API not available
       }
     })()
 
-    return () => { unlisten?.() }
-  }, [toggle, navigate])
+    return () => { unlisten?.(); unlistenPalette?.() }
+  }, [navigate])
 
   // Also listen for Ctrl+K / Ctrl+Shift+P keyboard shortcuts (browser fallback)
   useEffect(() => {

@@ -53,6 +53,24 @@ function App() {
   useEffect(() => {
     initUsageHistory()
     registerAll(allModules)
+
+    // Sync current language to Rust so utility windows get correct lang via initialization_script
+    if (isTauri()) {
+      import('@tauri-apps/api/core').then(({ invoke }) => {
+        invoke('sync_app_language', { lang: i18n.language || 'zh-CN' }).catch(() => {})
+      })
+
+      // Signal Rust: React has mounted, safe to show this utility window (avoids flicker)
+      // Exclude: main window, pick-overlay (own picker-ready), color-quick (own color-quick-ready)
+      import('@tauri-apps/api/window').then(async ({ getCurrentWindow }) => {
+        const label = getCurrentWindow().label
+        const skip = ['main', 'pick-overlay', 'color-quick']
+        if (label && !skip.includes(label)) {
+          const { emit } = await import('@tauri-apps/api/event')
+          emit('util-window-ready', label)
+        }
+      }).catch(() => {})
+    }
   }, [registerAll])
 
   return (

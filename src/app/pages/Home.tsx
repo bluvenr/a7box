@@ -7,9 +7,11 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useModuleRegistry } from '../../core/registry'
 import { useCommandPalette } from '../../core/command-palette'
+import { useShortcutStore } from '../../core/shortcuts/shortcutStore'
 import { useSettingsStore } from '../../core/settings'
 import { getRecentModuleIds, recordUsage } from '../../shared/utils'
 import { Box, Search, Clock } from 'lucide-react'
+import { formatShortcut } from '../../components/KeyCapture'
 import { useState, useEffect } from 'react'
 import type { A7Module } from '../../core/types'
 import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
@@ -20,6 +22,10 @@ export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const togglePalette = useCommandPalette((state) => state.toggle)
+  const paletteShortcut = useShortcutStore((s) => {
+    const sc = s.shortcuts.find((x) => x.action === 'toggle-command-palette')
+    return sc?.enabled ? formatShortcut(sc.keys) : ''
+  })
   const modules = useModuleRegistry((state) => state.modules)
   const enabledModuleIds = useModuleRegistry((state) => state.enabledModuleIds)
   const moduleOrder = useSettingsStore((s) => s.moduleOrder)
@@ -88,7 +94,7 @@ export default function Home() {
           {t('commandPalette.placeholder')}
         </span>
         <kbd className="rounded bg-bg-hover px-2 py-0.5 text-xs text-text-muted">
-          Ctrl+Shift+A
+          {paletteShortcut}
         </kbd>
       </button>
 

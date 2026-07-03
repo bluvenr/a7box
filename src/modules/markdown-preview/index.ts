@@ -25,6 +25,7 @@ export const markdownPreviewModule: A7Module = {
       label: 'Markdown Editor',
       labelI18n: 'modules.markdownPreview.commands.open',
       description: 'Open markdown editor with live preview and HTML conversion',
+      descriptionI18n: 'modules.markdownPreview.commands.openDesc',
       icon: FileText,
       run: async (ctx) => {
         ctx.navigate('/markdown-preview')

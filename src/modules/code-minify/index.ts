@@ -25,6 +25,7 @@ export const codeMinifyModule: A7Module = {
       label: 'Code Minify/Beautify',
       labelI18n: 'modules.codeMinify.commands.open',
       description: 'Minify or beautify code',
+      descriptionI18n: 'modules.codeMinify.commands.openDesc',
       icon: Minimize2,
       run: async (ctx) => {
         ctx.navigate('/code-minify')

@@ -23,6 +23,7 @@ export const screenshotModule: A7Module = {
       label: 'Screenshot',
       labelI18n: 'modules.screenshot.commands.open',
       description: 'Capture screenshots',
+      descriptionI18n: 'modules.screenshot.commands.openDesc',
       icon: Camera,
       run: async (ctx) => { ctx.navigate('/screenshot') },
     },

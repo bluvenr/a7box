@@ -23,6 +23,7 @@ export const imageConvertModule: A7Module = {
       label: 'Image Convert',
       labelI18n: 'modules.imageConvert.commands.open',
       description: 'Convert image formats',
+      descriptionI18n: 'modules.imageConvert.commands.openDesc',
       icon: ImageIcon,
       run: async (ctx) => { ctx.navigate('/image-convert') },
     },

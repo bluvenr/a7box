@@ -23,6 +23,7 @@ export const colorToolModule: A7Module = {
       label: 'Color Tool',
       labelI18n: 'modules.colorTool.commands.open',
       description: 'Color picker and converter',
+      descriptionI18n: 'modules.colorTool.commands.openDesc',
       icon: Palette,
       run: async (ctx) => { ctx.navigate('/color-tool') },
     },

@@ -23,6 +23,7 @@ export const p2pTransferModule: A7Module = {
       label: 'LAN Transfer',
       labelI18n: 'modules.p2p.commands.open',
       description: 'Open P2P LAN transfer',
+      descriptionI18n: 'modules.p2p.commands.openDesc',
       icon: Wifi,
       run: async (ctx) => { ctx.navigate('/p2p-transfer') },
     },

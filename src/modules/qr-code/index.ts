@@ -25,6 +25,7 @@ export const qrCodeModule: A7Module = {
       label: 'Generate QR Code',
       labelI18n: 'modules.qrCode.commands.generate',
       description: 'Generate a QR code from text or URL',
+      descriptionI18n: 'modules.qrCode.commands.generateDesc',
       icon: QrCode,
       run: async (ctx) => {
         ctx.navigate('/qr-code')
@@ -35,6 +36,7 @@ export const qrCodeModule: A7Module = {
       label: 'Decode QR Code',
       labelI18n: 'modules.qrCode.commands.decode',
       description: 'Decode a QR code from an image',
+      descriptionI18n: 'modules.qrCode.commands.decodeDesc',
       run: async (ctx) => {
         ctx.navigate('/qr-code?tab=decode')
       },

@@ -185,7 +185,7 @@ export function CommandPalette() {
         <div className="flex items-center justify-between border-t border-border-subtle px-4 py-2">
           <div className="flex items-center gap-2 text-xs text-text-muted">
             <kbd className="rounded bg-bg-hover px-1.5 py-0.5">↑↓</kbd>
-            <span>Navigate</span>
+            <span>{t('commandPalette.navigate')}</span>
             <kbd className="ml-2 rounded bg-bg-hover px-1.5 py-0.5">↵</kbd>
             <span>{t('commandPalette.pressEnter')}</span>
           </div>

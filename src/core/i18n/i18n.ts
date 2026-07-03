@@ -15,6 +15,10 @@ export const SUPPORTED_LANGUAGES = [
 
 export type LanguageCode = typeof SUPPORTED_LANGUAGES[number]['code']
 
+function isTauri(): boolean {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+}
+
 // Detect system language
 export function detectLanguage(): LanguageCode {
   const browserLang = navigator.language
@@ -24,10 +28,21 @@ export function detectLanguage(): LanguageCode {
   return 'en-US'
 }
 
-// Get initial language: saved > detected, and persist to localStorage
+/**
+ * Resolve initial language.
+ * Priority: injected global (Tauri init script) > localStorage > system detect.
+ */
 function getInitialLanguage(): LanguageCode {
+  // 1. Check injected global (set by Tauri initialization_script BEFORE page scripts run)
+  const injected = (window as any).__A7BOX_LANG__ as string | undefined
+  if (injected && SUPPORTED_LANGUAGES.some((l) => l.code === injected)) {
+    localStorage.setItem('a7box-language', injected)
+    return injected as LanguageCode
+  }
+  // 2. localStorage saved preference
   const saved = localStorage.getItem('a7box-language') as LanguageCode | null
   if (saved) return saved
+  // 3. System detection
   const detected = detectLanguage()
   localStorage.setItem('a7box-language', detected)
   return detected
@@ -54,22 +69,12 @@ export async function changeLanguage(lang: LanguageCode): Promise<void> {
   localStorage.setItem('a7box-language', lang)
 
   // Notify Rust backend to update tray menu language
-  if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+  if (isTauri()) {
     try {
       const { invoke } = await import('@tauri-apps/api/core')
       await invoke('update_tray_language', { lang })
     } catch { /* ignore in browser mode */ }
   }
-}
-
-// Get current language
-export function getCurrentLanguage(): LanguageCode {
-  return (i18n.language as LanguageCode) || 'en-US'
-}
-
-// Get saved language (used on startup)
-export function getSavedLanguage(): LanguageCode | null {
-  return localStorage.getItem('a7box-language') as LanguageCode | null
 }
 
 export default i18n

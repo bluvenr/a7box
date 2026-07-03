@@ -6,6 +6,7 @@ import { create } from 'zustand'
 import type { CommandSearchItem } from '../types'
 import { searchEngine } from './SearchEngine'
 import { useModuleRegistry } from '../registry'
+import { useShortcutStore } from '../shortcuts/shortcutStore'
 import { recordUsage as recordUsageShared, getAllHistory } from '../../shared/utils'
 
 interface CommandPaletteState {
@@ -103,6 +104,15 @@ export const useCommandPalette = create<CommandPaletteState>((set, get) => ({
   refreshCommands: () => {
     const commands = useModuleRegistry.getState().getAllCommands()
 
+    // Build moduleId → user-customized keys map from shortcut store
+    const userShortcuts = useShortcutStore.getState().shortcuts
+    const shortcutByModule = new Map<string, string>()
+    for (const sc of userShortcuts) {
+      if (sc.moduleId && sc.enabled) {
+        shortcutByModule.set(sc.moduleId, sc.keys)
+      }
+    }
+
     // Build usage map from shared history
     const usageMap: Record<string, number> = {}
     for (const record of getAllHistory()) {
@@ -111,6 +121,8 @@ export const useCommandPalette = create<CommandPaletteState>((set, get) => ({
 
     const commandsWithHistory = commands.map((cmd) => ({
       ...cmd,
+      // Use user-customized shortcut if available, otherwise fall back to hardcoded
+      shortcut: shortcutByModule.get(cmd.moduleId) ?? cmd.shortcut,
       lastUsedAt: usageMap[cmd.id],
     }))
 

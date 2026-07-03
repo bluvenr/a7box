@@ -23,6 +23,7 @@ export const textDiffModule: A7Module = {
       label: 'Text Diff',
       labelI18n: 'modules.textDiff.commands.open',
       description: 'Compare two texts',
+      descriptionI18n: 'modules.textDiff.commands.openDesc',
       icon: FileDiff,
       run: async (ctx) => { ctx.navigate('/text-diff') },
     },

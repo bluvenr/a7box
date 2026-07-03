@@ -26,7 +26,7 @@ export { useSettingsStore, useSetting, useUpdateSetting } from './settings'
 export type { AppSettings } from './settings'
 
 // i18n
-export { i18n, changeLanguage, getCurrentLanguage, SUPPORTED_LANGUAGES } from './i18n'
+export { i18n, changeLanguage, SUPPORTED_LANGUAGES } from './i18n'
 export type { LanguageCode } from './i18n'
 
 // Command palette

@@ -51,8 +51,7 @@
     "compress": "压缩",
     "generate": "生成",
     "options": "选项",
-    "quality": "质量",
-    "restore": "恢复"
+    "quality": "质量"
   },
   "categories": {
     "text": "文本工具",
@@ -80,7 +79,15 @@
     "allCommands": "所有命令",
     "noResults": "没有匹配的命令",
     "pressEnter": "按回车执行",
-    "pressEsc": "按 ESC 关闭"
+    "pressEsc": "按 ESC 关闭",
+    "navigate": "导航"
+  },
+  "palette": {
+    "searchPlaceholder": "搜索工具和命令...",
+    "noResults": "没有匹配的结果",
+    "navigate": "导航",
+    "open": "打开",
+    "items": "项"
   },
   "settings": {
     "title": "设置",
@@ -118,7 +125,6 @@
     "cacheTotal": "缓存总大小",
     "cacheClearAll": "全部清理",
     "cacheClear": "清理",
-    "cacheP2PDownloads": "传输接收文件",
     "cacheDownloads": "传输接收文件",
     "cacheScreenshots": "截图文件",
     "cacheTransferHistory": "传输记录",
@@ -133,7 +139,10 @@
     "cacheConfirmAll": "将清理所有缓存数据和传输记录，此操作不可撤销。",
     "shortcutsCapture": "按下组合键...",
     "shortcutsReset": "重置默认",
-    "shortcutCommandPalette": "命令面板",
+    "shortcutCommandPalette": "快速搜索",
+    "shortcutCommandPaletteDesc": "弹出 Spotlight 风格搜索窗口，快速跳转至任意工具",
+    "shortcutToggleWindow": "显示/隐藏窗口",
+    "shortcutToggleWindowDesc": "全局快捷键快速显示或隐藏主窗口",
     "shortcutScreenshot": "截图",
     "shortcutClipboardQr": "二维码快捷操作",
     "shortcutClipboardQrDesc": "剪贴板为文本时自动生成二维码，为图片时自动解析二维码",
@@ -143,6 +152,8 @@
     "shortcutClipboardJsonDesc": "读取剪贴板 JSON 并自动格式化或压缩",
     "shortcutClipboardCodeMinify": "代码压缩/美化",
     "shortcutClipboardCodeMinifyDesc": "读取剪贴板代码并打开压缩/美化浮窗",
+    "shortcutColorPicker": "屏幕取色",
+    "shortcutColorPickerDesc": "取鼠标位置像素颜色并打开颜色浮窗",
     "shortcutModuleDisabled": "模块已关闭"
   },
   "updater": {
@@ -177,11 +188,21 @@
     "exitFullscreen": "还原",
     "outputEmpty": "转换结果将显示在这里"
   },
+  "qrQuick": {
+    "title": "快速二维码",
+    "decodeTitle": "二维码解析",
+    "download": "下载",
+    "copyImage": "复制图片",
+    "copyText": "复制文本",
+    "copyResult": "复制解析结果",
+    "noQrFound": "未在图片中检测到二维码",
+    "clipboardEmpty": "剪贴板为空或包含非文本内容"
+  },
   "modules": {
     "jsonFormatter": {
       "name": "JSON 格式化",
       "description": "自动格式化或压缩 JSON 数据",
-      "commands": { "format": "格式化 JSON", "compress": "压缩 JSON" },
+      "commands": { "format": "格式化 JSON", "compress": "压缩 JSON", "formatDesc": "格式化 JSON 数据，提升可读性", "compressDesc": "将 JSON 压缩为单行" },
       "settings": { "autoFormat": "自动格式化", "autoFormatDesc": "检测到剪贴板 JSON 时自动格式化", "indentSize": "缩进大小" },
       "ui": {
         "loadingEditor": "编辑器加载中...",
@@ -233,7 +254,7 @@
     "qrCode": {
       "name": "二维码",
       "description": "生成和解析二维码",
-      "commands": { "generate": "生成二维码", "decode": "解析二维码" },
+      "commands": { "generate": "生成二维码", "decode": "解析二维码", "generateDesc": "从文本或 URL 生成二维码", "decodeDesc": "从图片中解析二维码" },
       "ui": {
         "tabGenerate": "生成",
         "tabDecode": "解析",
@@ -267,20 +288,10 @@
         "decodeShortcutHint": "复制二维码图片后按 {{keys}} 快速解析"
       }
     },
-    "qrQuick": {
-      "title": "快速二维码",
-      "decodeTitle": "二维码解析",
-      "download": "下载",
-      "copyImage": "复制图片",
-      "copyText": "复制文本",
-      "copyResult": "复制解析结果",
-      "noQrFound": "未在图片中检测到二维码",
-      "clipboardEmpty": "剪贴板为空或包含非文本内容"
-    },
     "markdownPreview": {
       "name": "Markdown 编辑器",
       "description": "Markdown 实时预览、语法高亮、文件导入与 HTML 互转",
-      "commands": { "open": "Markdown 编辑器" },
+      "commands": { "open": "Markdown 编辑器", "openDesc": "打开 Markdown 编辑器，支持实时预览和 HTML 转换" },
       "ui": {
         "previewToggle": "预览",
         "modeToggle": "切换正向/反向转换模式",
@@ -314,7 +325,7 @@
     "codeMinify": {
       "name": "代码压缩/美化",
       "description": "压缩或美化 JS、TS、CSS、HTML 和 JSON",
-      "commands": { "open": "代码压缩/美化" },
+      "commands": { "open": "代码压缩/美化", "openDesc": "压缩或美化代码" },
       "ui": {
         "loadingEditor": "编辑器加载中...",
         "minifyBtn": "压缩",
@@ -365,7 +376,7 @@
     "imageCompress": {
       "name": "图片压缩",
       "description": "图片压缩与格式转换，支持画质调节",
-      "commands": { "open": "图片压缩" },
+      "commands": { "open": "图片压缩", "openDesc": "压缩和转换图片" },
       "ui": {
         "qualityLabel": "质量",
         "maxWidthLabel": "最大宽度",
@@ -408,7 +419,7 @@
     "hashGenerator": {
       "name": "哈希生成器",
       "description": "生成 MD5、SHA-1、SHA-256、SHA-512 哈希值",
-      "commands": { "open": "哈希生成器" },
+      "commands": { "open": "哈希生成器", "openDesc": "生成加密哈希值" },
       "ui": {
         "textPlaceholder": "输入要计算哈希的文本...",
         "generateBtn": "生成哈希",
@@ -424,7 +435,7 @@
     "imageConvert": {
       "name": "图片转格式",
       "description": "图片格式互转（PNG、JPG、WebP）",
-      "commands": { "open": "图片转格式" },
+      "commands": { "open": "图片转格式", "openDesc": "转换图片格式" },
       "ui": {
         "outputLabel": "输出格式",
         "qualityLabel": "质量",
@@ -461,7 +472,7 @@
     "colorTool": {
       "name": "颜色工具",
       "description": "取色器、格式转换与调色板生成",
-      "commands": { "open": "颜色工具" },
+      "commands": { "open": "颜色工具", "openDesc": "取色器和颜色转换器" },
       "ui": {
         "contrastTitle": "对比度检查 (WCAG)",
         "contrastOnWhite": "白底",
@@ -470,14 +481,28 @@
         "paletteComplementary": "互补色",
         "paletteAnalogous": "类似色",
         "paletteTriadic": "三色组",
-        "textSample": "Aa 文本示例",
-        "wcagFail": "不通过"
+        "copiedLabel": "已复制",
+        "historyTitle": "历史记录",
+        "eyedropperTooltip": "屏幕取色",
+        "invalidHex": "无效的 HEX 颜色值",
+        "shortcuts": "快捷键",
+        "pickFromScreen": "屏幕取色",
+        "globalPick": "全局取色（左键复制 / 右键填入浮窗）",
+        "tintsAndShades": "色阶变化",
+        "tints": "浅色（加白）",
+        "shades": "深色（加黑）",
+        "baseColor": "基准",
+        "customContrast": "自定义对比度",
+        "foreground": "前景色",
+        "background": "背景色",
+        "swap": "交换",
+        "clickToPick": "点击选取颜色"
       }
     },
     "base64Tool": {
       "name": "Base64 工具",
       "description": "Base64 编解码，支持文本和文件",
-      "commands": { "open": "Base64 工具" },
+      "commands": { "open": "Base64 工具", "openDesc": "Base64 编码/解码" },
       "ui": {
         "swapTooltip": "交换",
         "copyTooltip": "复制输出",
@@ -503,7 +528,7 @@
     "timestampConverter": {
       "name": "时间戳转换器",
       "description": "Unix 时间戳与可读日期互转",
-      "commands": { "open": "时间戳转换器" },
+      "commands": { "open": "时间戳转换器", "openDesc": "转换时间戳与日期" },
       "now": "当前时间",
       "timestamp": "Unix 时间戳",
       "dateString": "日期字符串",
@@ -533,7 +558,7 @@
     "uuidGenerator": {
       "name": "UUID 生成器",
       "description": "生成 UUID v4、NanoID 等唯一标识",
-      "commands": { "open": "UUID 生成器" },
+      "commands": { "open": "UUID 生成器", "openDesc": "生成唯一标识符" },
       "type": "类型",
       "count": "数量",
       "length": "长度",
@@ -556,14 +581,14 @@
     "jwtDecoder": {
       "name": "JWT 解码器",
       "description": "解码并检查 JWT 令牌",
-      "commands": { "open": "JWT 解码器" },
+      "commands": { "open": "JWT 解码器", "openDesc": "解码 JWT 令牌" },
       "paste": "粘贴",
       "clear": "清空",
       "placeholder": "在此粘贴 JWT Token，如 eyJhbGci...",
       "expired": "已过期",
-      "expiredAgo": "已过期 {time}",
+      "expiredAgo": "已过期 {{time}}",
       "valid": "有效",
-      "expiresIn": "剩余 {time}",
+      "expiresIn": "剩余 {{time}}",
       "expiresAt": "过期时间",
       "signature": "签名",
       "signatureDesc": "验签需要签名密钥",
@@ -575,7 +600,7 @@
     "regexTester": {
       "name": "正则测试器",
       "description": "实时匹配测试和调试正则表达式",
-      "commands": { "open": "正则测试器" },
+      "commands": { "open": "正则测试器", "openDesc": "测试正则表达式" },
       "patternPlaceholder": "输入正则表达式...",
       "testText": "测试文本",
       "textPlaceholder": "输入要测试的文本...",
@@ -640,7 +665,7 @@
     "textDiff": {
       "name": "文本对比",
       "description": "比较两段文本并高亮差异",
-      "commands": { "open": "文本对比" },
+      "commands": { "open": "文本对比", "openDesc": "对比两段文本差异" },
       "swap": "交换",
       "clear": "清空全部",
       "original": "原始文本",
@@ -665,7 +690,7 @@
     "screenshot": {
       "name": "截图工具",
       "description": "全屏或区域截图",
-      "commands": { "open": "截图工具" },
+      "commands": { "open": "截图工具", "openDesc": "截取屏幕截图" },
       "ui": {
         "mode": "模式",
         "fullscreen": "全屏",
@@ -685,7 +710,7 @@
         "history": "历史记录",
         "preview": "预览",
         "edit": "编辑",
-        "webOnly": "截图功能需要桌面应用 (Tauri)",
+        "webOnly": "截图功能需要桌面应用",
         "captureFailed": "截图失败",
         "loadFailed": "加载图片失败",
         "saveFailed": "保存失败"
@@ -708,7 +733,7 @@
     "httpServer": {
       "name": "网页服务",
       "description": "为本地目录快速创建局域网网页，供浏览器访问",
-      "commands": { "open": "网页服务" },
+      "commands": { "open": "网页服务", "openDesc": "启动 HTTP 文件服务器" },
       "ui": {
         "directory": "目录",
         "port": "端口",
@@ -736,7 +761,7 @@
         "noServers": "暂无运行中的网页服务",
         "noServersHint": "选择目录并点击【启动服务】开始",
         "viewGuide": "查看使用指南",
-        "desktopOnly": "网页服务需要桌面应用 (Tauri)",
+        "desktopOnly": "网页服务需要桌面应用",
         "guide": {
           "title": "快速上手",
           "intro": "为你的任意文件夹快速创建一个局域网网站，让同事或同学通过浏览器直接访问其中的文件。适合分享 HTML 原型、项目文档或临时资料。",
@@ -755,9 +780,9 @@
     "p2p": {
       "name": "局域网传输",
       "description": "在局域网内与其他 A7Box 设备互传文件",
-      "commands": { "open": "局域网传输" },
+      "commands": { "open": "局域网传输", "openDesc": "打开 P2P 局域网传输" },
       "ui": {
-        "desktopOnly": "局域网传输需要桌面应用 (Tauri)",
+        "desktopOnly": "局域网传输需要桌面应用",
         "startFailed": "启动服务失败",
         "sendFailed": "发送文件失败",
         "selectDir": "请先选择共享目录",
@@ -894,5 +919,26 @@
     "copied": "已复制",
     "lines": "行",
     "chars": "字符"
+  },
+  "colorQuick": {
+    "title": "屏幕取色",
+    "repick": "再取一色",
+    "shortcutHint": "按 {{keys}} 随时从屏幕取色"
+  },
+  "screenPicker": {
+    "clickToPick": "点击选取颜色"
+  },
+  "livePicker": {
+    "clickToPick": "点击任意位置取色",
+    "clickOrKey": "点击或回车取色",
+    "leftClickCopy": "左键：复制颜色值",
+    "rightClickFill": "右键：填入浮窗",
+    "filled": "已填入浮窗！",
+    "copiedHint": "颜色值已复制",
+    "colorUpdatedFloat": "颜色已更新",
+    "colorUpdatedPage": "颜色已填入",
+    "clickFillFloat": "点击：取色",
+    "clickFillPage": "点击：填入页面",
+    "magnifier": "放大镜"
   }
 }

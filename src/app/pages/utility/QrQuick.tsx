@@ -318,6 +318,7 @@ export default function QrQuick() {
           </button>
         </div>
       )}
+
     </div>
   )
 }

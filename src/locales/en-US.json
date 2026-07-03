@@ -51,8 +51,7 @@
     "compress": "Compress",
     "generate": "Generate",
     "options": "Options",
-    "quality": "Quality",
-    "restore": "Restore"
+    "quality": "Quality"
   },
   "categories": {
     "text": "Text Tools",
@@ -80,7 +79,15 @@
     "allCommands": "All Commands",
     "noResults": "No matching commands",
     "pressEnter": "Press Enter to execute",
-    "pressEsc": "Press ESC to close"
+    "pressEsc": "Press ESC to close",
+    "navigate": "Navigate"
+  },
+  "palette": {
+    "searchPlaceholder": "Search tools and commands...",
+    "noResults": "No matching results",
+    "navigate": "Navigate",
+    "open": "Open",
+    "items": "items"
   },
   "settings": {
     "title": "Settings",
@@ -118,7 +125,6 @@
     "cacheTotal": "Total cache size",
     "cacheClearAll": "Clear All",
     "cacheClear": "Clear",
-    "cacheP2PDownloads": "Transfer Received Files",
     "cacheDownloads": "Transfer Received Files",
     "cacheScreenshots": "Screenshots",
     "cacheTransferHistory": "Transfer History",
@@ -133,7 +139,10 @@
     "cacheConfirmAll": "All cache data and transfer records will be cleared. This cannot be undone.",
     "shortcutsCapture": "Press key combination...",
     "shortcutsReset": "Reset defaults",
-    "shortcutCommandPalette": "Command Palette",
+    "shortcutCommandPalette": "Quick Search",
+    "shortcutCommandPaletteDesc": "Open a Spotlight-style search window to quickly jump to any tool",
+    "shortcutToggleWindow": "Show/Hide Window",
+    "shortcutToggleWindowDesc": "Globally show or hide the main window",
     "shortcutScreenshot": "Screenshot",
     "shortcutClipboardQr": "QR Quick Actions",
     "shortcutClipboardQrDesc": "Auto-generate QR from clipboard text, or auto-decode QR from clipboard image",
@@ -143,6 +152,8 @@
     "shortcutClipboardJsonDesc": "Read clipboard JSON and auto-format or compress",
     "shortcutClipboardCodeMinify": "Code Minify/Beautify",
     "shortcutClipboardCodeMinifyDesc": "Read clipboard code and open minify/beautify window",
+    "shortcutColorPicker": "Color Picker",
+    "shortcutColorPickerDesc": "Pick pixel color at cursor position and open color float window",
     "shortcutModuleDisabled": "Module disabled"
   },
   "updater": {
@@ -177,11 +188,21 @@
     "exitFullscreen": "Restore",
     "outputEmpty": "Converted output will appear here"
   },
+  "qrQuick": {
+    "title": "Quick QR",
+    "decodeTitle": "QR Decode",
+    "download": "Download",
+    "copyImage": "Copy Image",
+    "copyText": "Copy Text",
+    "copyResult": "Copy Result",
+    "noQrFound": "No QR code found in image",
+    "clipboardEmpty": "Clipboard is empty or contains non-text content"
+  },
   "modules": {
     "jsonFormatter": {
       "name": "JSON Formatter",
       "description": "Auto-format or compress JSON data",
-      "commands": { "format": "Format JSON", "compress": "Compress JSON" },
+      "commands": { "format": "Format JSON", "compress": "Compress JSON", "formatDesc": "Format JSON data for readability", "compressDesc": "Compress JSON data to single line" },
       "settings": { "autoFormat": "Auto Format", "autoFormatDesc": "Auto-format when JSON detected in clipboard", "indentSize": "Indent Size" },
       "ui": {
         "loadingEditor": "Loading editor...",
@@ -233,7 +254,7 @@
     "qrCode": {
       "name": "QR Code",
       "description": "Generate and decode QR codes",
-      "commands": { "generate": "Generate QR Code", "decode": "Decode QR Code" },
+      "commands": { "generate": "Generate QR Code", "decode": "Decode QR Code", "generateDesc": "Generate a QR code from text or URL", "decodeDesc": "Decode a QR code from an image" },
       "ui": {
         "tabGenerate": "Generate",
         "tabDecode": "Decode",
@@ -267,20 +288,10 @@
         "decodeShortcutHint": "Copy QR image then press {{keys}} to decode"
       }
     },
-    "qrQuick": {
-      "title": "Quick QR",
-      "decodeTitle": "QR Decode",
-      "download": "Download",
-      "copyImage": "Copy Image",
-      "copyText": "Copy Text",
-      "copyResult": "Copy Result",
-      "noQrFound": "No QR code found in image",
-      "clipboardEmpty": "Clipboard is empty or contains non-text content"
-    },
     "markdownPreview": {
       "name": "Markdown Editor",
       "description": "Live markdown preview, syntax highlighting, file import and HTML conversion",
-      "commands": { "open": "Markdown Editor" },
+      "commands": { "open": "Markdown Editor", "openDesc": "Open markdown editor with live preview and HTML conversion" },
       "ui": {
         "previewToggle": "Preview",
         "modeToggle": "Toggle forward/reverse conversion mode",
@@ -314,7 +325,7 @@
     "codeMinify": {
       "name": "Code Minify/Beautify",
       "description": "Minify or beautify JS, TS, CSS, HTML and JSON",
-      "commands": { "open": "Code Minify/Beautify" },
+      "commands": { "open": "Code Minify/Beautify", "openDesc": "Minify or beautify code" },
       "ui": {
         "loadingEditor": "Loading editor...",
         "minifyBtn": "Minify",
@@ -365,7 +376,7 @@
     "imageCompress": {
       "name": "Image Compress",
       "description": "Compress and convert images with quality control",
-      "commands": { "open": "Image Compress" },
+      "commands": { "open": "Image Compress", "openDesc": "Compress and convert images" },
       "ui": {
         "qualityLabel": "Quality",
         "maxWidthLabel": "Max Width",
@@ -408,7 +419,7 @@
     "hashGenerator": {
       "name": "Hash Generator",
       "description": "Generate MD5, SHA-1, SHA-256, SHA-512 hashes",
-      "commands": { "open": "Hash Generator" },
+      "commands": { "open": "Hash Generator", "openDesc": "Generate cryptographic hashes" },
       "ui": {
         "textPlaceholder": "Enter text to hash...",
         "generateBtn": "Generate Hashes",
@@ -424,7 +435,7 @@
     "imageConvert": {
       "name": "Image Convert",
       "description": "Convert images between PNG, JPG and WebP formats",
-      "commands": { "open": "Image Convert" },
+      "commands": { "open": "Image Convert", "openDesc": "Convert image formats" },
       "ui": {
         "outputLabel": "Output",
         "qualityLabel": "Quality",
@@ -461,7 +472,7 @@
     "colorTool": {
       "name": "Color Tool",
       "description": "Color picker, format converter and palette generator",
-      "commands": { "open": "Color Tool" },
+      "commands": { "open": "Color Tool", "openDesc": "Color picker and converter" },
       "ui": {
         "contrastTitle": "Contrast Check (WCAG)",
         "contrastOnWhite": "On White",
@@ -470,14 +481,28 @@
         "paletteComplementary": "Complementary",
         "paletteAnalogous": "Analogous",
         "paletteTriadic": "Triadic",
-        "textSample": "Aa Text Sample",
-        "wcagFail": "Fail"
+        "copiedLabel": "Copied",
+        "historyTitle": "History",
+        "eyedropperTooltip": "Pick from screen",
+        "invalidHex": "Invalid HEX color value",
+        "shortcuts": "Shortcuts",
+        "pickFromScreen": "Pick from screen",
+        "globalPick": "Global pick (Left-click copy / Right-click fill float)",
+        "tintsAndShades": "Tints & Shades",
+        "tints": "Tints (mix with white)",
+        "shades": "Shades (mix with black)",
+        "baseColor": "Base",
+        "customContrast": "Custom Contrast",
+        "foreground": "Foreground",
+        "background": "Background",
+        "swap": "Swap",
+        "clickToPick": "Click to pick a color"
       }
     },
     "base64Tool": {
       "name": "Base64 Tool",
       "description": "Encode and decode Base64 text and files",
-      "commands": { "open": "Base64 Tool" },
+      "commands": { "open": "Base64 Tool", "openDesc": "Base64 encode/decode" },
       "ui": {
         "swapTooltip": "Swap",
         "copyTooltip": "Copy output",
@@ -503,7 +528,7 @@
     "timestampConverter": {
       "name": "Timestamp Converter",
       "description": "Convert between unix timestamps and human-readable dates",
-      "commands": { "open": "Timestamp Converter" },
+      "commands": { "open": "Timestamp Converter", "openDesc": "Convert timestamps and dates" },
       "now": "Now",
       "timestamp": "Unix Timestamp",
       "dateString": "Date String",
@@ -533,7 +558,7 @@
     "uuidGenerator": {
       "name": "UUID Generator",
       "description": "Generate UUID v4, NanoID, and unique identifiers",
-      "commands": { "open": "UUID Generator" },
+      "commands": { "open": "UUID Generator", "openDesc": "Generate unique identifiers" },
       "type": "Type",
       "count": "Count",
       "length": "Length",
@@ -556,14 +581,14 @@
     "jwtDecoder": {
       "name": "JWT Decoder",
       "description": "Decode and inspect JWT tokens",
-      "commands": { "open": "JWT Decoder" },
+      "commands": { "open": "JWT Decoder", "openDesc": "Decode JWT tokens" },
       "paste": "Paste",
       "clear": "Clear",
       "placeholder": "Paste JWT Token here, e.g. eyJhbGci...",
       "expired": "Expired",
-      "expiredAgo": "Expired {time} ago",
+      "expiredAgo": "Expired {{time}} ago",
       "valid": "Valid",
-      "expiresIn": "Expires in {time}",
+      "expiresIn": "Expires in {{time}}",
       "expiresAt": "Expires at",
       "signature": "Signature",
       "signatureDesc": "Verification requires the signing key",
@@ -575,7 +600,7 @@
     "regexTester": {
       "name": "Regex Tester",
       "description": "Test and debug regular expressions with live matching",
-      "commands": { "open": "Regex Tester" },
+      "commands": { "open": "Regex Tester", "openDesc": "Test regular expressions" },
       "patternPlaceholder": "Enter regex pattern...",
       "testText": "Test Text",
       "textPlaceholder": "Enter text to test against...",
@@ -640,7 +665,7 @@
     "textDiff": {
       "name": "Text Diff",
       "description": "Compare two texts and highlight differences",
-      "commands": { "open": "Text Diff" },
+      "commands": { "open": "Text Diff", "openDesc": "Compare two texts" },
       "swap": "Swap",
       "clear": "Clear All",
       "original": "Original",
@@ -665,7 +690,7 @@
     "screenshot": {
       "name": "Screenshot",
       "description": "Capture full screen or region screenshots",
-      "commands": { "open": "Screenshot" },
+      "commands": { "open": "Screenshot", "openDesc": "Capture screenshots" },
       "ui": {
         "mode": "Mode",
         "fullscreen": "Full Screen",
@@ -685,7 +710,7 @@
         "history": "History",
         "preview": "Preview",
         "edit": "Edit",
-        "webOnly": "Screenshot requires the desktop app (Tauri)",
+        "webOnly": "Screenshot requires the desktop app",
         "captureFailed": "Capture failed",
         "loadFailed": "Failed to load image",
         "saveFailed": "Failed to save"
@@ -708,7 +733,7 @@
     "httpServer": {
       "name": "Web Service",
       "description": "Quickly create a LAN website for any local directory",
-      "commands": { "open": "Web Service" },
+      "commands": { "open": "Web Service", "openDesc": "Start HTTP file server" },
       "ui": {
         "directory": "Directory",
         "port": "Port",
@@ -736,7 +761,7 @@
         "noServers": "No web services running",
         "noServersHint": "Select a directory and click Start Server",
         "viewGuide": "View guide",
-        "desktopOnly": "Web service requires the desktop app (Tauri)",
+        "desktopOnly": "Web service requires the desktop app",
         "guide": {
           "title": "Quick Start",
           "intro": "Quickly create a LAN website for any folder on your computer. Colleagues can access files directly through their browser. Great for sharing HTML prototypes, project docs, or temporary files.",
@@ -755,9 +780,9 @@
     "p2p": {
       "name": "LAN Transfer",
       "description": "Transfer files with other A7Box devices on LAN",
-      "commands": { "open": "LAN Transfer" },
+      "commands": { "open": "LAN Transfer", "openDesc": "Open P2P LAN transfer" },
       "ui": {
-        "desktopOnly": "LAN Transfer requires the desktop app (Tauri)",
+        "desktopOnly": "LAN Transfer requires the desktop app",
         "startFailed": "Failed to start service",
         "sendFailed": "Failed to send file",
         "selectDir": "Please select a shared directory first",
@@ -894,5 +919,26 @@
     "copied": "Copied",
     "lines": "lines",
     "chars": "chars"
+  },
+  "colorQuick": {
+    "title": "Color Picker",
+    "repick": "Pick another color",
+    "shortcutHint": "Press {{keys}} to pick a color from anywhere on screen"
+  },
+  "screenPicker": {
+    "clickToPick": "Click to pick color"
+  },
+  "livePicker": {
+    "clickToPick": "Click anywhere to pick",
+    "clickOrKey": "Click or Enter to pick",
+    "leftClickCopy": "Left-click: copy",
+    "rightClickFill": "Right-click: fill float",
+    "filled": "Filled to float!",
+    "copiedHint": "Color value copied",
+    "colorUpdatedFloat": "Color updated in float",
+    "colorUpdatedPage": "Color filled to page",
+    "clickFillFloat": "Click: pick color",
+    "clickFillPage": "Click: fill page",
+    "magnifier": "Magnifier"
   }
 }

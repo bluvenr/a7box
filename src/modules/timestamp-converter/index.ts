@@ -23,6 +23,7 @@ export const timestampConverterModule: A7Module = {
       label: 'Timestamp Converter',
       labelI18n: 'modules.timestampConverter.commands.open',
       description: 'Convert timestamps and dates',
+      descriptionI18n: 'modules.timestampConverter.commands.openDesc',
       icon: CalendarClock,
       run: async (ctx) => { ctx.navigate('/timestamp-converter') },
     },

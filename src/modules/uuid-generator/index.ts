@@ -23,6 +23,7 @@ export const uuidGeneratorModule: A7Module = {
       label: 'UUID Generator',
       labelI18n: 'modules.uuidGenerator.commands.open',
       description: 'Generate unique identifiers',
+      descriptionI18n: 'modules.uuidGenerator.commands.openDesc',
       icon: Binary,
       run: async (ctx) => { ctx.navigate('/uuid-generator') },
     },

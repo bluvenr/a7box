@@ -23,6 +23,7 @@ export const httpServerModule: A7Module = {
       label: 'HTTP Server',
       labelI18n: 'modules.httpServer.commands.open',
       description: 'Start HTTP file server',
+      descriptionI18n: 'modules.httpServer.commands.openDesc',
       icon: Globe,
       run: async (ctx) => { ctx.navigate('/http-server') },
     },

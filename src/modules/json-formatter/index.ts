@@ -25,6 +25,7 @@ export const jsonFormatterModule: A7Module = {
       label: 'Format JSON',
       labelI18n: 'modules.jsonFormatter.commands.format',
       description: 'Format JSON data for readability',
+      descriptionI18n: 'modules.jsonFormatter.commands.formatDesc',
       icon: Braces,
       shortcut: 'Ctrl+Shift+J',
       run: async (ctx) => {
@@ -45,6 +46,7 @@ export const jsonFormatterModule: A7Module = {
       label: 'Compress JSON',
       labelI18n: 'modules.jsonFormatter.commands.compress',
       description: 'Compress JSON data to single line',
+      descriptionI18n: 'modules.jsonFormatter.commands.compressDesc',
       run: async (ctx) => {
         if (ctx.clipboardText) {
           try {

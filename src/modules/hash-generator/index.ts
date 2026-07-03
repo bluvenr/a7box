@@ -23,6 +23,7 @@ export const hashGeneratorModule: A7Module = {
       label: 'Hash Generator',
       labelI18n: 'modules.hashGenerator.commands.open',
       description: 'Generate cryptographic hashes',
+      descriptionI18n: 'modules.hashGenerator.commands.openDesc',
       icon: Fingerprint,
       run: async (ctx) => { ctx.navigate('/hash-generator') },
     },

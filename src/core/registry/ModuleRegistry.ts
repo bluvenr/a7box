@@ -5,6 +5,7 @@
 
 import { create } from 'zustand'
 import type { A7Module, CommandSearchItem } from '../types'
+import { i18n } from '../i18n'
 
 interface ModuleRegistryState {
   /** All registered modules */
@@ -103,10 +104,10 @@ export const useModuleRegistry = create<ModuleRegistryState>((set, get) => ({
         .map((cmd) => ({
           id: `${mod.meta.id}:${cmd.id}`,
           moduleId: mod.meta.id,
-          moduleName: mod.meta.name,
+          moduleName: mod.meta.nameI18n ? i18n.t(mod.meta.nameI18n) : mod.meta.name,
           moduleIcon: mod.meta.icon,
-          label: cmd.label,
-          description: cmd.description,
+          label: cmd.labelI18n ? i18n.t(cmd.labelI18n) : cmd.label,
+          description: cmd.descriptionI18n ? i18n.t(cmd.descriptionI18n) : cmd.description,
           icon: cmd.icon,
           shortcut: cmd.shortcut,
           tags: mod.meta.tags,

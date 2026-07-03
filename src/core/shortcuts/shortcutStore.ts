@@ -29,7 +29,16 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
   {
     action: 'toggle-command-palette',
     labelI18n: 'settings.shortcutCommandPalette',
+    descriptionI18n: 'settings.shortcutCommandPaletteDesc',
     keys: 'CommandOrControl+Shift+A',
+    enabled: true,
+    moduleId: null,
+  },
+  {
+    action: 'toggle-window',
+    labelI18n: 'settings.shortcutToggleWindow',
+    descriptionI18n: 'settings.shortcutToggleWindowDesc',
+    keys: 'CommandOrControl+Shift+H',
     enabled: true,
     moduleId: null,
   },
@@ -71,6 +80,14 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
     keys: 'CommandOrControl+Shift+K',
     enabled: true,
     moduleId: 'code-minify',
+  },
+  {
+    action: 'open-color-picker',
+    labelI18n: 'settings.shortcutColorPicker',
+    descriptionI18n: 'settings.shortcutColorPickerDesc',
+    keys: 'CommandOrControl+Shift+C',
+    enabled: true,
+    moduleId: 'color-tool',
   },
 ]
 

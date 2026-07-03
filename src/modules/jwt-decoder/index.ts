@@ -23,6 +23,7 @@ export const jwtDecoderModule: A7Module = {
       label: 'JWT Decoder',
       labelI18n: 'modules.jwtDecoder.commands.open',
       description: 'Decode JWT tokens',
+      descriptionI18n: 'modules.jwtDecoder.commands.openDesc',
       icon: KeyRound,
       run: async (ctx) => { ctx.navigate('/jwt-decoder') },
     },

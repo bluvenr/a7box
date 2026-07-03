@@ -23,6 +23,7 @@ export const regexTesterModule: A7Module = {
       label: 'Regex Tester',
       labelI18n: 'modules.regexTester.commands.open',
       description: 'Test regular expressions',
+      descriptionI18n: 'modules.regexTester.commands.openDesc',
       icon: Regex,
       run: async (ctx) => { ctx.navigate('/regex-tester') },
     },

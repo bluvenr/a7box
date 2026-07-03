@@ -25,6 +25,7 @@ export const imageCompressModule: A7Module = {
       label: 'Image Compress',
       labelI18n: 'modules.imageCompress.commands.open',
       description: 'Compress and convert images',
+      descriptionI18n: 'modules.imageCompress.commands.openDesc',
       icon: ImageDown,
       run: async (ctx) => {
         ctx.navigate('/image-compress')

@@ -23,6 +23,7 @@ export const base64ToolModule: A7Module = {
       label: 'Base64 Tool',
       labelI18n: 'modules.base64Tool.commands.open',
       description: 'Base64 encode/decode',
+      descriptionI18n: 'modules.base64Tool.commands.openDesc',
       icon: Binary,
       run: async (ctx) => { ctx.navigate('/base64-tool') },
     },

@@ -859,19 +859,20 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                         if let Some(existing) = app_ref.get_webview_window(label) {
                             let _ = existing.close();
                         } else {
-                            if let Ok(_win) = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
+                            let mut builder = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
                                 .title("A7Box")
                                 .inner_size(520.0, 420.0)
                                 .resizable(false)
                                 .decorations(false)
-                                .transparent(true)
                                 .always_on_top(true)
                                 .visible(false) // hidden until React emits util-window-ready
                                 .skip_taskbar(true)
                                 .center()
                                 .background_color(tauri::window::Color(0, 0, 0, 0))
-                                .initialization_script(crate::lang_init_script(app_ref))
-                                .build()
+                                .initialization_script(crate::lang_init_script(app_ref));
+                            #[cfg(target_os = "windows")]
+                            { builder = builder.transparent(true); }
+                            if let Ok(_win) = builder.build()
                             {
                                 // Window shown by util-window-ready listener
                             }
@@ -1095,7 +1096,7 @@ pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), 
         .unwrap_or(false);
 
     // Build full-screen transparent overlay covering all monitors
-    let _overlay = WebviewWindowBuilder::new(
+    let mut builder = WebviewWindowBuilder::new(
         &app,
         "pick-overlay",
         WebviewUrl::App("/utility/live-picker".into()),
@@ -1109,10 +1110,11 @@ pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), 
     .always_on_top(true)
     .visible(false) // Start hidden to avoid black flash
     .skip_taskbar(true)
-    .transparent(true)
     .initialization_script(crate::lang_init_script(&app))
-    .background_color(tauri::window::Color(0, 0, 0, 0))
-    .build()
+    .background_color(tauri::window::Color(0, 0, 0, 0));
+    #[cfg(target_os = "windows")]
+    { builder = builder.transparent(true); }
+    let _overlay = builder.build()
     .map_err(|e| format!("Failed to create overlay: {}", e))?;
 
     // Disable Windows show/hide animation via Win32 API (prevents zoom-in/out edge effect)

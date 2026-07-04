@@ -345,19 +345,20 @@ pub fn run() {
                                     let _ = existing.close();
                                     // Don't create a new one — this is toggle off
                                 } else {
-                                    if let Ok(win) = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
+                                    let mut builder = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
                                         .title("A7Box")
                                         .inner_size(520.0, 420.0)
                                         .resizable(false)
                                         .decorations(false)
-                                        .transparent(true)
                                         .always_on_top(true)
                                         .visible(true)
                                         .skip_taskbar(true)
                                         .center()
                                         .background_color(tauri::window::Color(0, 0, 0, 0))
-                                        .initialization_script(crate::lang_init_script(app_ref))
-                                        .build()
+                                        .initialization_script(crate::lang_init_script(app_ref));
+                                    #[cfg(target_os = "windows")]
+                                    { builder = builder.transparent(true); }
+                                    if let Ok(win) = builder.build()
                                     {
                                         let _ = win.set_focus();
                                     }
@@ -760,7 +761,7 @@ pub fn run() {
                     };
 
                     use tauri::{WebviewUrl, WebviewWindowBuilder};
-                    let _ = WebviewWindowBuilder::new(
+                    let mut builder = WebviewWindowBuilder::new(
                         &app_handle, "utility-region-picker",
                         WebviewUrl::App("/utility/region-picker".into()),
                     )
@@ -773,10 +774,11 @@ pub fn run() {
                         .always_on_top(true)
                         .visible(false)
                         .skip_taskbar(true)
-                        .transparent(true)
                         .background_color(tauri::window::Color(0, 0, 0, 0))
-                        .initialization_script(crate::utility_init_script(&app_handle))
-                        .build();
+                        .initialization_script(crate::utility_init_script(&app_handle));
+                    #[cfg(target_os = "windows")]
+                    { builder = builder.transparent(true); }
+                    let _ = builder.build();
                 });
             }
 

@@ -18,7 +18,7 @@ interface Point { x: number; y: number }
 interface EditorProps {
   imageData: string
   onSave: (dataUrl: string) => void
-  onCopy: (dataUrl: string) => void
+  onCopy?: (dataUrl: string) => void
   onClose: () => void
 }
 
@@ -154,7 +154,7 @@ export default function ScreenshotEditor({ imageData, onSave, onCopy, onClose }:
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      onCopy(getExportURL())
+      onCopy?.(getExportURL())
     }
   }, [getExportURL, onCopy])
 

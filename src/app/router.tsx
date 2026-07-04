@@ -39,6 +39,8 @@ const CodeQuick = lazy(() => import('./pages/utility/CodeQuick'))
 const ColorQuick = lazy(() => import('./pages/utility/ColorQuick'))
 const LivePicker = lazy(() => import('./pages/utility/LivePicker'))
 const Palette = lazy(() => import('./pages/utility/Palette'))
+const RegionPicker = lazy(() => import('./pages/utility/RegionPicker'))
+const CapturePreview = lazy(() => import('./pages/utility/CapturePreview'))
 
 // Wrap a module component with ErrorBoundary + Suspense
 function ModuleRoute({ moduleId, children }: { moduleId: string; children: React.ReactNode }) {
@@ -213,6 +215,22 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <Palette />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/region-picker',
+    element: (
+      <Suspense fallback={null}>
+        <RegionPicker />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/capture-preview',
+    element: (
+      <Suspense fallback={null}>
+        <CapturePreview />
       </Suspense>
     ),
   },

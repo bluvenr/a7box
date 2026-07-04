@@ -9,7 +9,7 @@ export const screenshotModule: A7Module = {
     id: 'screenshot',
     name: 'Screenshot',
     nameI18n: 'modules.screenshot.name',
-    description: 'Capture full screen or region screenshots',
+    description: 'Quick screen capture with annotation',
     descriptionI18n: 'modules.screenshot.description',
     icon: Camera,
     category: 'screen',

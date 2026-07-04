@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="README_zh-CN.md">中文文档</a> · <a href="#features">Features</a> · <a href="#getting-started">Getting Started</a> · <a href="#development">Development</a>
+  <a href="README_zh-CN.md">中文文档</a> · <a href="#features">Features</a> · <a href="#download">Download</a> · <a href="#getting-started">Getting Started</a>
 </p>
 
 ---
@@ -19,23 +19,45 @@
 
 17 built-in tools, all accessible via the sidebar, command palette (`Ctrl+K`), or customizable global shortcuts.
 
+**Developer Essentials**
+
+| Tool | Description |
+|------|-------------|
+| **JSON Formatter** | Auto-format, validate, compress, and tree-view JSON data |
+| **Code Minify / Beautify** | Minify or beautify JS, TS, CSS, HTML, and JSON |
+| **Regex Tester** | Test regular expressions with live matching and highlights |
+| **Text Diff** | Side-by-side text comparison with inline diff highlighting |
+
+**Text & Encoding**
+
+| Tool | Description |
+|------|-------------|
+| **Base64 Tool** | Encode and decode Base64 text and files |
+| **Hash Generator** | Generate MD5, SHA-1, SHA-256, SHA-512 hashes |
+| **JWT Decoder** | Decode and inspect JWT token headers and payloads |
+| **UUID Generator** | Generate UUID v4, NanoID, and unique identifiers |
+| **Timestamp Converter** | Convert between Unix timestamps and human-readable dates |
+
+**Design & Media**
+
 | Tool | Description |
 |------|-------------|
 | **Screenshot** | Region capture with annotation, inline editing, pin preview, and session history |
-| **JSON Formatter** | Auto-format, validate, compress, and tree-view JSON data |
-| **QR Code** | Generate QR codes from text/URL and decode from images |
-| **Markdown Editor** | Live preview, syntax highlighting, KaTeX math, Mermaid diagrams, HTML export |
-| **Code Minify / Beautify** | Minify or beautify JS, TS, CSS, HTML, and JSON |
+| **Color Tool** | Screen color picker, format converter, and palette generator |
 | **Image Compress** | Browser-side image compression with quality/size control |
 | **Image Convert** | Convert between PNG, JPG, and WebP formats |
-| **Hash Generator** | Generate MD5, SHA-1, SHA-256, SHA-512 hashes |
-| **Color Tool** | Screen color picker, format converter, and palette generator |
-| **Base64 Tool** | Encode and decode Base64 text and files |
-| **Timestamp Converter** | Convert between Unix timestamps and human-readable dates |
-| **UUID Generator** | Generate UUID v4, NanoID, and unique identifiers |
-| **JWT Decoder** | Decode and inspect JWT token headers and payloads |
-| **Regex Tester** | Test regular expressions with live matching and highlights |
-| **Text Diff** | Side-by-side text comparison with inline diff highlighting |
+| **QR Code** | Generate QR codes from text/URL and decode from images |
+
+**Content & Documents**
+
+| Tool | Description |
+|------|-------------|
+| **Markdown Editor** | Live preview, syntax highlighting, KaTeX math, Mermaid diagrams, HTML export |
+
+**Network**
+
+| Tool | Description |
+|------|-------------|
 | **Web Service** | Instantly serve any local directory over LAN with file upload support |
 | **LAN Transfer** | Peer-to-peer file transfer between A7Box devices on the same network |
 
@@ -48,21 +70,6 @@
 - **LAN Collaboration** — Serve any local directory as a website, or transfer files peer-to-peer with other A7Box devices on the same network
 - **Configurable** — Customizable global shortcuts, theme support, and per-module enable/disable
 
-## 📊 How It Compares
-
-| Feature | A7Box | DevToys | IT-Tools | He3 | PowerToys |
-|---------|:-----:|:-------:|:--------:|:---:|:---------:|
-| Desktop app | ✓ | ✓ | ✗ (Web) | ✓ | ✓ |
-| Lightweight (<15MB) | ✓ | ✗ | — | ✗ | ✗ |
-| Global shortcuts | ✓ | ✗ | ✗ | ✓ | ✓ |
-| Clipboard → floating window | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Screenshot + annotation | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Screenshot pin preview | ✓ | ✗ | ✗ | ✗ | ✗ |
-| LAN file transfer | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Local web server | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Auto update | ✓ | ✓ | — | ✓ | ✓ |
-| i18n (EN/ZH) | ✓ | Partial | ✓ | ✓ | ✓ |
-
 ## 📥 Download
 
 Pre-built installers for Windows are available on the [Releases](https://github.com/bluvenr/a7box/releases) page. Each version includes:
@@ -72,6 +79,39 @@ Pre-built installers for Windows are available on the [Releases](https://github.
 - Portable `.zip` (if applicable)
 
 The app also supports auto-update — once installed, it will notify you when a new version is available.
+
+## 🎯 The Name
+
+The name **A7** is no coincidence.
+
+Take one of the most recognizable engineering icons in history — the AK-47. Extract its first letter **A** and its last digit **7**. You get **A7**.
+
+We chose this deliberately — not for what it represents as a weapon, but for what it stands for as a piece of engineering:
+
+- **Reliability** — Built to work, every time, without fail.
+- **Simplicity** — No unnecessary complexity. Pick it up and it just works.
+- **Efficiency** — Maximum output with minimum overhead.
+
+A7Box carries this philosophy into the developer toolbox space: lightweight, no bloat, no compromises. A desktop app that launches instantly, runs quietly, and delivers exactly what you need — the moment you need it.
+
+The **"Box"** completes the picture: one container, a full arsenal of tools. From JSON formatting to screenshots, from file compression to LAN transfer — everything a developer reaches for daily, unified in a single, fast application.
+
+That's why our slogan reads: *Your Tactical Efficiency Weapon on Desktop.*
+
+## 📊 How It Compares
+
+| Feature | A7Box | DevToys | IT-Tools | He3 | PowerToys |
+|---------|:-----:|:-------:|:--------:|:---:|:---------:|
+| Clipboard → floating window | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Screenshot + annotation | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Screenshot pin preview | ✓ | ✗ | ✗ | ✗ | ✗ |
+| LAN file transfer | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Local web server | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Lightweight (<15MB) | ✓ | ✗ | — | ✗ | ✗ |
+| Global shortcuts | ✓ | ✗ | ✗ | ✓ | ✓ |
+| Desktop app | ✓ | ✓ | ✗ (Web) | ✓ | ✓ |
+| Auto update | ✓ | ✓ | — | ✓ | ✓ |
+| i18n (EN/ZH) | ✓ | Partial | ✓ | ✓ | ✓ |
 
 ## 🛠 Tech Stack
 

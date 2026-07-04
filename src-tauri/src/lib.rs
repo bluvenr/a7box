@@ -60,6 +60,37 @@ fn lang_init_script(app_ref: &tauri::AppHandle<tauri::Wry>) -> String {
     format!("window.__A7BOX_LANG__='{}';", current_lang(app_ref))
 }
 
+/// Init script for utility windows that need transparent background (region-picker, capture-toolbar).
+/// Sets transparent backgrounds immediately on page load to prevent black flash.
+fn utility_init_script(app_ref: &tauri::AppHandle<tauri::Wry>) -> String {
+    format!(
+        r#"window.__A7BOX_LANG__='{}';
+document.addEventListener('DOMContentLoaded',function(){{
+  var s='background:transparent!important';
+  document.documentElement.style.cssText+=s;
+  document.body.style.cssText+=s;
+  var r=document.getElementById('root');if(r)r.style.cssText+=s;
+}});"#,
+        current_lang(app_ref)
+    )
+}
+
+/// Read PNG width/height from the IHDR chunk in a base64 data URL.
+/// Returns (width, height) or None if parsing fails.
+fn read_png_dims_from_base64(data: &str) -> Option<(u32, u32)> {
+    let b64 = data.strip_prefix("data:image/png;base64,")?;
+    // PNG header: 8 signature + 4 length + 4 "IHDR" + 4 width + 4 height = first 24 bytes
+    // Base64: 24 bytes → 32 chars
+    let header_b64: String = b64.chars().take(32).collect();
+    let header = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, &header_b64).ok()?;
+    if header.len() < 24 {
+        return None;
+    }
+    let w = u32::from_be_bytes([header[16], header[17], header[18], header[19]]);
+    let h = u32::from_be_bytes([header[20], header[21], header[22], header[23]]);
+    Some((w, h))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let clipboard_state = Arc::new(ClipboardState::new());
@@ -167,6 +198,17 @@ pub fn run() {
             commands::get_monitors,
             commands::file_to_base64,
             commands::save_edited_image,
+            commands::scan_screenshot_history,
+            commands::set_capture_from_page,
+            commands::detect_window_at_cursor,
+            commands::get_session_captures,
+            commands::clear_session_captures,
+            commands::read_capture_file,
+            commands::read_capture_thumbnail,
+            commands::delete_capture_file,
+            commands::save_capture_from_temp,
+            commands::save_capture_dialog,
+            commands::get_pending_pin_data,
             // HTTP Server
             commands::start_http_server,
             commands::stop_http_server,
@@ -277,6 +319,7 @@ pub fn run() {
                 ("clipboard-to-qr", "CommandOrControl+Shift+Q"),
                 ("clipboard-to-md", "CommandOrControl+Shift+M"),
                 ("clipboard-to-json", "CommandOrControl+Shift+J"),
+                ("clipboard-to-code-minify", "CommandOrControl+Shift+K"),
                 ("open-color-picker", "CommandOrControl+Shift+C"),
             ];
             let registry = &app.state::<ShortcutRegistry>().0;
@@ -332,11 +375,12 @@ pub fn run() {
                                 }
                             }
                             "open-screenshot" => {
+                                // Global shortcut: trigger capture flow directly (no page navigation)
                                 if let Some(w) = app_ref.get_webview_window("main") {
-                                    let _ = w.show();
-                                    let _ = w.unminimize();
-                                    let _ = w.set_focus();
+                                    let _ = w.hide();
                                 }
+                                crate::commands::CAPTURE_FROM_PAGE.store(false, std::sync::atomic::Ordering::SeqCst);
+                                let _ = app_ref.emit("start-capture-flow", "");
                             }
                             "clipboard-to-qr" => {
                                 // Create utility window directly from Rust
@@ -447,19 +491,7 @@ pub fn run() {
                             _ => {}
                         }
                         // Also emit event to frontend for any additional handling
-                        // For actions that bring the window from hidden/minimized state,
-                        // delay the emit so the webview has time to become active.
-                        let needs_delay = matches!(action_emit.as_str(), "open-screenshot");
-                        if needs_delay {
-                            let h = handle_clone.clone();
-                            let a = action_emit.clone();
-                            std::thread::spawn(move || {
-                                std::thread::sleep(std::time::Duration::from_millis(150));
-                                let _ = h.emit("global-shortcut", &a);
-                            });
-                        } else {
-                            let _ = handle_clone.emit("global-shortcut", &action_emit);
-                        }
+                        let _ = handle_clone.emit("global-shortcut", &action_emit);
                     }) {
                         eprintln!("[WARN] Failed to register shortcut {}: {}", action_str, e);
                     }
@@ -687,10 +719,300 @@ pub fn run() {
                 });
             }
 
+            // ── Screenshot Capture Flow Listeners ──
+
+            // Listen for start-capture-flow: create transparent overlay for region selection
+            // Triggered by both global shortcut and page button
+            {
+                let app_handle = app.handle().clone();
+                app.listen("start-capture-flow", move |_event| {
+                    // Close existing region picker if any
+                    if let Some(existing) = app_handle.get_webview_window("utility-region-picker") {
+                        let _ = existing.close();
+                    }
+                    // Close existing toolbar if any
+                    if let Some(existing) = app_handle.get_webview_window("utility-capture-toolbar") {
+                        let _ = existing.close();
+                    }
+
+                    // Hide main window so it doesn't appear in the screenshot
+                    if let Some(main) = app_handle.get_webview_window("main") {
+                        let _ = main.hide();
+                    }
+
+                    // Calculate virtual screen bounds covering all monitors
+                    let screens = screenshots::Screen::all().unwrap_or_default();
+                    let (vx, vy, vw, vh) = if screens.is_empty() {
+                        (0, 0, 1920u32, 1080u32)
+                    } else {
+                        let mut min_x = i32::MAX;
+                        let mut min_y = i32::MAX;
+                        let mut max_x = i32::MIN;
+                        let mut max_y = i32::MIN;
+                        for s in &screens {
+                            let di = &s.display_info;
+                            min_x = min_x.min(di.x);
+                            min_y = min_y.min(di.y);
+                            max_x = max_x.max(di.x + di.width as i32);
+                            max_y = max_y.max(di.y + di.height as i32);
+                        }
+                        (min_x, min_y, (max_x - min_x) as u32, (max_y - min_y) as u32)
+                    };
+
+                    use tauri::{WebviewUrl, WebviewWindowBuilder};
+                    let _ = WebviewWindowBuilder::new(
+                        &app_handle, "utility-region-picker",
+                        WebviewUrl::App("/utility/region-picker".into()),
+                    )
+                        .title("")
+                        .inner_size(vw as f64, vh as f64)
+                        .position(vx as f64, vy as f64)
+                        .resizable(false)
+                        .decorations(false)
+                        .shadow(false)
+                        .always_on_top(true)
+                        .visible(false)
+                        .skip_taskbar(true)
+                        .transparent(true)
+                        .background_color(tauri::window::Color(0, 0, 0, 0))
+                        .initialization_script(crate::utility_init_script(&app_handle))
+                        .build();
+                });
+            }
+
+            // Listen for region-picker-ready: show the region picker overlay
+            {
+                let app_handle = app.handle().clone();
+                app.listen("region-picker-ready", move |_event| {
+                    if let Some(rp) = app_handle.get_webview_window("utility-region-picker") {
+                        let _ = rp.show();
+                        let _ = rp.set_focus();
+                    }
+                });
+            }
+
+            // Listen for region-selected: capture region to base64, send back to RegionPicker for inline editing
+            {
+                let app_handle = app.handle().clone();
+                app.listen("region-selected", move |event| {
+                    // Parse region coordinates from payload
+                    let payload_str = event.payload();
+                    let region: Option<serde_json::Value> = serde_json::from_str(payload_str).ok()
+                        .and_then(|v: serde_json::Value| {
+                            if let Some(s) = v.as_str() {
+                                serde_json::from_str(s).ok()
+                            } else {
+                                Some(v)
+                            }
+                        });
+
+                    let Some(r) = region else {
+                        if let Some(rp) = app_handle.get_webview_window("utility-region-picker") {
+                            let _ = rp.close();
+                        }
+                        return;
+                    };
+
+                    let x = r.get("x").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                    let y = r.get("y").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                    let w = r.get("width").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
+                    let h = r.get("height").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
+
+                    // ESC or too-small selection → close picker and cancel
+                    if w < 10 || h < 10 {
+                        if let Some(rp) = app_handle.get_webview_window("utility-region-picker") {
+                            let _ = rp.close();
+                        }
+                        let from_page = crate::commands::CAPTURE_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst);
+                        if from_page {
+                            if let Some(main) = app_handle.get_webview_window("main") {
+                                let _ = main.show();
+                                let _ = main.set_focus();
+                            }
+                        }
+                        return;
+                    }
+
+                    // Hide region picker FIRST to remove overlay/border from capture
+                    if let Some(rp) = app_handle.get_webview_window("utility-region-picker") {
+                        let _ = rp.hide();
+                    }
+
+                    // Spawn capture on new thread so the hide takes effect
+                    let capture_ah = app_handle.clone();
+                    let from_page_cap = crate::commands::CAPTURE_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst);
+                    std::thread::spawn(move || {
+                        // Wait for the overlay window to fully hide (React re-render + GPU composite)
+                        std::thread::sleep(std::time::Duration::from_millis(250));
+
+                        match crate::screenshot::capture_region_to_base64(x, y, w, h) {
+                            Ok((base64, img_w, img_h)) => {
+                                // Write to temp file for session storage
+                                let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S_%3f").to_string();
+                                let temp_dir = std::env::temp_dir().join("a7box_screenshots");
+                                let _ = std::fs::create_dir_all(&temp_dir);
+                                let temp_path = temp_dir.join(format!("screenshot_{}.png", timestamp));
+
+                                // Decode base64 for temp file (strip data URL prefix)
+                                let b64_raw = if base64.starts_with("data:") {
+                                    base64.split(',').nth(1).unwrap_or(&base64)
+                                } else { &base64 };
+                                if let Ok(bytes) = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, b64_raw) {
+                                    let _ = std::fs::write(&temp_path, &bytes);
+                                }
+                                let temp_path_str = temp_path.to_string_lossy().to_string();
+
+                                // Send capture result back to RegionPicker for inline editing
+                                let _ = capture_ah.emit("capture-result", serde_json::json!({
+                                    "base64": base64,
+                                    "tempPath": temp_path_str,
+                                    "x": x,
+                                    "y": y,
+                                    "width": w,
+                                    "height": h,
+                                    "imgWidth": img_w,
+                                    "imgHeight": img_h,
+                                }));
+
+                                // Re-show the region picker (it now enters edit mode)
+                                if let Some(rp) = capture_ah.get_webview_window("utility-region-picker") {
+                                    let _ = rp.show();
+                                    let _ = rp.set_focus();
+                                }
+                            }
+                            Err(e) => {
+                                eprintln!("[WARN] Region capture failed: {}", e);
+                                if let Some(rp) = capture_ah.get_webview_window("utility-region-picker") {
+                                    let _ = rp.close();
+                                }
+                                if from_page_cap {
+                                    if let Some(main) = capture_ah.get_webview_window("main") {
+                                        let _ = main.show();
+                                        let _ = main.set_focus();
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Listen for capture-done: user finished editing, close RegionPicker
+            {
+                let app_handle = app.handle().clone();
+                app.listen("capture-done", move |_event| {
+                    let from_page = crate::commands::CAPTURE_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst);
+
+                    if let Some(rp) = app_handle.get_webview_window("utility-region-picker") {
+                        let _ = rp.hide();
+                        let _ = rp.close();
+                    }
+
+                    if from_page {
+                        if let Some(main) = app_handle.get_webview_window("main") {
+                            let _ = main.show();
+                            let _ = main.set_focus();
+                        }
+                    }
+
+                    // Always notify frontend to refresh history (any source: button, shortcut, tray)
+                    let _ = app_handle.emit("screenshot-captured", "");
+                });
+            }
+
+            // Listen for save-capture-request: hide overlay, show save dialog, emit done
+            {
+                let app_handle = app.handle().clone();
+                app.listen("save-capture-request", move |event| {
+                    // Hide region picker so save dialog is not blocked
+                    if let Some(rp) = app_handle.get_webview_window("utility-region-picker") {
+                        let _ = rp.hide();
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(100));
+
+                    let payload = event.payload().trim_matches('"').to_string();
+                    let app_clone = app_handle.clone();
+                    std::thread::spawn(move || {
+                        let result = crate::commands::save_capture_dialog_sync(&app_clone, payload);
+                        let _ = app_clone.emit("save-capture-done", "");
+                        if let Err(e) = result {
+                            eprintln!("[WARN] Save dialog error: {}", e);
+                        }
+                    });
+                });
+            }
+
+            // Listen for pin-capture-request: close picker, create always-on-top preview window
+            {
+                let app_handle = app.handle().clone();
+                app.listen("pin-capture-request", move |event| {
+                    let payload_str = event.payload().trim_matches('"').to_string();
+
+                    // Close region picker
+                    if let Some(rp) = app_handle.get_webview_window("utility-region-picker") {
+                        let _ = rp.hide();
+                        let _ = rp.close();
+                    }
+
+                    // Restore main window
+                    let from_page = crate::commands::CAPTURE_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst);
+                    if from_page {
+                        if let Some(main) = app_handle.get_webview_window("main") {
+                            let _ = main.show();
+                            let _ = main.set_focus();
+                        }
+                    }
+
+                    // Read image dimensions from PNG header in base64 data
+                    let (img_w, img_h) = read_png_dims_from_base64(&payload_str)
+                        .unwrap_or((800, 600));
+
+                    // Calculate window size to fit image (same logic as CapturePreview)
+                    let max_dim = 1200.0_f64;
+                    let long_edge = img_w.max(img_h) as f64;
+                    let fit_scale = if long_edge > max_dim { max_dim / long_edge } else { 1.0 };
+                    let chrome_h = 60.0; // top bar + bottom hint
+                    let win_w = ((img_w as f64 * fit_scale) as f64).max(300.0);
+                    let win_h = ((img_h as f64 * fit_scale) as f64 + chrome_h).max(200.0);
+
+                    // Generate unique window label for multiple pin support
+                    let counter = crate::commands::PIN_WINDOW_COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                    let label = format!("capture-preview-{}", counter);
+
+                    // Create preview window at correct size from the start
+                    use tauri::{WebviewUrl, WebviewWindowBuilder};
+                    let _ = WebviewWindowBuilder::new(
+                        &app_handle, &label,
+                        WebviewUrl::App("/utility/capture-preview".into()),
+                    )
+                        .title("")
+                        .inner_size(win_w, win_h)
+                        .resizable(true)
+                        .decorations(false)
+                        .always_on_top(true)
+                        .visible(false)
+                        .skip_taskbar(true)
+                        .center()
+                        .background_color(tauri::window::Color(20, 20, 22, 255))
+                        .initialization_script(crate::lang_init_script(&app_handle))
+                        .build();
+
+                    // Store base64 data in queue for the preview window to fetch
+                    if let Ok(mut q) = crate::commands::PENDING_PIN_DATA.lock() {
+                        q.push(payload_str);
+                    }
+                });
+            }
+
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app, event| {
+            if let tauri::RunEvent::Exit = event {
+                crate::commands::cleanup_temp_screenshots();
+            }
+        });
 }
 
 /// Parse a deep link URL to extract the directory path.

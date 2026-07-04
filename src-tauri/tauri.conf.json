@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "A7Box",
-  "version": "0.1.0",
+  "version": "../package.json",
   "identifier": "a7box",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -45,7 +45,7 @@
       }
     },
     "updater": {
-      "pubkey": "",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM1QkEyNDBEQjExRjgyNkMKUldSc2doK3hEU1M2eFROSmIvZzJEYlFCYmd1b3FCL21xYkpmS3V6djNXVnRHb0p5cnc2R2VQWUgK",
       "endpoints": [
         "https://github.com/bluvenr/a7box/releases/latest/download/latest.json"
       ]

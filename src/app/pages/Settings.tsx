@@ -518,11 +518,14 @@ function UpdateSection({
 }) {
   const { checking, available, downloading, progress, info, error, checkForUpdates, downloadAndInstall } = updater
 
+  // Use silent=true so manual check doesn't trigger the bottom-left popup
+  const handleCheck = () => { checkForUpdates(true) }
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <button
-          onClick={checkForUpdates}
+          onClick={handleCheck}
           disabled={checking || downloading}
           className="inline-flex items-center gap-2 rounded-md bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
         >

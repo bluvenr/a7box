@@ -16,9 +16,11 @@ import { Logo } from '../../components/Logo'
 import { TitleBar } from '../../components/TitleBar'
 import { ToastContainer } from '../../components/Toast'
 import { DialogContainer } from '../../components/Dialog'
+import { UpdateNotification } from '../../components/UpdateNotification'
 import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
 import { useHttpServiceStatus } from '../../modules/http-server/httpServiceStore'
 import { useSettingsStore } from '../../core/settings'
+import { useUpdaterStore } from '../../core/updater'
 import { recordUsage } from '../../shared/utils'
 import type { LucideIcon } from 'lucide-react'
 
@@ -84,6 +86,17 @@ export function MainLayout() {
       unlistenConvert?.()
     }
   }, [navigate, setPendingDirectory])
+
+  // Auto-check for updates on startup (if enabled in settings)
+  const checkUpdateOnStart = useSettingsStore((s) => s.checkUpdateOnStart)
+  const checkForUpdates = useUpdaterStore((s) => s.checkForUpdates)
+  useEffect(() => {
+    if (checkUpdateOnStart) {
+      // Delay slightly so UI is fully rendered first
+      const timer = setTimeout(() => { checkForUpdates() }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [checkUpdateOnStart, checkForUpdates])
 
   // Sidebar collapsed state (persisted)
   const [collapsed, setCollapsed] = useState(() => {
@@ -202,6 +215,9 @@ export function MainLayout() {
 
       {/* Global dialog modals */}
       <DialogContainer />
+
+      {/* Update notification popup (bottom-left) */}
+      <UpdateNotification />
     </div>
   )
 }

@@ -150,6 +150,16 @@ export async function saveEditedImage(data: string): Promise<CaptureResult | nul
   }
 }
 
+export async function scanScreenshotHistory(limit?: number): Promise<CaptureResult[]> {
+  const invoke = await getInvoke()
+  if (!invoke) return []
+  try {
+    return await invoke<CaptureResult[]>('scan_screenshot_history', { limit: limit ?? 50 })
+  } catch {
+    return []
+  }
+}
+
 // ============ HTTP Server ============
 
 export interface ServerInfo {

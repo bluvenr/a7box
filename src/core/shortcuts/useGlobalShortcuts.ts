@@ -106,14 +106,7 @@ export function useGlobalShortcuts() {
         const { listen } = await import('@tauri-apps/api/event')
         unlisten = await listen<string>('global-shortcut', (event) => {
           switch (event.payload) {
-            case 'open-screenshot':
-              navigate('/screenshot')
-              import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
-                const win = getCurrentWindow()
-                win.show()
-                win.setFocus()
-              }).catch(() => {})
-              break
+            // 'open-screenshot' is now handled entirely on the Rust side
             case 'clipboard-to-qr':
               break
           }

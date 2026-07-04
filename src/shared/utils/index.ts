@@ -10,13 +10,10 @@ export {
   getClipboardText,
   onClipboardChanged,
   // Screenshot
-  captureFullScreen,
-  captureRegion,
-  captureToBase64,
-  getMonitors,
+  scanScreenshotHistory,
   // HTTP Server
   startHttpServer,
   stopHttpServer,
   getHttpServerInfo,
 } from './tauriBridge'
-export type { CaptureResult, MonitorInfo, ServerInfo } from './tauriBridge'
+export type { CaptureResult, ServerInfo } from './tauriBridge'

@@ -249,11 +249,12 @@ function CommandItem({
 }
 
 // Format shortcut for display
+const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
 function formatShortcut(shortcut: string): string {
   return shortcut
-    .replace('CommandOrControl', 'Ctrl')
+    .replace('CommandOrControl', isMac ? '⌘' : 'Ctrl')
     .replace('Command', '⌘')
-    .replace('Control', 'Ctrl')
-    .replace('Shift', '⇧')
-    .replace('Alt', 'Alt')
+    .replace('Control', isMac ? '⌃' : 'Ctrl')
+    .replace('Shift', isMac ? '⇧' : 'Shift')
+    .replace('Alt', isMac ? '⌥' : 'Alt')
 }

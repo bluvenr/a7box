@@ -26,6 +26,7 @@ interface ShortcutState {
 const STORAGE_KEY = 'a7box-shortcuts'
 
 const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
+  // ── Core controls ──
   {
     action: 'toggle-command-palette',
     labelI18n: 'settings.shortcutCommandPalette',
@@ -42,29 +43,24 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
     enabled: true,
     moduleId: null,
   },
+  // ── Standalone action tools ──
   {
     action: 'open-screenshot',
     labelI18n: 'settings.shortcutScreenshot',
+    descriptionI18n: 'settings.shortcutScreenshotDesc',
     keys: 'CommandOrControl+Shift+S',
     enabled: true,
     moduleId: 'screenshot',
   },
   {
-    action: 'clipboard-to-qr',
-    labelI18n: 'settings.shortcutClipboardQr',
-    descriptionI18n: 'settings.shortcutClipboardQrDesc',
-    keys: 'CommandOrControl+Shift+Q',
+    action: 'open-color-picker',
+    labelI18n: 'settings.shortcutColorPicker',
+    descriptionI18n: 'settings.shortcutColorPickerDesc',
+    keys: 'CommandOrControl+Shift+C',
     enabled: true,
-    moduleId: 'qr-code',
+    moduleId: 'color-tool',
   },
-  {
-    action: 'clipboard-to-md',
-    labelI18n: 'settings.shortcutClipboardMd',
-    descriptionI18n: 'settings.shortcutClipboardMdDesc',
-    keys: 'CommandOrControl+Shift+M',
-    enabled: true,
-    moduleId: 'markdown-preview',
-  },
+  // ── Clipboard quick actions ──
   {
     action: 'clipboard-to-json',
     labelI18n: 'settings.shortcutClipboardJson',
@@ -82,12 +78,20 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
     moduleId: 'code-minify',
   },
   {
-    action: 'open-color-picker',
-    labelI18n: 'settings.shortcutColorPicker',
-    descriptionI18n: 'settings.shortcutColorPickerDesc',
-    keys: 'CommandOrControl+Shift+C',
+    action: 'clipboard-to-md',
+    labelI18n: 'settings.shortcutClipboardMd',
+    descriptionI18n: 'settings.shortcutClipboardMdDesc',
+    keys: 'CommandOrControl+Shift+M',
     enabled: true,
-    moduleId: 'color-tool',
+    moduleId: 'markdown-preview',
+  },
+  {
+    action: 'clipboard-to-qr',
+    labelI18n: 'settings.shortcutClipboardQr',
+    descriptionI18n: 'settings.shortcutClipboardQrDesc',
+    keys: 'CommandOrControl+Shift+Q',
+    enabled: true,
+    moduleId: 'qr-code',
   },
 ]
 

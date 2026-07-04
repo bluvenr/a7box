@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Your Tactical Efficiency Weapon on Desktop</strong><br />
-  A lightweight, all-in-one developer toolbox built with Tauri 2 + React 19.
+  A modern, open-source, lightweight, all-in-one, 100% local developer toolbox for Windows, macOS, and Linux. Built with Tauri 2 + React 19.
 </p>
 
 <p align="center">
@@ -63,20 +63,25 @@
 
 ### Highlights
 
+- **Cross-Platform** — Native support for Windows, macOS, and Linux with a single codebase
 - **Lightweight & Native** — Built with Tauri, ~10MB installer, minimal memory usage, smooth native performance
-- **Instant Access** — Global shortcuts (`Ctrl+Shift+S/C`) and command palette (`Ctrl+K`) to reach any tool in milliseconds
+- **Spotlight Command Palette** — Fuzzy search, category filtering, keyboard navigation, and recently used history for instant tool access
 - **Clipboard Quick Actions** — Copy content, press a shortcut, and a floating window pops up ready to process: JSON formatting, code minification, Markdown preview, or QR decoding
-- **Full Screenshot Workflow** — Region capture → annotate (pen, rectangle, text, mosaic, blur) → pin to screen → session history with save/delete
+- **Full Screenshot Workflow** — Region capture → 5 annotation tools (pen, rectangle, text, mosaic, blur) → pin to screen → session history with save/delete
+- **Pixel-Level Color Picker** — Full-screen transparent overlay with magnifier for precise color sampling anywhere on screen
 - **LAN Collaboration** — Serve any local directory as a website, or transfer files peer-to-peer with other A7Box devices on the same network
-- **Configurable** — Customizable global shortcuts, theme support, and per-module enable/disable
+- **System Integration** — System tray with quick toggle, right-click context menu for instant actions (Windows), and auto-start on boot
+- **Highly Customizable** — Custom global shortcuts, drag-to-reorder modules, dark/light/system theme, font size control, and cache management
 
 ## 📥 Download
 
-Pre-built installers for Windows are available on the [Releases](https://github.com/bluvenr/a7box/releases) page. Each version includes:
+Pre-built installers for **Windows**, **macOS**, and **Linux** are available on the [Releases](https://github.com/bluvenr/a7box/releases) page. Each version includes:
 
-- `.exe` installer
-- `.msi` installer
-- Portable `.zip` (if applicable)
+| Platform | Formats |
+|----------|---------|
+| Windows | `.exe` installer, `.msi` installer, portable `.zip` |
+| macOS | `.dmg` (Universal / Intel / Apple Silicon) |
+| Linux | `.AppImage`, `.deb` |
 
 The app also supports auto-update — once installed, it will notify you when a new version is available.
 
@@ -100,18 +105,21 @@ That's why our slogan reads: *Your Tactical Efficiency Weapon on Desktop.*
 
 ## 📊 How It Compares
 
-| Feature | A7Box | DevToys | IT-Tools | He3 | PowerToys |
-|---------|:-----:|:-------:|:--------:|:---:|:---------:|
-| Clipboard → floating window | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Screenshot + annotation | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Screenshot pin preview | ✓ | ✗ | ✗ | ✗ | ✗ |
-| LAN file transfer | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Local web server | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Lightweight (<15MB) | ✓ | ✗ | — | ✗ | ✗ |
-| Global shortcuts | ✓ | ✗ | ✗ | ✓ | ✓ |
-| Desktop app | ✓ | ✓ | ✗ (Web) | ✓ | ✓ |
-| Auto update | ✓ | ✓ | — | ✓ | ✓ |
-| i18n (EN/ZH) | ✓ | Partial | ✓ | ✓ | ✓ |
+| Feature | A7Box | DevToys | IT-Tools | He3 | PowerToys | uTools |
+|---------|:-----:|:-------:|:--------:|:---:|:---------:|:------:|
+| Cross-platform (Win/Mac/Linux) | ✓ | ✓ | — | ✓ (Win/Mac) | ✗ (Win) | ✓ (Win/Mac) |
+| Clipboard → floating window | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| Screenshot workflow (capture + annotate + pin) | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Screen color picker | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ |
+| Spotlight command palette | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| LAN file transfer | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Local web server | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Lightweight (<15MB) | ✓ | ✗ | — | ✗ | ✗ | ✗ |
+| Global shortcuts | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ |
+| Works offline | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ |
+| Desktop app | ✓ | ✓ | ✗ (Web) | ✓ | ✓ | ✓ |
+| Auto update | ✓ | ✓ | — | ✓ | ✓ | ✓ |
+| i18n (EN/ZH) | ✓ | Partial | ✓ | ✓ | ✓ | ✓ |
 
 ## 🛠 Tech Stack
 

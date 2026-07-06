@@ -859,6 +859,8 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                         if let Some(existing) = app_ref.get_webview_window(label) {
                             let _ = existing.close();
                         } else {
+                            // transparent() is not available on macOS without macos-private-api feature
+                            #[cfg(not(target_os = "macos"))]
                             let builder = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
                                 .title("A7Box")
                                 .inner_size(520.0, 420.0)
@@ -870,6 +872,18 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                                 .center()
                                 .background_color(tauri::window::Color(0, 0, 0, 0))
                                 .transparent(true)
+                                .initialization_script(crate::lang_init_script(app_ref));
+                            #[cfg(target_os = "macos")]
+                            let builder = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
+                                .title("A7Box")
+                                .inner_size(520.0, 420.0)
+                                .resizable(false)
+                                .decorations(false)
+                                .always_on_top(true)
+                                .visible(false) // hidden until React emits util-window-ready
+                                .skip_taskbar(true)
+                                .center()
+                                .background_color(tauri::window::Color(0, 0, 0, 0))
                                 .initialization_script(crate::lang_init_script(app_ref));
                             if let Ok(_win) = builder.build()
                             {
@@ -1097,6 +1111,8 @@ pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), 
         .unwrap_or(false);
 
     // Build full-screen transparent overlay covering all monitors
+    // transparent() requires macos-private-api feature on macOS; rely on background_color alpha on macOS
+    #[cfg(not(target_os = "macos"))]
     let builder = WebviewWindowBuilder::new(
         &app,
         "pick-overlay",
@@ -1114,6 +1130,23 @@ pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), 
     .initialization_script(crate::lang_init_script(&app))
     .background_color(tauri::window::Color(0, 0, 0, 0))
     .transparent(true);
+    #[cfg(target_os = "macos")]
+    let builder = WebviewWindowBuilder::new(
+        &app,
+        "pick-overlay",
+        WebviewUrl::App("/utility/live-picker".into()),
+    )
+    .title("")
+    .inner_size(vw as f64, vh as f64)
+    .position(vx as f64, vy as f64)
+    .resizable(false)
+    .decorations(false)
+    .shadow(false) // Disable window shadow to prevent visible edge flicker
+    .always_on_top(true)
+    .visible(false) // Start hidden to avoid black flash
+    .skip_taskbar(true)
+    .initialization_script(crate::lang_init_script(&app))
+    .background_color(tauri::window::Color(0, 0, 0, 0));
     let _overlay = builder.build()
     .map_err(|e| format!("Failed to create overlay: {}", e))?;
 

@@ -345,6 +345,8 @@ pub fn run() {
                                     let _ = existing.close();
                                     // Don't create a new one — this is toggle off
                                 } else {
+                                    // transparent() requires macos-private-api feature on macOS; rely on background_color alpha on macOS
+                                    #[cfg(not(target_os = "macos"))]
                                     let builder = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
                                         .title("A7Box")
                                         .inner_size(520.0, 420.0)
@@ -356,6 +358,18 @@ pub fn run() {
                                         .center()
                                         .background_color(tauri::window::Color(0, 0, 0, 0))
                                         .transparent(true)
+                                        .initialization_script(crate::lang_init_script(app_ref));
+                                    #[cfg(target_os = "macos")]
+                                    let builder = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
+                                        .title("A7Box")
+                                        .inner_size(520.0, 420.0)
+                                        .resizable(false)
+                                        .decorations(false)
+                                        .always_on_top(true)
+                                        .visible(true)
+                                        .skip_taskbar(true)
+                                        .center()
+                                        .background_color(tauri::window::Color(0, 0, 0, 0))
                                         .initialization_script(crate::lang_init_script(app_ref));
                                     if let Ok(win) = builder.build()
                                     {
@@ -762,6 +776,8 @@ pub fn run() {
                     };
 
                     use tauri::{WebviewUrl, WebviewWindowBuilder};
+                    // transparent() requires macos-private-api feature on macOS; rely on background_color alpha on macOS
+                    #[cfg(not(target_os = "macos"))]
                     let builder = WebviewWindowBuilder::new(
                         &app_handle, "utility-region-picker",
                         WebviewUrl::App("/utility/region-picker".into()),
@@ -777,6 +793,22 @@ pub fn run() {
                         .skip_taskbar(true)
                         .background_color(tauri::window::Color(0, 0, 0, 0))
                         .transparent(true)
+                        .initialization_script(crate::utility_init_script(&app_handle));
+                    #[cfg(target_os = "macos")]
+                    let builder = WebviewWindowBuilder::new(
+                        &app_handle, "utility-region-picker",
+                        WebviewUrl::App("/utility/region-picker".into()),
+                    )
+                        .title("")
+                        .inner_size(vw as f64, vh as f64)
+                        .position(vx as f64, vy as f64)
+                        .resizable(false)
+                        .decorations(false)
+                        .shadow(false)
+                        .always_on_top(true)
+                        .visible(false)
+                        .skip_taskbar(true)
+                        .background_color(tauri::window::Color(0, 0, 0, 0))
                         .initialization_script(crate::utility_init_script(&app_handle));
                     let _ = builder.build();
                 });

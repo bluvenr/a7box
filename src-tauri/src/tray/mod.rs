@@ -43,7 +43,7 @@ fn detect_locale() -> String {
 
 /// macOS-specific tray icon (monochrome template image, 22x22)
 #[cfg(target_os = "macos")]
-const TRAY_ICON: Image<'_> = tauri::include_image!("../../icons/a7box-tray-22.png");
+const TRAY_ICON: Image<'_> = tauri::include_image!("icons/a7box-tray-22.png");
 
 /// Build (or rebuild) the system tray with the given language
 fn build_tray<R: Runtime>(app: &tauri::AppHandle<R>, lang: &str) -> Result<(), Box<dyn std::error::Error>> {

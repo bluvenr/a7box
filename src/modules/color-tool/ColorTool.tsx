@@ -8,10 +8,13 @@ import { useTranslation } from 'react-i18next'
 import { Palette, Copy, Pipette, Keyboard, Check, ArrowLeftRight } from 'lucide-react'
 import { useShortcutStore } from '../../core/shortcuts'
 import { usePageActive } from '../../app/layouts/CachedOutlet'
+import { formatShortcut } from '../../shared/utils'
 
 interface RGB { r: number; g: number; b: number }
 interface HSL { h: number; s: number; l: number }
 interface HSB { h: number; s: number; b: number }
+
+const _isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -150,14 +153,12 @@ export default function ColorTool() {
   const [history, setHistory] = useState<string[]>([])
   const hexInputRef = useRef<HTMLInputElement>(null)
   const colorInputRef = useRef<HTMLInputElement>(null)
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pageActive = usePageActive()
 
   // Dynamic shortcut hint (reads from shortcutStore, updates when user customizes)
   const colorShortcut = useShortcutStore(s => s.shortcuts.find(sc => sc.action === 'open-color-picker'))
   const shortcutKeys = colorShortcut?.enabled ? colorShortcut.keys : null
-  const formatKeys = (keys: string) => keys
-    .replace('CommandOrControl', navigator.platform.includes('Mac') ? '⌘' : 'Ctrl')
-    .replace('Shift', navigator.platform.includes('Mac') ? '⇧' : 'Shift')
 
   // Open live picker via event (reliable IPC: hide first, then Rust picks up via event)
   const handlePickFromScreen = useCallback(async () => {
@@ -189,7 +190,8 @@ export default function ColorTool() {
     if (!pageActive) return
     const handler = (e: KeyboardEvent) => {
       if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-        if (e.key === 'c' || e.key === 'C') {
+        // Use e.code as fallback: on macOS Option+letter produces special chars (e.g. ç) in e.key
+        if (e.key === 'c' || e.key === 'C' || e.code === 'KeyC') {
           e.preventDefault()
           handlePickFromScreen()
         }
@@ -228,8 +230,9 @@ export default function ColorTool() {
 
   const handleCopy = useCallback(async (text: string, label: string) => {
     await navigator.clipboard.writeText(text)
+    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
     setCopied(label)
-    setTimeout(() => setCopied(null), 1500)
+    copiedTimerRef.current = setTimeout(() => setCopied(null), 1500)
   }, [])
 
   const handleHexChange = useCallback((raw: string) => {
@@ -606,14 +609,14 @@ export default function ColorTool() {
               <span className="font-medium">{t('modules.colorTool.ui.shortcuts', { defaultValue: 'Shortcuts' })}</span>
             </div>
             <span className="flex items-center gap-1 text-[11px] text-text-disabled">
-              <kbd className="rounded bg-bg-base px-1.5 py-0.5 font-mono text-text-muted">Alt</kbd>
+              <kbd className="rounded bg-bg-base px-1.5 py-0.5 font-mono text-text-muted">{_isMac ? '⌥' : 'Alt'}</kbd>
               <span>+</span>
               <kbd className="rounded bg-bg-base px-1.5 py-0.5 font-mono text-text-muted">C</kbd>
               <span className="ml-0.5">{t('modules.colorTool.ui.pickFromScreen', { defaultValue: 'Pick from screen' })}</span>
             </span>
             {shortcutKeys && (
               <span className="flex items-center gap-1 text-[11px] text-text-disabled pl-2 border-l border-border-subtle">
-                <kbd className="rounded bg-bg-base px-1.5 py-0.5 font-mono text-text-muted">{formatKeys(shortcutKeys)}</kbd>
+                <kbd className="rounded bg-bg-base px-1.5 py-0.5 font-mono text-text-muted">{formatShortcut(shortcutKeys)}</kbd>
                 <span className="ml-0.5">{t('modules.colorTool.ui.globalPick', { defaultValue: 'Global pick + float' })}</span>
               </span>
             )}

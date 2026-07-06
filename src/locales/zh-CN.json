@@ -147,6 +147,8 @@
     "shortcutScreenshotDesc": "隐藏窗口后截取全屏或框选区域",
     "shortcutClipboardQr": "二维码快捷操作",
     "shortcutClipboardQrDesc": "剪贴板为文本时自动生成二维码，为图片时自动解析二维码",
+    "shortcutQuickReminder": "快速创建提醒",
+    "shortcutQuickReminderDesc": "打开快速创建提醒浮窗",
     "shortcutClipboardMd": "Markdown 格式转换",
     "shortcutClipboardMdDesc": "剪贴板为 HTML 时自动转 Markdown，为 Markdown 时自动转 HTML",
     "shortcutClipboardJson": "JSON 快速格式化",
@@ -436,7 +438,7 @@
     },
     "imageConvert": {
       "name": "图片转格式",
-      "description": "图片格式互转（PNG、JPG、WebP）",
+      "description": "图片格式互转（PNG、JPG、WebP、ICO）",
       "commands": { "open": "图片转格式", "openDesc": "转换图片格式" },
       "ui": {
         "outputLabel": "输出格式",
@@ -460,7 +462,7 @@
         "featureBatchTitle": "批量高效",
         "featureBatchDesc": "一次拖入多张图片，自动并行转换，无需逐张操作",
         "featureFormatTitle": "格式互转",
-        "featureFormatDesc": "支持 PNG、JPEG、WebP 格式互转，灵活适配不同场景",
+        "featureFormatDesc": "支持 PNG、JPEG、WebP、ICO 格式互转，灵活适配不同场景",
         "featureQualityTitle": "质量调控",
         "featureQualityDesc": "JPEG 和 WebP 输出质量可调，在清晰度和文件大小之间灵活取舍",
         "paramsChanged": "格式或质量已更改，点击重新转换应用新设置",
@@ -468,7 +470,9 @@
         "toastReconverted": "已重新转换所有图片",
         "rightClickHint": "在文件夹中右键图片，选择「用 A7Box 转换图片格式」可快速导入",
         "progressLabel": "转换中 {{done}}/{{total}}",
-        "progressRemaining": "张待处理"
+        "progressRemaining": "张待处理",
+        "icoSizeLabel": "图标尺寸",
+        "icoSizeHint": "至少选 1 个"
       }
     },
     "colorTool": {
@@ -723,6 +727,7 @@
       "editor": {
         "pencil": "画笔",
         "rect": "矩形",
+        "ellipse": "椭圆",
         "arrow": "箭头",
         "text": "文字",
         "mosaic": "模糊",
@@ -733,6 +738,7 @@
         "copied": "已复制",
         "pin": "置顶",
         "close": "关闭",
+        "shiftConstraint": "正圆 / 正方形",
         "textPlaceholder": "输入文字...",
         "previewHint": "滚轮缩放 · 拖拽平移 · 双击还原 · ESC关闭"
       }
@@ -896,6 +902,55 @@
           "skip": "跳过"
         }
       }
+    },
+    "reminder": {
+      "name": "事项提醒",
+      "description": "设置提醒通知和重复计划",
+      "commands": { "open": "事项提醒", "openDesc": "管理提醒和通知" }
+    }
+  },
+  "reminder": {
+    "title": "事项提醒",
+    "newReminder": "新建提醒",
+    "empty": "暂无提醒。点击「新建提醒」创建一个。",
+    "overdue": "已过期",
+    "today": "今天",
+    "tomorrow": "明天",
+    "snoozed": "已延迟",
+    "markDone": "标记完成",
+    "snooze10m": "延迟 10 分钟",
+    "edit": "编辑",
+    "delete": "删除",
+    "titlePlaceholder": "提醒标题",
+    "notePlaceholder": "备注（可选）",
+    "triggerTime": "时间",
+    "repeat": "重复",
+    "noRepeat": "不重复",
+    "repeatDaily": "每天",
+    "repeatWeekly": "每周",
+    "repeatMonthly": "每月",
+    "repeatCustomShort": "自定义",
+    "repeatCustom": "每 {{val}} {{unit}}",
+    "monthDay": "每月几号",
+    "every": "每",
+    "minutes": "分钟",
+    "hours": "小时",
+    "days": "天",
+    "create": "创建",
+    "created": "提醒已创建",
+    "updated": "提醒已更新",
+    "deleted": "提醒已删除",
+    "markedDone": "已标记完成",
+    "snoozedMsg": "已延迟 10 分钟",
+    "quickCreate": "快速提醒",
+    "quickPlaceholder": "例如：明天下午3点开会 每天",
+    "parsedAs": "解析结果",
+    "manualEdit": "手动编辑",
+    "parseFailed": "⚠ 未识别时间，请点击手动编辑",
+    "filter": {
+      "all": "全部",
+      "pending": "待处理",
+      "completed": "已完成"
     }
   },
   "jsonQuick": {

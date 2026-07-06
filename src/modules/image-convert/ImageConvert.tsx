@@ -9,8 +9,9 @@ import { useTranslation } from 'react-i18next'
 import { ImageIcon, Upload, Download, X, Shield, Layers, RefreshCw, ZoomIn, ZoomOut, RotateCcw, AlertCircle, MousePointerClick } from 'lucide-react'
 import { useToast } from '../../components/Toast'
 import { usePageActive } from '../../app/layouts/CachedOutlet'
+import { convertToIco, ICO_ALL_SIZES } from './icoEncoder'
 
-type OutputFormat = 'image/png' | 'image/jpeg' | 'image/webp'
+type OutputFormat = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/x-icon'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -33,12 +34,13 @@ const FORMATS: { value: OutputFormat; label: string; ext: string }[] = [
   { value: 'image/png', label: 'PNG', ext: 'png' },
   { value: 'image/jpeg', label: 'JPEG', ext: 'jpg' },
   { value: 'image/webp', label: 'WebP', ext: 'webp' },
+  { value: 'image/x-icon', label: 'ICO', ext: 'ico' },
 ]
 
 /** Infer original format label from file name extension */
 function getOriginalFormat(file: File): string {
   const ext = file.name.split('.').pop()?.toLowerCase() || ''
-  const map: Record<string, string> = { png: 'PNG', jpg: 'JPEG', jpeg: 'JPEG', webp: 'WebP', bmp: 'BMP', gif: 'GIF' }
+  const map: Record<string, string> = { png: 'PNG', jpg: 'JPEG', jpeg: 'JPEG', webp: 'WebP', bmp: 'BMP', gif: 'GIF', ico: 'ICO' }
   return map[ext] || ext.toUpperCase()
 }
 
@@ -63,8 +65,19 @@ function formatBytes(bytes: number): string {
 }
 
 
-/** Convert image using Canvas */
-async function convertImage(file: File, format: OutputFormat, quality: number): Promise<{ blob: Blob; url: string }> {
+/** Convert image using Canvas (PNG/JPEG/WebP) or ICO encoder */
+async function convertImage(
+  file: File,
+  format: OutputFormat,
+  quality: number,
+  icoSizes: number[]
+): Promise<{ blob: Blob; url: string }> {
+  // ICO uses dedicated encoder
+  if (format === 'image/x-icon') {
+    const blob = await convertToIco(file, icoSizes)
+    return { blob, url: URL.createObjectURL(blob) }
+  }
+
   const img = await new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new window.Image()
     const url = URL.createObjectURL(file)
@@ -105,6 +118,7 @@ export default function ImageConvert() {
   const [results, setResults] = useState<ConvertResult[]>([])
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('image/png')
   const [quality, setQuality] = useState(92)
+  const [icoSizes, setIcoSizes] = useState<number[]>([256])
   const [isDragging, setIsDragging] = useState(false)
   const [previewImage, setPreviewImage] = useState<ConvertResult | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -118,7 +132,7 @@ export default function ImageConvert() {
 
   // ── Detect parameter changes ──
   const doneItems = results.filter((r) => r.status === 'done')
-  const paramsSnapshot = JSON.stringify({ outputFormat, quality })
+  const paramsSnapshot = JSON.stringify({ outputFormat, quality, icoSizes })
   const lastConvertedParamsRef = useRef<string | null>(null)
   const paramsChanged = doneItems.length > 0 && lastConvertedParamsRef.current !== null && lastConvertedParamsRef.current !== paramsSnapshot
 
@@ -161,7 +175,7 @@ export default function ImageConvert() {
       newItems.map(async (item) => {
         try {
           setResults((prev) => prev.map((p) => p.id === item.id ? { ...p, status: 'converting' } : p))
-          const { blob, url } = await convertImage(item.originalFile, outputFormat, quality / 100)
+          const { blob, url } = await convertImage(item.originalFile, outputFormat, quality / 100, icoSizes)
           setResults((prev) => prev.map((p) => p.id === item.id
             ? { ...p, convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, status: 'done' }
             : p
@@ -182,11 +196,11 @@ export default function ImageConvert() {
 
     const formatLabel = FORMATS.find(f => f.value === outputFormat)?.label ?? ''
     toast(t('modules.imageConvert.ui.toastConverted', { success: successCount, total: newItems.length, format: formatLabel }))
-    lastConvertedParamsRef.current = JSON.stringify({ outputFormat, quality })
+    lastConvertedParamsRef.current = JSON.stringify({ outputFormat, quality, icoSizes })
 
     // Clear batch progress after a short delay
     setTimeout(() => setBatchProgress(null), 1500)
-  }, [outputFormat, quality, toast, t])
+  }, [outputFormat, quality, icoSizes, toast, t])
 
   addFilesRef.current = addFiles
 
@@ -208,8 +222,8 @@ export default function ImageConvert() {
             const paths = event.payload.paths
             if (paths.length > 0) {
               const files: File[] = []
-              const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif'])
-              const MIME: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', bmp: 'image/bmp', gif: 'image/gif' }
+              const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif', 'ico'])
+              const MIME: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', bmp: 'image/bmp', gif: 'image/gif', ico: 'image/x-icon' }
               const { readFile } = await import('@tauri-apps/plugin-fs')
               for (const p of paths) {
                 try {
@@ -246,7 +260,7 @@ export default function ImageConvert() {
   useEffect(() => {
     if (!isTauri() || !pageActive) return
 
-    const MIME_MAP: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', bmp: 'image/bmp' }
+    const MIME_MAP: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', bmp: 'image/bmp', ico: 'image/x-icon' }
 
     const pollAndLoad = async () => {
       try {
@@ -370,7 +384,7 @@ export default function ImageConvert() {
   }, [results])
 
   const reconvertAll = useCallback(async () => {
-    lastConvertedParamsRef.current = JSON.stringify({ outputFormat, quality })
+    lastConvertedParamsRef.current = JSON.stringify({ outputFormat, quality, icoSizes })
     const pending = results.filter((r) => r.status !== 'converting')
     const reset = pending.map((item) => {
       if (item.convertedUrl) URL.revokeObjectURL(item.convertedUrl)
@@ -390,7 +404,7 @@ export default function ImageConvert() {
     await Promise.all(
       reset.map(async (item) => {
         try {
-          const { blob, url } = await convertImage(item.originalFile, outputFormat, quality / 100)
+          const { blob, url } = await convertImage(item.originalFile, outputFormat, quality / 100, icoSizes)
           setResults((prev) => prev.map((p) => p.id === item.id
             ? { ...p, convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, status: 'done' }
             : p
@@ -408,7 +422,7 @@ export default function ImageConvert() {
     )
     toast(t('modules.imageConvert.ui.toastReconverted'))
     setTimeout(() => setBatchProgress(null), 1500)
-  }, [results, outputFormat, quality, toast, t])
+  }, [results, outputFormat, quality, icoSizes, toast, t])
 
   const totalOriginal = doneItems.reduce((acc, r) => acc + r.originalFile.size, 0)
   const totalConverted = doneItems.reduce((acc, r) => acc + (r.convertedSize ?? 0), 0)
@@ -459,6 +473,32 @@ export default function ImageConvert() {
               <label className="text-xs text-text-secondary">{t('modules.imageConvert.ui.qualityLabel')}</label>
               <input type="range" min="10" max="100" value={quality} onChange={(e) => setQuality(parseInt(e.target.value))} className="w-24" />
               <span className="w-8 text-right text-xs text-text-muted">{quality}%</span>
+            </div>
+          )}
+
+          {/* ICO size checkboxes */}
+          {outputFormat === 'image/x-icon' && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <label className="text-xs text-text-secondary">{t('modules.imageConvert.ui.icoSizeLabel')}</label>
+              {ICO_ALL_SIZES.map((size) => (
+                <label key={size} className="flex cursor-pointer items-center gap-1 text-xs text-text-secondary select-none">
+                  <input
+                    type="checkbox"
+                    checked={icoSizes.includes(size)}
+                    onChange={() => {
+                      setIcoSizes((prev) =>
+                        prev.includes(size)
+                          ? prev.filter((s) => s !== size)
+                          : [...prev, size]
+                      )
+                    }}
+                    disabled={icoSizes.length === 1 && icoSizes.includes(size)}
+                    className="h-3.5 w-3.5 cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-40"
+                  />
+                  {size}
+                </label>
+              ))}
+              <span className="text-[10px] text-text-disabled">{t('modules.imageConvert.ui.icoSizeHint')}</span>
             </div>
           )}
 

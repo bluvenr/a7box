@@ -147,6 +147,8 @@
     "shortcutScreenshotDesc": "Hide window then capture fullscreen or select a region",
     "shortcutClipboardQr": "QR Quick Actions",
     "shortcutClipboardQrDesc": "Auto-generate QR from clipboard text, or auto-decode QR from clipboard image",
+    "shortcutQuickReminder": "Quick Reminder",
+    "shortcutQuickReminderDesc": "Open quick create reminder popup",
     "shortcutClipboardMd": "Markdown Convert",
     "shortcutClipboardMdDesc": "Auto-convert HTML to Markdown or Markdown to HTML from clipboard",
     "shortcutClipboardJson": "JSON Quick Format",
@@ -436,7 +438,7 @@
     },
     "imageConvert": {
       "name": "Image Convert",
-      "description": "Convert images between PNG, JPG and WebP formats",
+      "description": "Convert images between PNG, JPG, WebP and ICO formats",
       "commands": { "open": "Image Convert", "openDesc": "Convert image formats" },
       "ui": {
         "outputLabel": "Output",
@@ -460,7 +462,7 @@
         "featureBatchTitle": "Batch Processing",
         "featureBatchDesc": "Drop multiple images at once, automatically converted in parallel",
         "featureFormatTitle": "Format Conversion",
-        "featureFormatDesc": "Convert between PNG, JPEG, and WebP formats for any use case",
+        "featureFormatDesc": "Convert between PNG, JPEG, WebP and ICO formats for any use case",
         "featureQualityTitle": "Quality Control",
         "featureQualityDesc": "Fine-tune output quality for JPEG and WebP to balance size and clarity",
         "paramsChanged": "Format or quality changed, click to re-convert",
@@ -468,7 +470,9 @@
         "toastReconverted": "Re-converted all images",
         "rightClickHint": "Right-click an image in folder, select \"Convert Image Format with A7Box\" to import",
         "progressLabel": "Converting {{done}}/{{total}}",
-        "progressRemaining": "remaining"
+        "progressRemaining": "remaining",
+        "icoSizeLabel": "Icon Size",
+        "icoSizeHint": "Min 1 required"
       }
     },
     "colorTool": {
@@ -723,6 +727,7 @@
       "editor": {
         "pencil": "Pencil",
         "rect": "Rectangle",
+        "ellipse": "Ellipse",
         "arrow": "Arrow",
         "text": "Text",
         "mosaic": "Blur",
@@ -733,6 +738,7 @@
         "copied": "Copied",
         "pin": "Pin to Top",
         "close": "Close",
+        "shiftConstraint": "Circle / Square",
         "textPlaceholder": "Type text...",
         "previewHint": "Scroll to zoom · Drag to pan · Double-click reset · ESC close"
       }
@@ -896,6 +902,55 @@
           "skip": "Skip"
         }
       }
+    },
+    "reminder": {
+      "name": "Reminder",
+      "description": "Set reminders with notifications and repeat schedules",
+      "commands": { "open": "Reminder", "openDesc": "Manage reminders and notifications" }
+    }
+  },
+  "reminder": {
+    "title": "Reminders",
+    "newReminder": "New Reminder",
+    "empty": "No reminders yet. Click \"New Reminder\" to create one.",
+    "overdue": "overdue",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "snoozed": "Snoozed",
+    "markDone": "Mark Done",
+    "snooze10m": "Snooze 10 min",
+    "edit": "Edit",
+    "delete": "Delete",
+    "titlePlaceholder": "Reminder title",
+    "notePlaceholder": "Note (optional)",
+    "triggerTime": "Time",
+    "repeat": "Repeat",
+    "noRepeat": "No Repeat",
+    "repeatDaily": "Daily",
+    "repeatWeekly": "Weekly",
+    "repeatMonthly": "Monthly",
+    "repeatCustomShort": "Custom",
+    "repeatCustom": "Every {{val}} {{unit}}",
+    "monthDay": "Day of month",
+    "every": "Every",
+    "minutes": "min",
+    "hours": "hr",
+    "days": "day",
+    "create": "Create",
+    "created": "Reminder created",
+    "updated": "Reminder updated",
+    "deleted": "Reminder deleted",
+    "markedDone": "Marked as done",
+    "snoozedMsg": "Snoozed for 10 minutes",
+    "quickCreate": "Quick Reminder",
+    "quickPlaceholder": "e.g. Meeting tomorrow at 3pm daily",
+    "parsedAs": "Parsed as",
+    "manualEdit": "Edit",
+    "parseFailed": "⚠ Could not parse time, please edit manually",
+    "filter": {
+      "all": "All",
+      "pending": "Pending",
+      "completed": "Completed"
     }
   },
   "jsonQuick": {

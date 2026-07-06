@@ -23,20 +23,10 @@ import { useSettingsStore } from '../../core'
 import { useShortcutStore } from '../../core/shortcuts'
 import { useConfirm } from '../../components/Dialog'
 import { usePageActive } from '../../app/layouts/CachedOutlet'
+import { formatShortcut, formatPlainShortcuts } from '../../shared/utils'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
-
-/** Format Tauri key string to human-readable display */
-function formatShortcut(keys: string): string {
-  return keys
-    .replace(/CommandOrControl/gi, 'Ctrl')
-    .replace(/Command/gi, '\u2318')
-    .replace(/Control/gi, 'Ctrl')
-    .replace(/Shift/gi, 'Shift')
-    .replace(/Alt/gi, 'Alt')
-    .replace(/\+/g, ' + ')
 }
 
 // Lazy load Monaco Editor
@@ -275,10 +265,11 @@ export default function CodeMinify() {
     if (!pageActive) return
     const handler = (e: KeyboardEvent) => {
       if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-        if (e.key === 'm' || e.key === 'M') {
+        // Use e.code as fallback: on macOS Option+letter produces special chars in e.key
+        if (e.key === 'm' || e.key === 'M' || e.code === 'KeyM') {
           e.preventDefault()
           handleMinify()
-        } else if (e.key === 'b' || e.key === 'B') {
+        } else if (e.key === 'b' || e.key === 'B' || e.code === 'KeyB') {
           e.preventDefault()
           handleBeautify()
         }
@@ -612,9 +603,9 @@ export default function CodeMinify() {
         <span className="ml-auto flex items-center gap-1 text-text-disabled">
           <Keyboard size={11} />
           <span>
-            {t('modules.codeMinify.ui.inWindowShortcuts', {
+            {formatPlainShortcuts(t('modules.codeMinify.ui.inWindowShortcuts', {
               defaultValue: 'Alt+M Compress · Alt+B Beautify',
-            })}
+            }))}
           </span>
         </span>
         {/* Floating window shortcut hint */}

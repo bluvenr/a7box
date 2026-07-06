@@ -12,17 +12,7 @@ import {
 import { useMarkdown } from './hooks/useMarkdown'
 import { useShortcutStore } from '../../core/shortcuts'
 import { usePageActive } from '../../app/layouts/CachedOutlet'
-
-/** Format Tauri key string to human-readable display */
-function formatShortcut(keys: string): string {
-  return keys
-    .replace(/CommandOrControl/gi, 'Ctrl')
-    .replace(/Command/gi, '⌘')
-    .replace(/Control/gi, 'Ctrl')
-    .replace(/Shift/gi, 'Shift')
-    .replace(/Alt/gi, 'Alt')
-    .replace(/\+/g, ' + ')
-}
+import { formatShortcut } from '../../shared/utils'
 
 export default function MarkdownPreview() {
   const { t } = useTranslation()

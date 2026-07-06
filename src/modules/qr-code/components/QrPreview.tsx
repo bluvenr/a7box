@@ -5,17 +5,7 @@
 import { Copy, Download, FileDown, Keyboard } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useShortcutStore } from '../../../core/shortcuts'
-
-/** Format Tauri key string to human-readable display */
-function formatShortcut(keys: string): string {
-  return keys
-    .replace(/CommandOrControl/gi, 'Ctrl')
-    .replace(/Command/gi, '⌘')
-    .replace(/Control/gi, 'Ctrl')
-    .replace(/Shift/gi, 'Shift')
-    .replace(/Alt/gi, 'Alt')
-    .replace(/\+/g, ' + ')
-}
+import { formatShortcut } from '../../../shared/utils'
 
 interface QrPreviewProps {
   qrDataUrl: string | null

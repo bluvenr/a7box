@@ -4,25 +4,14 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatShortcut } from '../shared/utils'
+
+export { formatShortcut }
 
 interface KeyCaptureProps {
   value: string
   onChange: (keys: string) => void
   onCancel: () => void
-}
-
-const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
-
-/** Convert Tauri shortcut format to display format */
-export function formatShortcut(keys: string): string {
-  return keys
-    .replace(/CommandOrControl/g, isMac ? '⌘' : 'Ctrl')
-    .replace(/Command/g, '⌘')
-    .replace(/Control/g, isMac ? '⌃' : 'Ctrl')
-    .replace(/Shift/g, isMac ? '⇧' : 'Shift')
-    .replace(/Alt/g, isMac ? '⌥' : 'Alt')
-    .replace(/Super/g, isMac ? '⌘' : 'Win')
-    .replace(/\+/g, isMac ? '' : '+')
 }
 
 /** Convert KeyboardEvent to Tauri shortcut format */

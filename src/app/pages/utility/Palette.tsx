@@ -8,9 +8,9 @@ import { useTranslation } from 'react-i18next'
 import { Search, Box, ArrowRight } from 'lucide-react'
 import { allModules } from '../../../modules'
 import { useModuleRegistry } from '../../../core/registry'
+import { formatShortcut, getAllHistory } from '../../../shared/utils'
 import { useShortcutStore } from '../../../core/shortcuts/shortcutStore'
 import { CommandSearchEngine } from '../../../core/command-palette/SearchEngine'
-import { getAllHistory } from '../../../shared/utils'
 import type { CommandSearchItem } from '../../../core/types'
 import type { LucideIcon } from 'lucide-react'
 
@@ -365,13 +365,3 @@ function CommandIcon({ item, selected }: { item: CommandSearchItem; selected: bo
   )
 }
 
-// Format shortcut for display
-const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
-function formatShortcut(shortcut: string): string {
-  return shortcut
-    .replace('CommandOrControl', isMac ? '⌘' : 'Ctrl')
-    .replace('Command', '⌘')
-    .replace('Control', isMac ? '⌃' : 'Ctrl')
-    .replace('Shift', isMac ? '⇧' : 'Shift')
-    .replace('Alt', isMac ? '⌥' : 'Alt')
-}

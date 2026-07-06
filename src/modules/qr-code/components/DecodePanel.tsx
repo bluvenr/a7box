@@ -7,16 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Upload, X, Copy, Keyboard } from 'lucide-react'
 import { useShortcutStore } from '../../../core/shortcuts'
-
-function formatShortcut(keys: string): string {
-  return keys
-    .replace(/CommandOrControl/gi, 'Ctrl')
-    .replace(/Command/gi, '⌘')
-    .replace(/Control/gi, 'Ctrl')
-    .replace(/Shift/gi, 'Shift')
-    .replace(/Alt/gi, 'Alt')
-    .replace(/\+/g, ' + ')
-}
+import { formatShortcut } from '../../../shared/utils'
 
 interface DecodePanelProps {
   decodedText: string | null

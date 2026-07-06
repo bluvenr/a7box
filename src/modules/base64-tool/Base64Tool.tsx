@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { Binary, ArrowLeftRight, Copy, Upload, Download, X, File, Trash2, Keyboard } from 'lucide-react'
 import { useConfirm } from '../../components/Dialog'
 import { usePageActive } from '../../app/layouts/CachedOutlet'
+import { formatPlainShortcuts } from '../../shared/utils'
 
 function encodeText(text: string): string {
   const bytes = new TextEncoder().encode(text)
@@ -396,10 +397,11 @@ export default function Base64Tool() {
     if (!pageActive) return
     const handler = (e: KeyboardEvent) => {
       if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-        if (e.key === 'e' || e.key === 'E') {
+        // Use e.code as fallback: on macOS Option+letter produces special chars in e.key
+        if (e.key === 'e' || e.key === 'E' || e.code === 'KeyE') {
           e.preventDefault()
           encodeRef.current()
-        } else if (e.key === 'd' || e.key === 'D') {
+        } else if (e.key === 'd' || e.key === 'D' || e.code === 'KeyD') {
           e.preventDefault()
           decodeRef.current()
         }
@@ -581,9 +583,9 @@ export default function Base64Tool() {
         <span className="ml-auto flex items-center gap-1 text-text-disabled">
           <Keyboard size={11} />
           <span>
-            {t('modules.base64Tool.ui.inWindowShortcuts', {
+            {formatPlainShortcuts(t('modules.base64Tool.ui.inWindowShortcuts', {
               defaultValue: 'Alt+E Encode · Alt+D Decode',
-            })}
+            }))}
           </span>
         </span>
       </div>

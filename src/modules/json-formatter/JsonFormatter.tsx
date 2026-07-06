@@ -20,20 +20,10 @@ import { useSettingsStore } from '../../core'
 import { useConfirm } from '../../components/Dialog'
 import { useShortcutStore } from '../../core/shortcuts'
 import { usePageActive } from '../../app/layouts/CachedOutlet'
+import { formatShortcut, formatPlainShortcuts } from '../../shared/utils'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
-
-/** Format Tauri key string to human-readable display */
-function formatShortcut(keys: string): string {
-  return keys
-    .replace(/CommandOrControl/gi, 'Ctrl')
-    .replace(/Command/gi, '⌘')
-    .replace(/Control/gi, 'Ctrl')
-    .replace(/Shift/gi, 'Shift')
-    .replace(/Alt/gi, 'Alt')
-    .replace(/\+/g, ' + ')
 }
 
 // Lazy load Monaco Editor
@@ -228,10 +218,11 @@ export default function JsonFormatter() {
     if (!pageActive) return
     const handler = (e: KeyboardEvent) => {
       if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-        if (e.key === 'f' || e.key === 'F') {
+        // Use e.code as fallback: on macOS Option+letter produces special chars in e.key
+        if (e.key === 'f' || e.key === 'F' || e.code === 'KeyF') {
           e.preventDefault()
           handleFormat()
-        } else if (e.key === 'm' || e.key === 'M') {
+        } else if (e.key === 'm' || e.key === 'M' || e.code === 'KeyM') {
           e.preventDefault()
           handleCompress()
         }
@@ -403,9 +394,9 @@ export default function JsonFormatter() {
         <span className="ml-auto flex items-center gap-1 text-text-disabled">
           <Keyboard size={11} />
           <span>
-            {t('modules.jsonFormatter.ui.inWindowShortcuts', {
+            {formatPlainShortcuts(t('modules.jsonFormatter.ui.inWindowShortcuts', {
               defaultValue: 'Alt+F Format · Alt+M Compress',
-            })}
+            }))}
           </span>
         </span>
         {/* Floating window shortcut hint */}

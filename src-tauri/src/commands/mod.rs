@@ -859,7 +859,7 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                         if let Some(existing) = app_ref.get_webview_window(label) {
                             let _ = existing.close();
                         } else {
-                            let mut builder = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
+                            let builder = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
                                 .title("A7Box")
                                 .inner_size(520.0, 420.0)
                                 .resizable(false)
@@ -869,9 +869,8 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                                 .skip_taskbar(true)
                                 .center()
                                 .background_color(tauri::window::Color(0, 0, 0, 0))
+                                .transparent(true)
                                 .initialization_script(crate::lang_init_script(app_ref));
-                            #[cfg(target_os = "windows")]
-                            { builder = builder.transparent(true); }
                             if let Ok(_win) = builder.build()
                             {
                                 // Window shown by util-window-ready listener
@@ -888,7 +887,9 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                     }
                     "toggle-window" => {
                         if let Some(w) = app_ref.get_webview_window("main") {
-                            if w.is_visible().unwrap_or(false) {
+                            let is_vis = w.is_visible().unwrap_or(false);
+                            let is_min = w.is_minimized().unwrap_or(false);
+                            if is_vis && !is_min {
                                 let _ = w.hide();
                             } else {
                                 let _ = w.show();
@@ -1096,7 +1097,7 @@ pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), 
         .unwrap_or(false);
 
     // Build full-screen transparent overlay covering all monitors
-    let mut builder = WebviewWindowBuilder::new(
+    let builder = WebviewWindowBuilder::new(
         &app,
         "pick-overlay",
         WebviewUrl::App("/utility/live-picker".into()),
@@ -1111,9 +1112,8 @@ pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), 
     .visible(false) // Start hidden to avoid black flash
     .skip_taskbar(true)
     .initialization_script(crate::lang_init_script(&app))
-    .background_color(tauri::window::Color(0, 0, 0, 0));
-    #[cfg(target_os = "windows")]
-    { builder = builder.transparent(true); }
+    .background_color(tauri::window::Color(0, 0, 0, 0))
+    .transparent(true);
     let _overlay = builder.build()
     .map_err(|e| format!("Failed to create overlay: {}", e))?;
 

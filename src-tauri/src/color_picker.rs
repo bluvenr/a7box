@@ -2,7 +2,7 @@
 // Cross-platform pixel color picking at cursor position.
 // Windows: Win32 GetCursorPos + screenshots crate
 // macOS:   CoreGraphics CGEvent + screenshots crate
-// Linux:   screenshots crate with /dev/input fallback
+// Linux:   dlopen libX11 + XQueryPointer + screenshots crate
 
 use screenshots::Screen;
 
@@ -64,9 +64,64 @@ fn get_cursor_position() -> Result<(i32, i32), String> {
 
 #[cfg(target_os = "linux")]
 fn get_cursor_position() -> Result<(i32, i32), String> {
-    // X11: use Xlib QueryPointer
-    // For now, return an error — will be implemented when X11 support is needed
-    Err("Cursor position detection not yet supported on Linux".into())
+    // X11: use dlopen to load libX11 at runtime (avoids compile-time dependency on libx11-dev).
+    // On Wayland sessions without XWayland, XOpenDisplay returns null and we fall back to an error.
+    unsafe {
+        let lib = libc::dlopen(
+            b"libX11.so.6\0".as_ptr() as *const libc::c_char,
+            libc::RTLD_LAZY,
+        );
+        if lib.is_null() {
+            return Err("libX11 not found (X11 session required)".into());
+        }
+
+        type Display = std::ffi::c_void;
+        type XOpenDisplayFn = unsafe extern "C" fn(*const libc::c_char) -> *mut Display;
+        type XCloseDisplayFn = unsafe extern "C" fn(*mut Display) -> libc::c_int;
+        type XDefaultRootWindowFn = unsafe extern "C" fn(*mut Display) -> u64;
+        type XQueryPointerFn = unsafe extern "C" fn(
+            *mut Display, u64, *mut u64, *mut u64,
+            *mut libc::c_int, *mut libc::c_int,
+            *mut libc::c_int, *mut libc::c_int, *mut libc::c_uint,
+        ) -> libc::c_int;
+
+        let x_open: XOpenDisplayFn = std::mem::transmute(
+            libc::dlsym(lib, b"XOpenDisplay\0".as_ptr() as *const libc::c_char)
+        );
+        let x_close: XCloseDisplayFn = std::mem::transmute(
+            libc::dlsym(lib, b"XCloseDisplay\0".as_ptr() as *const libc::c_char)
+        );
+        let x_root: XDefaultRootWindowFn = std::mem::transmute(
+            libc::dlsym(lib, b"XDefaultRootWindow\0".as_ptr() as *const libc::c_char)
+        );
+        let x_query: XQueryPointerFn = std::mem::transmute(
+            libc::dlsym(lib, b"XQueryPointer\0".as_ptr() as *const libc::c_char)
+        );
+
+        let display = x_open(std::ptr::null());
+        if display.is_null() {
+            libc::dlclose(lib);
+            return Err("XOpenDisplay failed (no X11 display available)".into());
+        }
+
+        let root_window = x_root(display);
+        let (mut root_ret, mut child_ret) = (0u64, 0u64);
+        let (mut root_x, mut root_y, mut win_x, mut win_y) = (0i32, 0i32, 0i32, 0i32);
+        let mut mask = 0u32;
+
+        x_query(
+            display, root_window,
+            &mut root_ret, &mut child_ret,
+            &mut root_x, &mut root_y,
+            &mut win_x, &mut win_y,
+            &mut mask,
+        );
+
+        x_close(display);
+        libc::dlclose(lib);
+
+        Ok((root_x, root_y))
+    }
 }
 
 // ── Capture pixel color at given position using screenshots crate ──

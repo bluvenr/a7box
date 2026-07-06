@@ -345,7 +345,7 @@ pub fn run() {
                                     let _ = existing.close();
                                     // Don't create a new one — this is toggle off
                                 } else {
-                                    let mut builder = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
+                                    let builder = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/palette".into()))
                                         .title("A7Box")
                                         .inner_size(520.0, 420.0)
                                         .resizable(false)
@@ -355,9 +355,8 @@ pub fn run() {
                                         .skip_taskbar(true)
                                         .center()
                                         .background_color(tauri::window::Color(0, 0, 0, 0))
+                                        .transparent(true)
                                         .initialization_script(crate::lang_init_script(app_ref));
-                                    #[cfg(target_os = "windows")]
-                                    { builder = builder.transparent(true); }
                                     if let Ok(win) = builder.build()
                                     {
                                         let _ = win.set_focus();
@@ -366,7 +365,9 @@ pub fn run() {
                             }
                             "toggle-window" => {
                                 if let Some(w) = app_ref.get_webview_window("main") {
-                                    if w.is_visible().unwrap_or(false) {
+                                    let is_vis = w.is_visible().unwrap_or(false);
+                                    let is_min = w.is_minimized().unwrap_or(false);
+                                    if is_vis && !is_min {
                                         let _ = w.hide();
                                     } else {
                                         let _ = w.show();
@@ -761,7 +762,7 @@ pub fn run() {
                     };
 
                     use tauri::{WebviewUrl, WebviewWindowBuilder};
-                    let mut builder = WebviewWindowBuilder::new(
+                    let builder = WebviewWindowBuilder::new(
                         &app_handle, "utility-region-picker",
                         WebviewUrl::App("/utility/region-picker".into()),
                     )
@@ -775,9 +776,8 @@ pub fn run() {
                         .visible(false)
                         .skip_taskbar(true)
                         .background_color(tauri::window::Color(0, 0, 0, 0))
+                        .transparent(true)
                         .initialization_script(crate::utility_init_script(&app_handle));
-                    #[cfg(target_os = "windows")]
-                    { builder = builder.transparent(true); }
                     let _ = builder.build();
                 });
             }
@@ -829,6 +829,7 @@ pub fn run() {
                         if from_page {
                             if let Some(main) = app_handle.get_webview_window("main") {
                                 let _ = main.show();
+                                let _ = main.unminimize();
                                 let _ = main.set_focus();
                             }
                         }
@@ -890,6 +891,7 @@ pub fn run() {
                                 if from_page_cap {
                                     if let Some(main) = capture_ah.get_webview_window("main") {
                                         let _ = main.show();
+                                        let _ = main.unminimize();
                                         let _ = main.set_focus();
                                     }
                                 }
@@ -913,6 +915,7 @@ pub fn run() {
                     if from_page {
                         if let Some(main) = app_handle.get_webview_window("main") {
                             let _ = main.show();
+                            let _ = main.unminimize();
                             let _ = main.set_focus();
                         }
                     }
@@ -961,6 +964,7 @@ pub fn run() {
                     if from_page {
                         if let Some(main) = app_handle.get_webview_window("main") {
                             let _ = main.show();
+                            let _ = main.unminimize();
                             let _ = main.set_focus();
                         }
                     }

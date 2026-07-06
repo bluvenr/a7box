@@ -133,13 +133,15 @@ export default function CapturePreview() {
       style={{ width: '100vw', height: '100vh', background: '#141416', overflow: 'hidden', position: 'relative', cursor: dragging ? 'grabbing' : 'grab' }}>
 
       {/* Top bar */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 32, display: 'flex', alignItems: 'center',
+      <div data-tauri-drag-region
+        onMouseDown={(e) => e.stopPropagation()}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 32, display: 'flex', alignItems: 'center',
         justifyContent: 'space-between', padding: '0 8px', background: 'rgba(0,0,0,0.6)', zIndex: 10,
         fontFamily: 'system-ui', fontSize: 11, color: 'rgba(255,255,255,0.5)', userSelect: 'none',
-        WebkitAppRegion: 'drag' } as React.CSSProperties}>
-        <span>{pct}%</span>
+        cursor: 'default' } as React.CSSProperties}>
+        <span data-tauri-drag-region>{pct}%</span>
         <button onClick={handleClose}
-          style={{ WebkitAppRegion: 'no-drag', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
             borderRadius: 4, border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.5)',
             cursor: 'pointer', fontSize: 14, transition: 'all 0.15s' } as React.CSSProperties}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.3)'; e.currentTarget.style.color = '#ef4444' }}

@@ -7,6 +7,8 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, Runtime,
 };
+#[cfg(target_os = "macos")]
+use tauri::image::Image;
 
 /// Tray icon fixed ID for removal/rebuild
 pub const TRAY_ID: &str = "main-tray";
@@ -39,6 +41,10 @@ fn detect_locale() -> String {
     "en".to_string()
 }
 
+/// macOS-specific tray icon (monochrome template image, 22x22)
+#[cfg(target_os = "macos")]
+const TRAY_ICON: Image<'_> = tauri::include_image!("../../icons/a7box-tray-22.png");
+
 /// Build (or rebuild) the system tray with the given language
 fn build_tray<R: Runtime>(app: &tauri::AppHandle<R>, lang: &str) -> Result<(), Box<dyn std::error::Error>> {
     let (show_label, quit_label, tooltip) = get_labels(lang);
@@ -50,14 +56,27 @@ fn build_tray<R: Runtime>(app: &tauri::AppHandle<R>, lang: &str) -> Result<(), B
     let quit = MenuItem::with_id(app, "quit", quit_label, true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &quit])?;
 
-    TrayIconBuilder::with_id(TRAY_ID)
-        .icon(app.default_window_icon().unwrap().clone())
+    let mut builder = TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
-        .tooltip(tooltip)
+        .tooltip(tooltip);
+
+    // macOS: use monochrome template icon for proper light/dark menu bar adaptation
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.icon(TRAY_ICON).icon_as_template(true);
+    }
+    // Windows/Linux: use default app icon
+    #[cfg(not(target_os = "macos"))]
+    {
+        builder = builder.icon(app.default_window_icon().unwrap().clone());
+    }
+
+    builder
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.show();
+                    let _ = window.unminimize();
                     let _ = window.set_focus();
                 }
             }
@@ -76,10 +95,13 @@ fn build_tray<R: Runtime>(app: &tauri::AppHandle<R>, lang: &str) -> Result<(), B
             {
                 let app = tray.app_handle();
                 if let Some(window) = app.get_webview_window("main") {
-                    if window.is_visible().unwrap_or(false) {
+                    let is_vis = window.is_visible().unwrap_or(false);
+                    let is_min = window.is_minimized().unwrap_or(false);
+                    if is_vis && !is_min {
                         let _ = window.hide();
                     } else {
                         let _ = window.show();
+                        let _ = window.unminimize();
                         let _ = window.set_focus();
                     }
                 }

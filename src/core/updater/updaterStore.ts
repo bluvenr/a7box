@@ -13,6 +13,7 @@ function isTauri(): boolean {
 // LocalStorage keys for persisting dismiss/remind decisions
 const SKIP_KEY = 'a7box-skip-version'
 const REMIND_KEY = 'a7box-remind-later'
+const DISMISSED_AT_KEY = 'a7box-update-dismissed-at'
 
 /** Read persisted skip version */
 function getSkipVersion(): string | null {
@@ -27,6 +28,14 @@ function getRemindLater(): number | null {
   } catch { return null }
 }
 
+/** Read when user last closed the notification with X */
+function getDismissedAt(): number | null {
+  try {
+    const v = localStorage.getItem(DISMISSED_AT_KEY)
+    return v ? Number(v) : null
+  } catch { return null }
+}
+
 export interface UpdateInfo {
   version: string
   body: string
@@ -35,6 +44,7 @@ export interface UpdateInfo {
 
 interface UpdaterState {
   // Status
+  checked: boolean  // whether a check has been performed at least once
   checking: boolean
   available: boolean
   downloading: boolean
@@ -55,6 +65,7 @@ interface UpdaterState {
 }
 
 export const useUpdaterStore = create<UpdaterState>()((set, get) => ({
+  checked: false,
   checking: false,
   available: false,
   downloading: false,
@@ -65,9 +76,12 @@ export const useUpdaterStore = create<UpdaterState>()((set, get) => ({
 
   checkForUpdates: async (silent = false) => {
     if (!isTauri()) {
-      if (!silent) set({ error: 'Auto-update requires desktop app' })
+      if (!silent) set({ error: 'Auto-update requires desktop app', checked: true })
       return
     }
+
+    // Prevent concurrent checks
+    if (get().checking) return
 
     set({ checking: true, error: null })
 
@@ -85,22 +99,26 @@ export const useUpdaterStore = create<UpdaterState>()((set, get) => ({
         // Check if user dismissed or skipped this version
         const skipped = getSkipVersion()
         const reminded = getRemindLater()
+        const dismissedAt = getDismissedAt()
         const isDismissed = skipped === update.version
         // Remind later: 24 hours cooldown
-        const isRemindCooldown = reminded && (Date.now() - reminded < 24 * 60 * 60 * 1000)
-        const shouldShow = !isDismissed && !isRemindCooldown
+        const isRemindCooldown = reminded !== null && (Date.now() - reminded < 24 * 60 * 60 * 1000)
+        // X-close: 4 hours cooldown to avoid periodic check pop-up fatigue
+        const isDismissCooldown = dismissedAt !== null && (Date.now() - dismissedAt < 4 * 60 * 60 * 1000)
+        const shouldShow = !isDismissed && !isRemindCooldown && !isDismissCooldown
 
         set({
           checking: false,
+          checked: true,
           available: true,
           info,
           notificationVisible: shouldShow && !silent,
         })
       } else {
-        set({ checking: false, available: false, info: null, notificationVisible: false })
+        set({ checking: false, checked: true, available: false, info: null, notificationVisible: false })
       }
     } catch (e) {
-      set({ checking: false, error: String(e) })
+      set({ checking: false, checked: true, error: String(e) })
       if (!silent) set({ notificationVisible: false })
     }
   },
@@ -161,7 +179,8 @@ export const useUpdaterStore = create<UpdaterState>()((set, get) => ({
   },
 
   hideNotification: () => {
-    set({ notificationVisible: false })
+    try { localStorage.setItem(DISMISSED_AT_KEY, String(Date.now())) } catch { /* ignore */ }
+    set({ notificationVisible: false, error: null })
   },
 
   showNotification: () => {

@@ -9,6 +9,7 @@ import { useUpdaterStore } from './updaterStore'
 export type { UpdateInfo } from './updaterStore'
 
 export interface UpdateState {
+  checked: boolean
   checking: boolean
   available: boolean
   downloading: boolean
@@ -26,6 +27,7 @@ export interface UpdateState {
 
 export function useUpdater(): UpdateState {
   return {
+    checked: useUpdaterStore((s) => s.checked),
     checking: useUpdaterStore((s) => s.checking),
     available: useUpdaterStore((s) => s.available),
     downloading: useUpdaterStore((s) => s.downloading),

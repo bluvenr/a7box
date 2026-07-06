@@ -516,17 +516,20 @@ function UpdateSection({
   updater: ReturnType<typeof useUpdater>
   t: (key: string) => string
 }) {
-  const { checking, available, downloading, progress, info, error, checkForUpdates, downloadAndInstall } = updater
+  const { checked, checking, available, downloading, progress, info, error, checkForUpdates, downloadAndInstall } = updater
 
   // Use silent=true so manual check doesn't trigger the bottom-left popup
   const handleCheck = () => { checkForUpdates(true) }
+
+  // Download finished, waiting for restart
+  const readyToInstall = progress >= 100 && !downloading && available
 
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <button
           onClick={handleCheck}
-          disabled={checking || downloading}
+          disabled={checking || downloading || readyToInstall}
           className="inline-flex items-center gap-2 rounded-md bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
         >
           {checking ? (
@@ -537,7 +540,7 @@ function UpdateSection({
           {checking ? t('settings.checkingUpdate') : t('settings.checkUpdate')}
         </button>
 
-        {available && !downloading && (
+        {available && !downloading && !readyToInstall && (
           <button
             onClick={downloadAndInstall}
             className="inline-flex items-center gap-2 rounded-md bg-green-500/10 px-3 py-1.5 text-sm font-medium text-green-500 transition-colors hover:bg-green-500/20"
@@ -546,17 +549,40 @@ function UpdateSection({
             {t('settings.downloadUpdate')}
           </button>
         )}
+
+        {readyToInstall && (
+          <button
+            onClick={async () => {
+              const { relaunch } = await import('@tauri-apps/plugin-process')
+              await relaunch()
+            }}
+            className="inline-flex items-center gap-2 rounded-md bg-green-500 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-600"
+          >
+            <RotateCcw className="h-4 w-4" />
+            {t('updater.restartNow')}
+          </button>
+        )}
       </div>
 
-      {/* Status messages */}
-      {!checking && !available && !error && (
+      {/* Status messages — only show after a check has actually been performed */}
+      {checked && !checking && !available && !error && (
         <p className="flex items-center gap-1.5 text-xs text-text-muted">
           <CheckCircle className="h-3.5 w-3.5" />
           {t('settings.upToDate')}
         </p>
       )}
 
-      {available && info && (
+      {/* Ready to install status */}
+      {readyToInstall && info && (
+        <div className="rounded-md border border-green-500/20 bg-green-500/5 p-3">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-green-500">
+            <CheckCircle className="h-4 w-4" />
+            {t('updater.readyToInstall')}
+          </p>
+        </div>
+      )}
+
+      {available && info && !readyToInstall && (
         <div className="rounded-md border border-green-500/20 bg-green-500/5 p-3">
           <p className="flex items-center gap-1.5 text-sm font-medium text-green-500">
             <CheckCircle className="h-4 w-4" />

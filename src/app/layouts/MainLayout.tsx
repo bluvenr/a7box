@@ -98,6 +98,15 @@ export function MainLayout() {
     }
   }, [checkUpdateOnStart, checkForUpdates])
 
+  // Periodic Update Check (every 6 hours)
+  // Non-silent: may show popup, but cooldowns (X=4h, Later=24h, Skip=permanent)
+  // prevent notification fatigue.
+  useEffect(() => {
+    const INTERVAL = 6 * 60 * 60 * 1000 // 6 hours
+    const timer = setInterval(() => { checkForUpdates() }, INTERVAL)
+    return () => clearInterval(timer)
+  }, [checkForUpdates])
+
   // Sidebar collapsed state (persisted)
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(SIDEBAR_KEY) === 'true' } catch { return false }

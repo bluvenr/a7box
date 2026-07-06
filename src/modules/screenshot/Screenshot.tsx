@@ -5,7 +5,8 @@
  */
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Camera, Clock, Download, Trash2, X } from 'lucide-react'
+import { Camera, Clock, Download, Eye, Trash2, X } from 'lucide-react'
+import { formatShortcut } from '../../shared/utils'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -15,16 +16,6 @@ interface SessionCapture {
   tempPath: string
   width: number
   height: number
-}
-
-const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
-function formatShortcut(keys: string): string {
-  return keys
-    .replace('CommandOrControl', isMac ? '⌘' : 'Ctrl')
-    .replace('Command', '⌘')
-    .replace('Control', isMac ? '⌃' : 'Ctrl')
-    .replace('Shift', isMac ? '⇧' : 'Shift')
-    .replace('Alt', isMac ? '⌥' : 'Alt')
 }
 
 export default function Screenshot() {
@@ -257,21 +248,27 @@ export default function Screenshot() {
                     onError={() => setFailedThumbs(prev => new Set([...prev, h.tempPath]))}
                   />
                 )}
-                {/* Hover overlay */}
-                <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/60 opacity-0 transition group-hover:opacity-100">
+                {/* Hover overlay with center view icon */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition group-hover:opacity-100">
+                  <div className="rounded-full bg-white/25 p-3 text-white backdrop-blur-sm transition hover:bg-white/40">
+                    <Eye size={20} />
+                  </div>
+                </div>
+                {/* Bottom-left: Save & Delete */}
+                <div className="absolute bottom-1 left-1 z-10 flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
                   <button
                     onClick={(e) => handleSaveItem(e, h.tempPath)}
-                    className="rounded-full bg-white/20 p-1.5 text-white transition hover:bg-white/30 cursor-pointer"
+                    className="rounded-full bg-black/50 p-1.5 text-white transition hover:bg-black/70 cursor-pointer"
                     title={t('modules.screenshot.ui.save', { defaultValue: 'Save' })}
                   >
-                    <Download size={12} />
+                    <Download size={11} />
                   </button>
                   <button
                     onClick={(e) => handleDeleteItem(e, h.tempPath)}
-                    className="rounded-full bg-white/20 p-1.5 text-white transition hover:bg-red-500/50 cursor-pointer"
+                    className="rounded-full bg-black/50 p-1.5 text-white transition hover:bg-red-500/70 cursor-pointer"
                     title={t('modules.screenshot.ui.delete', { defaultValue: 'Delete' })}
                   >
-                    <Trash2 size={12} />
+                    <Trash2 size={11} />
                   </button>
                 </div>
                 {/* Resolution badge */}

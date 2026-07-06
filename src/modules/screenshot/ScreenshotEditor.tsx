@@ -1,17 +1,37 @@
 /**
  * A7Box Screenshot Editor
  * Canvas-based image annotation tool
- * Tools: pencil, rectangle, arrow, text, mosaic
+ * Tools: pencil, rectangle, ellipse, arrow, text, mosaic
  * Supports undo/redo, save to file, copy to clipboard
+ * Shift key constraint: perfect circle / square while drawing
  */
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Pencil, Square, ArrowRight, Type, Grid3X3,
+  Pencil, Square, Type, Grid3X3,
   Undo2, Redo2, Save, Copy, X, Check,
 } from 'lucide-react'
 
-type Tool = 'pencil' | 'rect' | 'arrow' | 'text' | 'mosaic'
+/** Custom ellipse icon — rx=10 ry=8, fills 20×16 for visual weight matching Square */
+function EllipseIcon({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <ellipse cx="12" cy="12" rx="10" ry="8" />
+    </svg>
+  )
+}
+
+/** Custom arrow icon — spans 18×16 for visual weight matching Square */
+function ArrowIcon({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12h18" />
+      <path d="m13 4 8 8-8 8" />
+    </svg>
+  )
+}
+
+type Tool = 'pencil' | 'rect' | 'ellipse' | 'arrow' | 'text' | 'mosaic'
 
 interface Point { x: number; y: number }
 
@@ -164,13 +184,34 @@ export default function ScreenshotEditor({ imageData, onSave, onCopy, onClose }:
     ctx.clearRect(0, 0, imgSize.w, imgSize.h)
   }, [imgSize])
 
-  const drawRect = useCallback((ctx: CanvasRenderingContext2D, p1: Point, p2: Point) => {
+  const drawRect = useCallback((ctx: CanvasRenderingContext2D, p1: Point, p2: Point, shiftKey = false) => {
+    let dx = Math.abs(p2.x - p1.x)
+    let dy = Math.abs(p2.y - p1.y)
+    if (shiftKey) {
+      const side = Math.max(dx, dy)
+      dx = dy = side
+    }
+    const x = p2.x >= p1.x ? p1.x : p1.x - dx
+    const y = p2.y >= p1.y ? p1.y : p1.y - dy
     ctx.strokeStyle = color
     ctx.lineWidth = width
-    ctx.strokeRect(
-      Math.min(p1.x, p2.x), Math.min(p1.y, p2.y),
-      Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y)
-    )
+    ctx.strokeRect(x, y, dx, dy)
+  }, [color, width])
+
+  const drawEllipse = useCallback((ctx: CanvasRenderingContext2D, p1: Point, p2: Point, shiftKey = false) => {
+    let rx = Math.abs(p2.x - p1.x) / 2
+    let ry = Math.abs(p2.y - p1.y) / 2
+    if (shiftKey) {
+      const r = Math.max(rx, ry)
+      rx = ry = r
+    }
+    const cx = (p1.x + p2.x) / 2
+    const cy = (p1.y + p2.y) / 2
+    ctx.strokeStyle = color
+    ctx.lineWidth = width
+    ctx.beginPath()
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2)
+    ctx.stroke()
   }, [color, width])
 
   const drawArrow = useCallback((ctx: CanvasRenderingContext2D, p1: Point, p2: Point) => {
@@ -244,7 +285,10 @@ export default function ScreenshotEditor({ imageData, onSave, onCopy, onClose }:
         drawPencilStroke(ctx, pencilPoints.current)
         break
       case 'rect':
-        drawRect(ctx, start.current, pos)
+        drawRect(ctx, start.current, pos, e.shiftKey)
+        break
+      case 'ellipse':
+        drawEllipse(ctx, start.current, pos, e.shiftKey)
         break
       case 'arrow':
         drawArrow(ctx, start.current, pos)
@@ -254,7 +298,7 @@ export default function ScreenshotEditor({ imageData, onSave, onCopy, onClose }:
         break
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tool, getPos, imgSize, drawPencilStroke, drawRect, drawArrow])
+  }, [tool, getPos, imgSize, drawPencilStroke, drawRect, drawEllipse, drawArrow])
 
   const onMouseUp = useCallback((e: React.MouseEvent) => {
     if (!drawing.current) return
@@ -271,7 +315,12 @@ export default function ScreenshotEditor({ imageData, onSave, onCopy, onClose }:
         clearPreview()
         break
       case 'rect':
-        drawRect(mainCtx, start.current, pos)
+        drawRect(mainCtx, start.current, pos, e.shiftKey)
+        saveHistory()
+        clearPreview()
+        break
+      case 'ellipse':
+        drawEllipse(mainCtx, start.current, pos, e.shiftKey)
         saveHistory()
         clearPreview()
         break
@@ -291,7 +340,7 @@ export default function ScreenshotEditor({ imageData, onSave, onCopy, onClose }:
         setTextValue('')
         break
     }
-  }, [tool, getPos, drawPencilStroke, drawRect, drawArrow, saveHistory, clearPreview])
+  }, [tool, getPos, drawPencilStroke, drawRect, drawEllipse, drawArrow, saveHistory, clearPreview])
 
   // ---- Mosaic helper ----
   const applyMosaic = useCallback((pos: Point) => {
@@ -352,10 +401,11 @@ export default function ScreenshotEditor({ imageData, onSave, onCopy, onClose }:
   }, [undo, redo, onClose, textEditing])
 
   // ---- Render ----
-  const tools: { id: Tool; icon: typeof Pencil; label: string }[] = [
-    { id: 'pencil', icon: Pencil, label: t('modules.screenshot.editor.pencil') },
+  const tools: { id: Tool; icon: typeof Pencil | typeof EllipseIcon; label: string }[] = [
     { id: 'rect', icon: Square, label: t('modules.screenshot.editor.rect') },
-    { id: 'arrow', icon: ArrowRight, label: t('modules.screenshot.editor.arrow') },
+    { id: 'ellipse', icon: EllipseIcon, label: t('modules.screenshot.editor.ellipse') },
+    { id: 'arrow', icon: ArrowIcon, label: t('modules.screenshot.editor.arrow') },
+    { id: 'pencil', icon: Pencil, label: t('modules.screenshot.editor.pencil') },
     { id: 'text', icon: Type, label: t('modules.screenshot.editor.text') },
     { id: 'mosaic', icon: Grid3X3, label: t('modules.screenshot.editor.mosaic') },
   ]
@@ -534,6 +584,7 @@ export default function ScreenshotEditor({ imageData, onSave, onCopy, onClose }:
       <div className="flex shrink-0 items-center justify-center gap-4 border-t border-white/5 py-1.5 text-[11px] text-text-muted">
         <span>Ctrl+Z {t('modules.screenshot.editor.undo')}</span>
         <span>Ctrl+Shift+Z {t('modules.screenshot.editor.redo')}</span>
+        <span>Shift = {t('modules.screenshot.editor.shiftConstraint', { defaultValue: 'Circle / Square' })}</span>
         <span>ESC {t('modules.screenshot.editor.close')}</span>
       </div>
     </div>

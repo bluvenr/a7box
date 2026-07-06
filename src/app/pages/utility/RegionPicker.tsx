@@ -21,7 +21,7 @@ interface CaptureData {
   imgWidth: number; imgHeight: number
 }
 
-type Tool = 'pencil' | 'rect' | 'arrow' | 'text' | 'mosaic'
+type Tool = 'pencil' | 'rect' | 'ellipse' | 'arrow' | 'text' | 'mosaic'
 
 const COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ffffff', '#000000']
 const WIDTHS = [2, 4, 8]
@@ -48,7 +48,8 @@ function dataURLtoBlob(dataUrl: string): Blob {
 // ── Inline SVG Icons (lucide/feather style) ──
 const iconSvg = {
   rect: 'M3 3h18v18H3z',
-  arrow: 'M7 17L17 7M17 7H9M17 7V15',
+  ellipse: 'M2 12a10 8 0 1020 0 10 8 0 00-20 0z',
+  arrow: 'M3 12h18M13 4l8 8-8 8',
   pencil: 'M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z',
   text: 'M4 7V4h16v3M9 20h6M12 4v16',
   mosaic: 'M3 3h9v9H3zM13 3h8v8h-8zM3 13h8v8H3z',
@@ -296,9 +297,32 @@ export default function RegionPicker() {
     ctx.clearRect(0, 0, canvasSize.w, canvasSize.h)
   }, [canvasSize])
 
-  const drawRect = useCallback((ctx: CanvasRenderingContext2D, p1: Point, p2: Point) => {
+  const drawRect = useCallback((ctx: CanvasRenderingContext2D, p1: Point, p2: Point, shiftKey = false) => {
+    let dx = Math.abs(p2.x - p1.x)
+    let dy = Math.abs(p2.y - p1.y)
+    if (shiftKey) {
+      const side = Math.max(dx, dy)
+      dx = dy = side
+    }
+    const x = p2.x >= p1.x ? p1.x : p1.x - dx
+    const y = p2.y >= p1.y ? p1.y : p1.y - dy
     ctx.strokeStyle = color; ctx.lineWidth = lineWidth
-    ctx.strokeRect(Math.min(p1.x, p2.x), Math.min(p1.y, p2.y), Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y))
+    ctx.strokeRect(x, y, dx, dy)
+  }, [color, lineWidth])
+
+  const drawEllipse = useCallback((ctx: CanvasRenderingContext2D, p1: Point, p2: Point, shiftKey = false) => {
+    let rx = Math.abs(p2.x - p1.x) / 2
+    let ry = Math.abs(p2.y - p1.y) / 2
+    if (shiftKey) {
+      const r = Math.max(rx, ry)
+      rx = ry = r
+    }
+    const cx = (p1.x + p2.x) / 2
+    const cy = (p1.y + p2.y) / 2
+    ctx.strokeStyle = color; ctx.lineWidth = lineWidth
+    ctx.beginPath()
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2)
+    ctx.stroke()
   }, [color, lineWidth])
 
   const drawArrow = useCallback((ctx: CanvasRenderingContext2D, p1: Point, p2: Point) => {
@@ -351,11 +375,12 @@ export default function RegionPicker() {
     ctx.clearRect(0, 0, canvasSize.w, canvasSize.h)
     switch (tool) {
       case 'pencil': pencilPoints.current.push(pos); drawPencilStroke(ctx, pencilPoints.current); break
-      case 'rect': drawRect(ctx, drawStart.current, pos); break
+      case 'rect': drawRect(ctx, drawStart.current, pos, e.shiftKey); break
+      case 'ellipse': drawEllipse(ctx, drawStart.current, pos, e.shiftKey); break
       case 'arrow': drawArrow(ctx, drawStart.current, pos); break
       case 'mosaic': applyMosaic(pos); break
     }
-  }, [tool, getCanvasPos, canvasSize, drawPencilStroke, drawRect, drawArrow, applyMosaic])
+  }, [tool, getCanvasPos, canvasSize, drawPencilStroke, drawRect, drawEllipse, drawArrow, applyMosaic])
 
   const onCanvasMouseUp = useCallback((e: React.MouseEvent) => {
     if (!drawing.current) return
@@ -366,12 +391,13 @@ export default function RegionPicker() {
       case 'pencil':
         if (pencilPoints.current.length > 1) { drawPencilStroke(mainCtx, pencilPoints.current); saveHistory() }
         clearPreview(); break
-      case 'rect': drawRect(mainCtx, drawStart.current, pos); saveHistory(); clearPreview(); break
+      case 'rect': drawRect(mainCtx, drawStart.current, pos, e.shiftKey); saveHistory(); clearPreview(); break
+      case 'ellipse': drawEllipse(mainCtx, drawStart.current, pos, e.shiftKey); saveHistory(); clearPreview(); break
       case 'arrow': drawArrow(mainCtx, drawStart.current, pos); saveHistory(); clearPreview(); break
       case 'mosaic': saveHistory(); clearPreview(); break
       case 'text': setTextEditing({ x: pos.x, y: pos.y }); setTextValue(''); break
     }
-  }, [tool, getCanvasPos, drawPencilStroke, drawRect, drawArrow, saveHistory, clearPreview])
+  }, [tool, getCanvasPos, drawPencilStroke, drawRect, drawEllipse, drawArrow, saveHistory, clearPreview])
 
   const submitText = useCallback(() => {
     if (!textEditing || !textValue.trim()) { setTextEditing(null); return }
@@ -455,7 +481,7 @@ export default function RegionPicker() {
   const toolbarX = capture ? Math.max(0, Math.min(capture.x + capture.width / 2 - 280, window.innerWidth - 580)) : 0
 
   // Determine which tool options to show
-  const showWidths = tool === 'rect' || tool === 'arrow' || tool === 'pencil'
+  const showWidths = tool === 'rect' || tool === 'ellipse' || tool === 'arrow' || tool === 'pencil'
   const showFontSize = tool === 'text'
   const showMosaicSize = tool === 'mosaic'
 
@@ -531,7 +557,7 @@ export default function RegionPicker() {
           border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', fontFamily: 'system-ui' }}>
 
           {/* Tool buttons with i18n tooltips */}
-          {([['rect', iconSvg.rect, 'rect'], ['arrow', iconSvg.arrow, 'arrow'], ['pencil', iconSvg.pencil, 'pencil'], ['text', iconSvg.text, 'text'], ['mosaic', iconSvg.mosaic, 'mosaic']] as [Tool, string, string][]).map(([id, d, tip]) => (
+          {([['rect', iconSvg.rect, 'rect'], ['ellipse', iconSvg.ellipse, 'ellipse'], ['arrow', iconSvg.arrow, 'arrow'], ['pencil', iconSvg.pencil, 'pencil'], ['text', iconSvg.text, 'text'], ['mosaic', iconSvg.mosaic, 'mosaic']] as [Tool, string, string][]).map(([id, d, tip]) => (
             <TBtn key={id} active={tool === id} onClick={() => setTool(id)} title={t(`modules.screenshot.editor.${tip}`)}>
               <Icon d={d} stroke={id !== 'mosaic'} />
             </TBtn>

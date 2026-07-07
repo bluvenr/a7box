@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <!-- East Asian -->
+    <string>zh-Hans</string>
+    <string>zh-Hant</string>
+    <string>ja</string>
+    <string>ko</string>
+    <!-- European -->
+    <string>en</string>
+    <string>fr</string>
+    <string>de</string>
+    <string>es</string>
+    <string>it</string>
+    <string>pt</string>
+    <string>pt-BR</string>
+    <string>ru</string>
+    <string>nl</string>
+    <string>pl</string>
+    <string>uk</string>
+    <string>cs</string>
+    <string>sk</string>
+    <string>sv</string>
+    <string>da</string>
+    <string>fi</string>
+    <string>nb</string>
+    <string>is</string>
+    <string>hu</string>
+    <string>ro</string>
+    <string>el</string>
+    <string>bg</string>
+    <string>hr</string>
+    <string>sr</string>
+    <string>sl</string>
+    <string>lt</string>
+    <string>lv</string>
+    <string>et</string>
+    <string>ca</string>
+    <string>eu</string>
+    <string>gl</string>
+    <string>ga</string>
+    <!-- Middle East / Central / South Asian -->
+    <string>ar</string>
+    <string>he</string>
+    <string>fa</string>
+    <string>ur</string>
+    <string>hi</string>
+    <string>bn</string>
+    <string>pa</string>
+    <string>gu</string>
+    <string>mr</string>
+    <string>ta</string>
+    <string>te</string>
+    <string>tr</string>
+    <string>kk</string>
+    <!-- Southeast Asian -->
+    <string>th</string>
+    <string>vi</string>
+    <string>id</string>
+    <string>ms</string>
+    <string>fil</string>
+    <string>km</string>
+    <string>lo</string>
+    <string>my</string>
+    <!-- African -->
+    <string>af</string>
+    <string>sw</string>
+    <string>am</string>
+  </array>
+</dict>
+</plist>

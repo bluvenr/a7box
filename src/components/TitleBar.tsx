@@ -70,20 +70,20 @@ export function TitleBar() {
 
   const isMac = platform === 'macos'
 
+  // macOS: native title bar (tauri.macos.conf.json → titleBarStyle: "Transparent")
+  // provides traffic lights + drag region, so the custom TitleBar is not needed.
+  if (isMac) return null
+
   return (
     <div
       className="flex h-8 shrink-0 select-none items-center bg-bg-elevated"
       data-tauri-drag-region
     >
-      {/* macOS: left padding for traffic light buttons */}
-      {isMac && <div className="w-[78px] shrink-0" />}
-
       {/* Drag region (fills remaining space) */}
       <div className="flex-1" data-tauri-drag-region />
 
       {/* Windows/Linux: window control buttons on the right */}
-      {!isMac && (
-        <div className="flex h-full shrink-0 items-center" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="flex h-full shrink-0 items-center" onMouseDown={(e) => e.stopPropagation()}>
           <TitleBarButton onClick={handleMinimize} title={t('common.minimize')}>
             <Minus className="h-3.5 w-3.5" />
           </TitleBarButton>
@@ -98,7 +98,6 @@ export function TitleBar() {
             <X className="h-3.5 w-3.5" />
           </TitleBarButton>
         </div>
-      )}
     </div>
   )
 }

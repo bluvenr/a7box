@@ -85,6 +85,29 @@ Pre-built installers for **Windows**, **macOS**, and **Linux** are available on 
 
 The app also supports auto-update — once installed, it will notify you when a new version is available.
 
+### macOS Users: "App is damaged" Warning
+
+Since A7Box is not currently signed with an Apple Developer certificate, macOS Gatekeeper may show a warning like **"A7Box is damaged and can't be opened"** or **"cannot be opened because the developer cannot be verified"** when you first launch it.
+
+**Fix (Option 1 — Terminal, recommended):**
+
+Open Terminal and run:
+
+```bash
+xattr -cr /Applications/A7Box.app
+```
+
+This removes the macOS quarantine flag. You only need to do this once after installing or updating.
+
+**Fix (Option 2 — System Settings):**
+
+1. Try to open A7Box — the warning will appear
+2. Open **System Settings → Privacy & Security**
+3. Scroll down and click **Open Anyway** next to A7Box
+4. Enter your password when prompted
+
+> **Why does this happen?** macOS requires apps distributed outside the App Store to be code-signed and notarized by Apple. A7Box is an open-source project and does not yet have an Apple Developer certificate ($99/year). The app is safe — it is 100% local, open-source, and auditable. You can verify the source code on GitHub.
+
 ## 🎯 The Name
 
 The name **A7** is no coincidence.

@@ -27,7 +27,7 @@ export const jsonFormatterModule: A7Module = {
       description: 'Format JSON data for readability',
       descriptionI18n: 'modules.jsonFormatter.commands.formatDesc',
       icon: Braces,
-      shortcut: 'Ctrl+Shift+J',
+      shortcut: 'CommandOrControl+Shift+J',
       run: async (ctx) => {
         if (ctx.clipboardText) {
           try {

@@ -482,7 +482,7 @@ export default function Settings() {
             <SettingSection title={t('common.about')} icon={Info}>
           <div className="space-y-3 text-sm">
             <p className="text-text-secondary">
-              <span className="text-text-muted">{t('app.name')}</span> v0.1.0
+              <span className="text-text-muted">{t('app.name')}</span> v{__APP_VERSION__}
             </p>
             <p className="text-text-muted">{t('app.description')}</p>
             <a
@@ -901,6 +901,12 @@ function ShortcutsSection({ t }: { t: (key: string, opts?: Record<string, unknow
   const resetDefaults = useShortcutStore((s: any) => s.resetDefaults)
   const enabledModuleIds = useModuleRegistry((s: any) => s.enabledModuleIds)
 
+  // Build shortcut list for conflict detection (stable reference for KeyCapture)
+  const shortcutList = useMemo(() =>
+    shortcuts.map((s: any) => ({ action: s.action, keys: s.keys, labelI18n: s.labelI18n })),
+    [shortcuts]
+  )
+
   const handleShortcutChange = async (action: string, keys: string, enabled: boolean) => {
     updateShortcut(action, keys)
     if (isTauri()) {
@@ -937,13 +943,13 @@ function ShortcutsSection({ t }: { t: (key: string, opts?: Record<string, unknow
 
   return (
     <SettingSection title={t('settings.shortcuts', { defaultValue: 'Shortcuts' })} icon={Keyboard}>
-      <div className="space-y-2">
+      <div className="divide-y divide-border-subtle">
         {shortcuts.map((sc: any) => {
           const moduleDisabled = sc.moduleId && !enabledModuleIds.has(sc.moduleId)
           return (
             <div
               key={sc.action}
-              className={`flex items-center justify-between py-2 ${moduleDisabled ? 'opacity-40 pointer-events-none' : ''}`}
+              className={`flex items-center justify-between py-3 ${moduleDisabled ? 'opacity-40 pointer-events-none' : ''}`}
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-sm text-text-primary">{t(sc.labelI18n)}</span>
@@ -966,6 +972,8 @@ function ShortcutsSection({ t }: { t: (key: string, opts?: Record<string, unknow
                   value={sc.keys}
                   onChange={(keys: string) => handleShortcutChange(sc.action, keys, sc.enabled)}
                   onCancel={() => {}}
+                  allShortcuts={shortcutList}
+                  currentAction={sc.action}
                 />
                 <Toggle
                   checked={sc.enabled}

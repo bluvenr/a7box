@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Search, Box, Keyboard } from 'lucide-react'
 import { useCommandPalette } from './useCommandPalette'
-import { formatShortcut } from '../../shared/utils'
+import { formatShortcut, recordUsage } from '../../shared/utils'
 import type { CommandSearchItem } from '../types'
 import type { LucideIcon } from 'lucide-react'
 
@@ -15,27 +15,27 @@ export function CommandPalette() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
   const {
     isOpen,
     query,
     results,
-    selectedIndex,
     close,
     setQuery,
-    moveUp,
-    moveDown,
-    execute,
   } = useCommandPalette()
 
   // Category filter state
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  // Local index within filteredResults (decoupled from store's global selectedIndex)
+  const [filteredIdx, setFilteredIdx] = useState(0)
 
   // Auto-focus input on open
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50)
       setActiveCategory(null)
+      setFilteredIdx(0)
     }
   }, [isOpen])
 
@@ -52,21 +52,41 @@ export function CommandPalette() {
     return results.filter((item) => item.moduleName === activeCategory)
   }, [results, activeCategory])
 
-  // Keyboard navigation
+  // Reset filtered index when filtered list changes (category switch or query change)
+  useEffect(() => {
+    setFilteredIdx(0)
+  }, [filteredResults.length, activeCategory])
+
+  // Scroll selected item into view when navigating with keyboard
+  useEffect(() => {
+    const container = listRef.current
+    if (!container) return
+    const el = container.children[filteredIdx + 1] as HTMLElement | undefined // +1 for header div
+    el?.scrollIntoView({ block: 'nearest' })
+  }, [filteredIdx])
+
+  // Execute a specific item from the filtered list
+  const executeItem = useCallback(async (item: CommandSearchItem) => {
+    recordUsage(item.id)
+    close()
+    await item.run({ navigate })
+  }, [close, navigate])
+
+  // Keyboard navigation (operates on filteredResults bounds)
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       switch (e.key) {
         case 'ArrowUp':
           e.preventDefault()
-          moveUp()
+          setFilteredIdx(i => i > 0 ? i - 1 : filteredResults.length - 1)
           break
         case 'ArrowDown':
           e.preventDefault()
-          moveDown()
+          setFilteredIdx(i => i < filteredResults.length - 1 ? i + 1 : 0)
           break
         case 'Enter':
           e.preventDefault()
-          execute({ navigate })
+          if (filteredResults[filteredIdx]) executeItem(filteredResults[filteredIdx])
           break
         case 'Escape':
           e.preventDefault()
@@ -83,7 +103,7 @@ export function CommandPalette() {
           break
       }
     },
-    [moveUp, moveDown, execute, close, navigate, query, activeCategory, moduleNames]
+    [filteredResults, filteredIdx, executeItem, close, query, activeCategory, moduleNames]
   )
 
   // Close on backdrop click
@@ -150,7 +170,7 @@ export function CommandPalette() {
         )}
 
         {/* Results list */}
-        <div className="max-h-72 overflow-y-auto p-2">
+        <div ref={listRef} className="max-h-72 overflow-y-auto p-2">
           {filteredResults.length > 0 ? (
             <>
               <div className="px-2 py-1">
@@ -166,9 +186,9 @@ export function CommandPalette() {
                 <CommandItem
                   key={item.id}
                   item={item}
-                  isSelected={index === selectedIndex}
-                  onClick={() => execute({ navigate })}
-                  onMouseEnter={() => useCommandPalette.setState({ selectedIndex: index })}
+                  isSelected={index === filteredIdx}
+                  onClick={() => executeItem(item)}
+                  onMouseEnter={() => setFilteredIdx(index)}
                 />
               ))}
             </>

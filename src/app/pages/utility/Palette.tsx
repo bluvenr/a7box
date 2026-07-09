@@ -211,18 +211,6 @@ export default function Palette() {
     return groups
   }, [results])
 
-  // Flat index tracker for grouped rendering
-  const flatIndexMap = useMemo(() => {
-    const map: number[] = []
-    for (const g of groupedResults) {
-      for (const _item of g.items) {
-        map.push(0) // placeholder, we'll use running index
-      }
-    }
-    return map
-  }, [groupedResults])
-  void flatIndexMap // suppress unused
-
   return (
     <div
       className="flex h-screen w-screen flex-col overflow-hidden rounded-xl border border-border-base bg-bg-elevated"

@@ -153,10 +153,8 @@ export default function CodeQuick() {
       {/* Header (draggable) */}
       <div
         className="flex cursor-pointer items-center justify-between px-4 py-2.5 border-b border-border-subtle"
-        data-tauri-drag-region
-        onDoubleClick={toggleMaximize}
       >
-        <div className="pointer-events-none flex items-center gap-2" data-tauri-drag-region>
+        <div className="flex flex-1 items-center gap-2" data-tauri-drag-region onDoubleClick={toggleMaximize}>
           <Code2 className="h-4 w-4 text-primary" />
           <span className="text-sm font-medium">
             {t('codeQuick.title', { defaultValue: 'Code Quick' })}
@@ -164,7 +162,7 @@ export default function CodeQuick() {
         </div>
         <button
           onClick={closeWindow}
-          className="pointer-events-auto rounded p-1 text-text-muted transition hover:bg-bg-hover hover:text-text-primary"
+          className="rounded p-1 text-text-muted transition hover:bg-bg-hover hover:text-text-primary"
         >
           <X size={14} />
         </button>

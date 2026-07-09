@@ -247,10 +247,8 @@ export default function ColorQuick() {
       {/* Title bar */}
       <div
         className="flex shrink-0 cursor-default select-none items-center justify-between border-b border-border-subtle bg-bg-elevated px-3 py-2"
-        data-tauri-drag-region
-        onDoubleClick={toggleMaximize}
       >
-        <div className="flex items-center gap-2 pointer-events-none" data-tauri-drag-region>
+        <div className="flex flex-1 items-center gap-2" data-tauri-drag-region onDoubleClick={toggleMaximize}>
           <Palette size={14} className="text-primary" />
           <span className="text-sm font-medium text-text-primary">
             {t('colorQuick.title', { defaultValue: 'Color Picker' })}

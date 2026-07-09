@@ -222,10 +222,8 @@ export default function QrQuick() {
       {/* Title bar - draggable (extends to top edge) */}
       <div
         className="mb-3 flex cursor-pointer items-center justify-between pt-4"
-        data-tauri-drag-region
-        onDoubleClick={toggleMaximize}
       >
-        <div className="flex items-center gap-2 pointer-events-none" data-tauri-drag-region>
+        <div className="flex flex-1 items-center gap-2" data-tauri-drag-region onDoubleClick={toggleMaximize}>
           {mode === 'generate' ? (
             <QrCode size={16} className="text-primary" />
           ) : (

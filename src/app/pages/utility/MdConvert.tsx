@@ -300,10 +300,8 @@ ${bodyHtml}
       {/* Title bar — draggable */}
       <div
         className="flex shrink-0 cursor-pointer items-center justify-between px-4 pt-3 pb-2"
-        data-tauri-drag-region
-        onDoubleClick={toggleMaximize}
       >
-        <div className="pointer-events-none flex items-center gap-2" data-tauri-drag-region>
+        <div className="flex flex-1 items-center gap-2" data-tauri-drag-region onDoubleClick={toggleMaximize}>
           <ArrowLeftRight size={14} className="text-primary" />
           <span className="text-sm font-medium text-text-primary">
             {t('mdQuick.title', { defaultValue: 'Quick Convert' })}
@@ -311,7 +309,7 @@ ${bodyHtml}
         </div>
         <button
           onClick={closeWindow}
-          className="pointer-events-auto rounded p-1 text-text-muted transition hover:bg-bg-hover hover:text-text-primary"
+          className="rounded p-1 text-text-muted transition hover:bg-bg-hover hover:text-text-primary"
         >
           <X size={14} />
         </button>

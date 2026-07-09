@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Camera, Clock, Download, Eye, Trash2, X } from 'lucide-react'
 import { formatShortcut } from '../../shared/utils'
+import { useShortcutStore } from '../../core/shortcuts'
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -22,7 +23,11 @@ export default function Screenshot() {
   const { t } = useTranslation()
   const [history, setHistory] = useState<SessionCapture[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [shortcutText, setShortcutText] = useState('Ctrl+Shift+S')
+  // Reactive shortcut subscription — stays in sync when user changes it in Settings
+  const shortcutText = useShortcutStore((s) => {
+    const sc = s.shortcuts.find((sc) => sc.action === 'open-screenshot')
+    return sc?.enabled ? formatShortcut(sc.keys) : ''
+  })
   const [previewItem, setPreviewItem] = useState<SessionCapture | null>(null)
   const [previewBase64, setPreviewBase64] = useState<string>('')
   const [thumbnailCache, setThumbnailCache] = useState<Record<string, string>>({})
@@ -40,18 +45,6 @@ export default function Screenshot() {
       setThumbnailCache({})
       thumbnailCacheRef.current = {}
       setFailedThumbs(new Set())
-    } catch { /* ignore */ }
-  }, [])
-
-  // Read shortcut config
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('a7box-shortcuts')
-      if (stored) {
-        const shortcuts = JSON.parse(stored) as Array<{ action: string; keys: string; enabled: boolean }>
-        const sc = shortcuts.find((s) => s.action === 'open-screenshot')
-        if (sc?.enabled) setShortcutText(formatShortcut(sc.keys))
-      }
     } catch { /* ignore */ }
   }, [])
 

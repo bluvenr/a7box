@@ -4,7 +4,7 @@
  * Features: drag to move, double-click to maximize, window control buttons
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Minus, Square, X, Maximize2 } from 'lucide-react'
 
@@ -68,6 +68,32 @@ export function TitleBar() {
     getCurrentWindow().hide()
   }, [])
 
+  // Track last click time for reliable double-click detection.
+  // We avoid the native `dblclick` event because `startDragging()` on mousedown
+  // enters a native drag loop that may swallow the second mouseup, preventing
+  // `dblclick` from firing on the webview.
+  const lastClickRef = useRef(0)
+
+  const handleMouseDown = useCallback(async (e: React.MouseEvent) => {
+    if (e.button !== 0) return // left click only
+    if (!isTauri()) return
+
+    // Double-click detection via click timestamp (within 400ms)
+    const now = Date.now()
+    if (now - lastClickRef.current < 400) {
+      lastClickRef.current = 0
+      const { getCurrentWindow } = await import('@tauri-apps/api/window')
+      getCurrentWindow().toggleMaximize()
+      return
+    }
+    lastClickRef.current = now
+
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window')
+      await getCurrentWindow().startDragging()
+    } catch { /* ignore */ }
+  }, [])
+
   const isMac = platform === 'macos'
 
   // macOS: native title bar (tauri.macos.conf.json → titleBarStyle: "Transparent")
@@ -77,10 +103,10 @@ export function TitleBar() {
   return (
     <div
       className="flex h-8 shrink-0 select-none items-center bg-bg-elevated"
-      data-tauri-drag-region
+      onMouseDown={handleMouseDown}
     >
       {/* Drag region (fills remaining space) */}
-      <div className="flex-1" data-tauri-drag-region />
+      <div className="flex-1" />
 
       {/* Windows/Linux: window control buttons on the right */}
       <div className="flex h-full shrink-0 items-center" onMouseDown={(e) => e.stopPropagation()}>

@@ -130,18 +130,25 @@ function ConfirmModal({
   onCancel: () => void
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
+  const confirmRef = useRef<HTMLButtonElement>(null)
 
-  // ESC to cancel
+  // ESC to cancel, Enter to confirm (skip Enter when focus is on a text input)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel()
+      if (e.key === 'Escape') { onCancel(); return }
+      if (e.key === 'Enter') {
+        const tag = (e.target as HTMLElement)?.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+        onConfirm()
+      }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [onCancel])
+  }, [onCancel, onConfirm])
 
+  // Focus confirm button on mount
   useEffect(() => {
-    cardRef.current?.focus()
+    setTimeout(() => confirmRef.current?.focus(), 50)
   }, [])
 
   const Icon = opts.danger ? AlertTriangle : Info
@@ -190,6 +197,7 @@ function ConfirmModal({
             {opts.cancelText || 'Cancel'}
           </button>
           <button
+            ref={confirmRef}
             onClick={onConfirm}
             className={`rounded-lg px-4 py-1.5 text-xs font-medium text-white cursor-pointer transition ${btnColor}`}
           >
@@ -211,18 +219,25 @@ function AlertModal({
   onOk: () => void
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
+  const okRef = useRef<HTMLButtonElement>(null)
 
-  // ESC or Enter to dismiss
+  // ESC or Enter to dismiss (skip Enter when focus is on a text input)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' || e.key === 'Enter') onOk()
+      if (e.key === 'Escape') { onOk(); return }
+      if (e.key === 'Enter') {
+        const tag = (e.target as HTMLElement)?.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+        onOk()
+      }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onOk])
 
+  // Focus OK button on mount
   useEffect(() => {
-    cardRef.current?.focus()
+    setTimeout(() => okRef.current?.focus(), 50)
   }, [])
 
   const Icon = opts.icon === 'warning' ? AlertTriangle : Info
@@ -231,7 +246,7 @@ function AlertModal({
   return (
     <div
       className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      onClick={onOk}
+      onClick={(e) => { if (e.target === e.currentTarget) onOk() }}
       style={{ animation: 'dialogFadeIn 0.15s ease-out' }}
     >
       <div
@@ -263,6 +278,7 @@ function AlertModal({
         {/* OK button */}
         <div className="flex justify-end mt-4">
           <button
+            ref={okRef}
             onClick={onOk}
             className="rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-white hover:bg-primary/90 cursor-pointer transition"
           >

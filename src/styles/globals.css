@@ -63,6 +63,12 @@
   box-sizing: border-box;
 }
 
+/* Dark-mode: invert native date/time input icons so they are visible */
+::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
 /* Interactive elements should show pointer cursor */
 button:not(:disabled),
 select,
@@ -206,6 +212,16 @@ input[type="number"] {
   border-radius: 4px;
 }
 
+/* Drawer slide-in animation */
+@keyframes drawerSlideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes drawerSlideOut {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
 /* Toast slide-in animation */
 @keyframes toastSlideIn {
   from { opacity: 0; transform: translateX(100%); }
@@ -220,6 +236,12 @@ input[type="number"] {
 @keyframes dialogScaleIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/* Bottom-left popup slide-up animation */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Light theme overrides */

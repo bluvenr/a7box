@@ -132,14 +132,6 @@ export function UpdateNotification() {
           </>
         )}
       </div>
-
-      {/* Inline keyframes for slide-up animation */}
-      <style>{`
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   )
 }

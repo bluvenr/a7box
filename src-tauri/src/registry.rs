@@ -19,22 +19,21 @@ pub fn setup_context_menu(_app: &tauri::AppHandle) {
             }
         };
         let exe_str = exe.display().to_string();
-        println!("[A7Box Registry] Exe path: {}", exe_str);
 
         let is_zh = sys_locale::get_locale()
             .map(|l| l.starts_with("zh"))
             .unwrap_or(false);
 
         match write_registry_entries(&exe_str, is_zh) {
-            Ok(()) => println!("[A7Box Registry] HTTP server menu registered (zh={})", is_zh),
+            Ok(()) => {}
             Err(e) => eprintln!("[A7Box Registry] Failed: {}", e),
         }
         match write_image_registry_entries(&exe_str, is_zh) {
-            Ok(()) => println!("[A7Box Registry] Image compress menu registered (zh={})", is_zh),
+            Ok(()) => {}
             Err(e) => eprintln!("[A7Box Registry] Failed: {}", e),
         }
         match write_image_convert_registry_entries(&exe_str, is_zh) {
-            Ok(()) => println!("[A7Box Registry] Image convert menu registered (zh={})", is_zh),
+            Ok(()) => {}
             Err(e) => eprintln!("[A7Box Registry] Failed: {}", e),
         }
     }
@@ -49,7 +48,7 @@ pub fn setup_context_menu(_app: &tauri::AppHandle) {
             }
         };
         match setup_macos_quick_actions(&exe) {
-            Ok(()) => println!("[A7Box macOS] Quick Actions registered successfully"),
+            Ok(()) => {}
             Err(e) => eprintln!("[A7Box macOS] Failed to register Quick Actions: {}", e),
         }
     }
@@ -259,8 +258,6 @@ fn setup_macos_quick_actions(exe_path: &std::path::Path) -> Result<(), String> {
 
         std::fs::write(workflow_dir.join("document.wflow"), wflow_xml.as_bytes())
             .map_err(|e| format!("Write {}.wflow: {}", name, e))?;
-
-        println!("[A7Box macOS] Installed Quick Action: {} ({})", name, label);
     }
 
     Ok(())

@@ -250,6 +250,7 @@ pub fn run() {
             // Utility Windows
             commands::create_utility_window,
             commands::close_utility_window,
+            commands::show_notification_toast,
             // Deep Link: pending HTTP serve directory
             get_pending_http_serve_dir,
             // Deep Link: pending image file for compression
@@ -321,6 +322,7 @@ pub fn run() {
                 ("clipboard-to-json", "CommandOrControl+Shift+J"),
                 ("clipboard-to-code-minify", "CommandOrControl+Shift+K"),
                 ("open-color-picker", "CommandOrControl+Shift+C"),
+                ("quick-create-reminder", "CommandOrControl+Shift+R"),
             ];
             let registry = &app.state::<ShortcutRegistry>().0;
             {
@@ -353,7 +355,7 @@ pub fn run() {
                                         .resizable(false)
                                         .decorations(false)
                                         .always_on_top(true)
-                                        .visible(true)
+                                        .visible(false) // hidden until React emits util-window-ready
                                         .skip_taskbar(true)
                                         .center()
                                         .background_color(tauri::window::Color(0, 0, 0, 0))
@@ -366,14 +368,14 @@ pub fn run() {
                                         .resizable(false)
                                         .decorations(false)
                                         .always_on_top(true)
-                                        .visible(true)
+                                        .visible(false) // hidden until React emits util-window-ready
                                         .skip_taskbar(true)
                                         .center()
                                         .background_color(tauri::window::Color(0, 0, 0, 0))
                                         .initialization_script(crate::lang_init_script(app_ref));
-                                    if let Ok(win) = builder.build()
+                                    if let Ok(_win) = builder.build()
                                     {
-                                        let _ = win.set_focus();
+                                        // Window shown by util-window-ready listener
                                     }
                                 }
                             }
@@ -503,6 +505,26 @@ pub fn run() {
                                         eprintln!("[WARN] Failed to start screen pick: {}", e);
                                     }
                                 });
+                            }
+                            "quick-create-reminder" => {
+                                use tauri::{WebviewUrl, WebviewWindowBuilder};
+                                let label = "reminder-quick";
+                                if let Some(existing) = app_ref.get_webview_window(label) {
+                                    let _ = existing.close();
+                                }
+                                if let Ok(_win) = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/reminder-quick".into()))
+                                    .title("")
+                                    .inner_size(480.0, 380.0)
+                                    .resizable(false)
+                                    .decorations(false)
+                                    .always_on_top(true)
+                                    .visible(false)
+                                    .skip_taskbar(true)
+                                    .center()
+                                    .background_color(tauri::window::Color(10, 10, 11, 255))
+                                    .initialization_script(crate::lang_init_script(app_ref))
+                                    .build()
+                                {}
                             }
                             _ => {}
                         }

@@ -1014,6 +1014,26 @@ pub fn update_shortcut(app: AppHandle, action: String, keys: String, enabled: bo
                             }
                         });
                     }
+                    "quick-create-reminder" => {
+                        use tauri::{WebviewUrl, WebviewWindowBuilder};
+                        let label = "reminder-quick";
+                        if let Some(existing) = app_ref.get_webview_window(label) {
+                            let _ = existing.close();
+                        }
+                        if let Ok(_win) = WebviewWindowBuilder::new(app_ref, label, WebviewUrl::App("/utility/reminder-quick".into()))
+                            .title("")
+                            .inner_size(480.0, 380.0)
+                            .resizable(false)
+                            .decorations(false)
+                            .always_on_top(true)
+                            .visible(false)
+                            .skip_taskbar(true)
+                            .center()
+                            .background_color(tauri::window::Color(10, 10, 11, 255))
+                            .initialization_script(crate::lang_init_script(app_ref))
+                            .build()
+                        {}
+                    }
                     _ => {}
                 }
                 // Also emit to frontend
@@ -1067,6 +1087,80 @@ pub fn close_utility_window(app: AppHandle, label: String) -> Result<(), String>
         window.close().map_err(|e| format!("Failed to close window: {}", e))?;
     }
     Ok(())
+}
+
+// ============ Notification Toast Window ============
+
+/// Create or show the always-on-top notification toast window.
+/// Positioned at the bottom-right corner of the primary monitor.
+/// Returns true if a new window was created, false if an existing one was shown.
+#[tauri::command]
+pub async fn show_notification_toast(app: AppHandle) -> bool {
+    let label = "notification-toast";
+
+    // If window already exists, just show + focus
+    if let Some(existing) = app.get_webview_window(label) {
+        let _ = existing.show();
+        let _ = existing.set_focus();
+        return false;
+    }
+
+    // Create new window positioned at bottom-right of primary monitor
+    if let Some(monitor) = app.primary_monitor().ok().flatten() {
+        let mon_size = monitor.size();
+        let mon_pos = monitor.position();
+        let scale = monitor.scale_factor() as f64; // physical → logical conversion
+        let win_w = 380.0;
+        let win_h = 160.0;
+        let margin = 20.0;
+        // monitor.size()/position() return physical pixels;
+        // WebviewWindowBuilder::position/inner_size expect logical pixels.
+        let x = (mon_pos.x as f64 + mon_size.width as f64) / scale - win_w - margin;
+        let y = (mon_pos.y as f64 + mon_size.height as f64) / scale - win_h - margin;
+
+        use tauri::{WebviewUrl, WebviewWindowBuilder};
+        // transparent() requires macos-private-api feature on macOS; rely on background_color alpha on macOS
+        #[cfg(not(target_os = "macos"))]
+        let result = WebviewWindowBuilder::new(&app, label, WebviewUrl::App("/utility/notification-toast".into()))
+            .title("")
+            .inner_size(win_w, win_h)
+            .position(x, y)
+            .resizable(false)
+            .decorations(false)
+            .shadow(false)
+            .always_on_top(true)
+            .visible(false)
+            .skip_taskbar(true)
+            .transparent(true)
+            .background_color(tauri::window::Color(0, 0, 0, 0))
+            .initialization_script(crate::utility_init_script(&app))
+            .build();
+        #[cfg(target_os = "macos")]
+        let result = WebviewWindowBuilder::new(&app, label, WebviewUrl::App("/utility/notification-toast".into()))
+            .title("")
+            .inner_size(win_w, win_h)
+            .position(x, y)
+            .resizable(false)
+            .decorations(false)
+            .shadow(false)
+            .always_on_top(true)
+            .visible(false)
+            .skip_taskbar(true)
+            .background_color(tauri::window::Color(0, 0, 0, 0))
+            .initialization_script(crate::utility_init_script(&app))
+            .build();
+        match result {
+            Ok(_) => {
+                return true;
+            }
+            Err(e) => {
+                eprintln!("[NotificationToast] Failed to create window: {}", e);
+                return false;
+            }
+        }
+    }
+
+    false
 }
 
 // ============ Color Picker Commands ============

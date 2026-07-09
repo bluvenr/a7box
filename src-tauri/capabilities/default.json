@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main", "qr-quick", "md-convert", "json-quick", "code-quick", "color-quick", "live-picker", "pick-overlay", "utility-palette", "utility-*", "capture-preview*"],
+  "windows": ["main", "qr-quick", "md-convert", "json-quick", "code-quick", "color-quick", "reminder-quick", "notification-toast", "live-picker", "pick-overlay", "utility-palette", "utility-*", "capture-preview*"],
   "permissions": [
     "core:default",
     "opener:default",
@@ -27,6 +27,7 @@
     "core:window:allow-set-position",
     "core:window:allow-is-maximized",
     "core:window:allow-set-title",
+    "core:window:allow-set-always-on-top",
     "dialog:default",
     "dialog:allow-open",
     "dialog:allow-save",

@@ -17,8 +17,11 @@ import { TitleBar } from '../../components/TitleBar'
 import { ToastContainer } from '../../components/Toast'
 import { DialogContainer } from '../../components/Dialog'
 import { UpdateNotification } from '../../components/UpdateNotification'
+import { ReminderBanner } from '../../components/ReminderBanner'
 import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
 import { useHttpServiceStatus } from '../../modules/http-server/httpServiceStore'
+import { useReminderStore } from '../../modules/reminder/reminderStore'
+import { startReminderChecker, stopReminderChecker, rescheduleAllReminders, setupToastListeners } from '../../modules/reminder/notificationBridge'
 import { useSettingsStore } from '../../core/settings'
 import { useUpdaterStore } from '../../core/updater'
 import { recordUsage } from '../../shared/utils'
@@ -90,6 +93,47 @@ export function MainLayout() {
   // Auto-check for updates on startup (if enabled in settings)
   const checkUpdateOnStart = useSettingsStore((s) => s.checkUpdateOnStart)
   const checkForUpdates = useUpdaterStore((s) => s.checkForUpdates)
+
+  // Global reminder checker + notification click listener
+  useEffect(() => {
+    rescheduleAllReminders()
+    startReminderChecker()
+
+    // Setup toast window event listeners (action buttons, ready/closed signals)
+    let cleanupToast: (() => void) | null = null
+    setupToastListeners().then((cleanup) => {
+      cleanupToast = cleanup
+    })
+
+    // When user clicks a notification → navigate to reminder page
+    let unlistenClicked: (() => void) | null = null
+    if (isTauri()) {
+      import('@tauri-apps/api/event').then(({ listen }) => {
+        listen<{ reminderId: string }>('notification-reminder-clicked', (evt) => {
+          navigate('/reminder', { state: { openReminderId: evt.payload.reminderId } })
+        }).then((fn) => { unlistenClicked = fn })
+      })
+    }
+
+    // When QuickCreate window creates a reminder → reload store from localStorage
+    let unlistenCreated: (() => void) | null = null
+    if (isTauri()) {
+      import('@tauri-apps/api/event').then(({ listen }) => {
+        listen('reminder-created', () => {
+          useReminderStore.getState().loadFromStorage()
+          rescheduleAllReminders()
+        }).then((fn) => { unlistenCreated = fn })
+      })
+    }
+
+    return () => {
+      stopReminderChecker()
+      cleanupToast?.()
+      unlistenClicked?.()
+      unlistenCreated?.()
+    }
+  }, [navigate])
+
   useEffect(() => {
     if (checkUpdateOnStart) {
       // Delay slightly so UI is fully rendered first
@@ -227,6 +271,9 @@ export function MainLayout() {
 
       {/* Update notification popup (bottom-left) */}
       <UpdateNotification />
+
+      {/* Reminder due banner (top-center) */}
+      <ReminderBanner />
     </div>
   )
 }
@@ -287,8 +334,19 @@ function ModuleNavItem({
   const isActive = location.pathname === `/${moduleId}`
   const p2pRunning = useP2PStatus((s) => s.running)
   const httpCount = useHttpServiceStatus((s) => s.count)
+  const reminderPending = useReminderStore((s) => s.getOverdueCount())
+
+  // Periodic tick: refresh overdue badge every 60s (Date.now() changes without store mutation)
+  const [, setReminderTick] = useState(0)
+  useEffect(() => {
+    if (moduleId !== 'reminder') return
+    const id = setInterval(() => setReminderTick((n) => n + 1), 60_000)
+    return () => clearInterval(id)
+  }, [moduleId])
+
   const showDot = moduleId === 'p2p-transfer' && p2pRunning
   const httpActive = moduleId === 'http-server' && httpCount > 0
+  const reminderBadge = moduleId === 'reminder' && reminderPending > 0
 
   return (
     <button
@@ -311,6 +369,11 @@ function ModuleNavItem({
         <span className={`flex items-center gap-1 ${collapsed ? 'absolute -top-0.5 -right-0.5' : 'ml-auto'}`}>
           <span className="h-2 w-2 shrink-0 rounded-full bg-green-400" />
           <span className="text-[10px] font-medium leading-none text-green-400">{httpCount}</span>
+        </span>
+      )}
+      {reminderBadge && (
+        <span className={`flex items-center justify-center rounded-full bg-error px-1.5 py-0.5 text-[9px] font-bold text-white ${collapsed ? 'absolute -top-0.5 -right-0.5 min-w-[16px]' : 'ml-auto min-w-[18px]'}`}>
+          {reminderPending}
         </span>
       )}
     </button>

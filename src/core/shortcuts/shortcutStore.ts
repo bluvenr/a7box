@@ -93,6 +93,15 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
     enabled: true,
     moduleId: 'qr-code',
   },
+  // ── Quick create ──
+  {
+    action: 'quick-create-reminder',
+    labelI18n: 'settings.shortcutQuickReminder',
+    descriptionI18n: 'settings.shortcutQuickReminderDesc',
+    keys: 'CommandOrControl+Shift+R',
+    enabled: true,
+    moduleId: 'reminder',
+  },
 ]
 
 function loadShortcuts(): ShortcutConfig[] {

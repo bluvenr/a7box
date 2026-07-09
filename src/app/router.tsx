@@ -30,6 +30,7 @@ const TextDiff = lazy(() => import('../modules/text-diff/TextDiff'))
 const Screenshot = lazy(() => import('../modules/screenshot/Screenshot'))
 const HttpServer = lazy(() => import('../modules/http-server/HttpServer'))
 const P2PTransfer = lazy(() => import('../modules/p2p-transfer/P2PTransfer'))
+const Reminder = lazy(() => import('../modules/reminder/Reminder'))
 
 // Utility windows (standalone, no layout)
 const QrQuick = lazy(() => import('./pages/utility/QrQuick'))
@@ -41,6 +42,8 @@ const LivePicker = lazy(() => import('./pages/utility/LivePicker'))
 const Palette = lazy(() => import('./pages/utility/Palette'))
 const RegionPicker = lazy(() => import('./pages/utility/RegionPicker'))
 const CapturePreview = lazy(() => import('./pages/utility/CapturePreview'))
+const ReminderQuick = lazy(() => import('../modules/reminder/QuickCreate'))
+const NotificationToast = lazy(() => import('./pages/utility/NotificationToast'))
 
 // Wrap a module component with ErrorBoundary + Suspense
 function ModuleRoute({ moduleId, children }: { moduleId: string; children: React.ReactNode }) {
@@ -157,6 +160,11 @@ export const mainAppChildren: RouteObject[] = [
     handle: { moduleId: 'p2p-transfer' },
     element: <ModuleRoute moduleId="p2p-transfer"><P2PTransfer /></ModuleRoute>,
   },
+  {
+    path: 'reminder',
+    handle: { moduleId: 'reminder' },
+    element: <ModuleRoute moduleId="reminder"><Reminder /></ModuleRoute>,
+  },
 ]
 
 // Router configuration
@@ -231,6 +239,22 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <CapturePreview />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/reminder-quick',
+    element: (
+      <Suspense fallback={null}>
+        <ReminderQuick />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/notification-toast',
+    element: (
+      <Suspense fallback={null}>
+        <NotificationToast />
       </Suspense>
     ),
   },

@@ -7,7 +7,7 @@
  * - Context tracks which paths have been visited across navigation.
  */
 
-import { createContext, useContext, useState, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
 import { useMatch } from 'react-router-dom'
 import type { RouteObject } from 'react-router-dom'
 import { useModuleRegistry } from '../../core/registry'
@@ -68,20 +68,29 @@ function CachedRoute({ path, index, moduleId, children }: {
   const match = useMatch(pattern)
   const isActive = !!match
 
-  // Track first visit
+  // Track first visit — use a local ref to avoid depending on `visited`
+  // (which would re-fire this effect every time any route's visited state changes).
+  // markVisited is stable (useCallback []) and uses functional setState internally,
+  // so correctness is preserved without `visited` in the dependency array.
   const { visited, markVisited, unmarkVisited } = useContext(VisitedContext)
-  if (isActive && !visited.has(pattern)) {
-    markVisited(pattern)
-  }
+  const didMarkRef = useRef(false)
+  useEffect(() => {
+    if (isActive && !didMarkRef.current) {
+      didMarkRef.current = true
+      markVisited(pattern)
+    }
+  }, [isActive, pattern, markVisited])
 
   // Module-level enable check (skip for non-module routes like home/settings)
   const enabledModuleIds = useModuleRegistry((s) => s.enabledModuleIds)
   const isEnabled = !moduleId || enabledModuleIds.has(moduleId)
 
   // When module is disabled, clear visited record so re-enable requires actual navigation
-  if (moduleId && !isEnabled && visited.has(pattern)) {
-    unmarkVisited(pattern)
-  }
+  useEffect(() => {
+    if (moduleId && !isEnabled && visited.has(pattern)) {
+      unmarkVisited(pattern)
+    }
+  }, [moduleId, isEnabled, pattern, visited, unmarkVisited])
 
   // Decide visibility: must be visited, enabled, and (currently active or already mounted)
   const hasBeenVisited = visited.has(pattern)

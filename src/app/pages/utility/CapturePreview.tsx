@@ -5,6 +5,7 @@
  */
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { X } from 'lucide-react'
 
 export default function CapturePreview() {
   const { t } = useTranslation()
@@ -94,9 +95,11 @@ export default function CapturePreview() {
     setScale(prev => Math.max(0.1, Math.min(10, prev * (e.deltaY < 0 ? 1.15 : 0.87))))
   }, [])
 
-  // Drag to pan
+  // Drag to pan (skip when clicking on the drag region / title bar)
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return
+    // Don't start image pan when interacting with the drag region (title bar)
+    if ((e.target as HTMLElement).closest('[data-tauri-drag-region]')) return
     setDragging(true)
     dragStart.current = { x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y }
   }, [offset])
@@ -110,8 +113,9 @@ export default function CapturePreview() {
 
   const onMouseUp = useCallback(() => setDragging(false), [])
 
-  // Double-click to reset
-  const onDoubleClick = useCallback(() => {
+  // Double-click to reset (skip when on drag region to let Tauri handle maximize)
+  const onDoubleClick = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('[data-tauri-drag-region]')) return
     setScale(initialScaleRef.current)
     setOffset({ x: 0, y: 0 })
   }, [])
@@ -130,42 +134,33 @@ export default function CapturePreview() {
     <div ref={containerRef}
       onWheel={onWheel} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
       onDoubleClick={onDoubleClick}
-      style={{ width: '100vw', height: '100vh', background: '#141416', overflow: 'hidden', position: 'relative', cursor: dragging ? 'grabbing' : 'grab' }}>
+      className={`relative h-screen w-screen overflow-hidden bg-bg-elevated ${dragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
 
       {/* Top bar */}
-      <div data-tauri-drag-region
-        onMouseDown={(e) => e.stopPropagation()}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 32, display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', padding: '0 8px', background: 'rgba(0,0,0,0.6)', zIndex: 10,
-        fontFamily: 'system-ui', fontSize: 11, color: 'rgba(255,255,255,0.5)', userSelect: 'none',
-        cursor: 'default' } as React.CSSProperties}>
-        <span data-tauri-drag-region>{pct}%</span>
+      <div className="absolute top-0 left-0 right-0 z-10 flex h-8 items-center justify-between bg-black/60 px-2 text-[11px] text-white/50 select-none">
+        <div data-tauri-drag-region className="flex-1">{pct}%</div>
         <button onClick={handleClose}
-          style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            borderRadius: 4, border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.5)',
-            cursor: 'pointer', fontSize: 14, transition: 'all 0.15s' } as React.CSSProperties}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.3)'; e.currentTarget.style.color = '#ef4444' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' }}>
-          ✕
+          className="flex h-5 w-5 items-center justify-center rounded text-white/50 transition-colors hover:bg-red-500/30 hover:text-red-500 cursor-pointer">
+          <X size={12} />
         </button>
       </div>
 
       {/* Image */}
       {imageSrc && (
-        <div style={{ position: 'absolute', top: '50%', left: '50%',
-          transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
-          transformOrigin: 'center', transition: dragging ? 'none' : 'transform 0.15s ease-out',
-          pointerEvents: 'none' }}>
-          <img src={imageSrc} alt="Preview" style={{ maxWidth: 'none', display: 'block', userSelect: 'none' }}
-            draggable={false} />
+        <div
+          className="absolute top-1/2 left-1/2 pointer-events-none"
+          style={{
+            transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${scale})`,
+            transformOrigin: 'center',
+            transition: dragging ? 'none' : 'transform 0.15s ease-out',
+          }}>
+          <img src={imageSrc} alt="Preview" className="block max-w-none select-none" draggable={false} />
         </div>
       )}
 
       {/* Zoom hint on first load */}
       {imageSrc && (
-        <div style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
-          background: 'rgba(0,0,0,0.5)', color: 'rgba(255,255,255,0.4)', fontFamily: 'system-ui',
-          fontSize: 10, padding: '3px 10px', borderRadius: 6, pointerEvents: 'none', userSelect: 'none' }}>
+        <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-md bg-black/50 px-2.5 py-1 text-[10px] text-white/40 select-none">
           {t('modules.screenshot.editor.previewHint', { defaultValue: 'Scroll to zoom · Drag to pan · Double-click reset · ESC close' })}
         </div>
       )}

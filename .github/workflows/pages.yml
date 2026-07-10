@@ -1,0 +1,50 @@
+name: Deploy Website to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pages/**'
+      - 'public/a7box-logo.png'
+      - 'public/favicon.png'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare site
+        run: |
+          mkdir -p _site
+          cp -r pages/* _site/
+          cp public/a7box-logo.png _site/ 2>/dev/null || true
+          cp public/favicon.png _site/ 2>/dev/null || true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

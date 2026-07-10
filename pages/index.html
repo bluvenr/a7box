@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A7Box — Your Tactical Efficiency Weapon on Desktop</title>
+  <meta name="description" content="A 100% local, cross-platform developer toolbox — 18 built-in tools including screenshot, JSON formatter, QR code, image compression, color picker and more. ~10MB, no cloud. Built with Tauri 2 + React 19.">
+  <meta name="author" content="bluvenr">
+  <meta name="robots" content="index, follow">
+  <meta name="keywords" content="developer toolbox, local tools, JSON formatter, screenshot tool, QR code generator, color picker, Tauri, desktop app, offline tools, cross-platform">
+  <link rel="canonical" href="https://bluvenr.github.io/a7box/">
+  <link rel="alternate" hreflang="en" href="https://bluvenr.github.io/a7box/">
+  <link rel="alternate" hreflang="zh" href="https://bluvenr.github.io/a7box/">
+  <link rel="alternate" hreflang="x-default" href="https://bluvenr.github.io/a7box/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="A7Box — Tactical Efficiency Weapon on Desktop">
+  <meta property="og:description" content="18 built-in dev tools in one ~10MB app. 100% local. No cloud. No tracking. Cross-platform.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://bluvenr.github.io/a7box/">
+  <meta property="og:image" content="https://bluvenr.github.io/a7box/a7box-logo.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="A7Box Logo">
+  <meta property="og:site_name" content="A7Box">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="zh_CN">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="A7Box — Tactical Efficiency Weapon on Desktop">
+  <meta name="twitter:description" content="18 built-in dev tools in one ~10MB app. 100% local. No cloud. No tracking. Cross-platform.">
+  <meta name="twitter:image" content="https://bluvenr.github.io/a7box/a7box-logo.png">
+  <meta name="twitter:image:alt" content="A7Box Logo">
+
+  <meta name="theme-color" content="#08090c">
+  <link rel="icon" href="favicon.png" type="image/png">
+
+  <!-- Structured Data: SoftwareApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "A7Box",
+    "description": "A 100% local, cross-platform developer toolbox with 18 built-in tools including screenshot, JSON formatter, QR code, image compression, color picker and more.",
+    "url": "https://bluvenr.github.io/a7box/",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Windows, macOS, Linux",
+    "softwareVersion": "latest",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "downloadUrl": "https://github.com/bluvenr/a7box/releases/latest",
+    "license": "https://github.com/bluvenr/a7box/blob/main/LICENSE",
+    "author": {
+      "@type": "Person",
+      "name": "bluvenr"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "1"
+    }
+  }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script>
+  var _hmt = _hmt || [];
+  (function() {
+    var hm = document.createElement("script");
+    hm.src = "https://hm.baidu.com/hm.js?7130bad9bf55c61171e5d258b2620bd0";
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(hm, s);
+  })();
+  </script>
+</head>
+<body>
+
+<!-- Skip to content (Accessibility) -->
+<a href="#hero" class="skip-link" data-i18n="a11y.skip">Skip to content</a>
+
+<!-- ── Navigation ── -->
+<nav class="nav" id="nav" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a href="#" class="nav-brand" aria-label="A7Box home">
+      <img src="a7box-logo.png" alt="A7Box" width="28" height="28">
+      <span>A7Box</span>
+    </a>
+    <div class="nav-links" id="navLinks" role="navigation">
+      <a href="#features" data-i18n="nav.features">Features</a>
+      <a href="#tools" data-i18n="nav.tools">Tools</a>
+      <a href="#compare" data-i18n="nav.compare">Compare</a>
+      <a href="#story" data-i18n="nav.story">Story</a>
+      <a href="#download" class="nav-cta" data-i18n="nav.download">Download</a>
+    </div>
+    <div class="nav-right">
+      <button class="lang-toggle" id="langToggle" aria-label="Switch language">
+        <span class="lang-opt lang-en active">EN</span>
+        <span class="lang-sep">/</span>
+        <span class="lang-opt lang-zh">中</span>
+      </button>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main id="main-content" aria-label="Main content">
+
+<!-- ── Hero ── -->
+<section class="hero" id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="container hero-inner">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        <span data-i18n="hero.badge" id="heroBadge">Open Source (MIT)</span>
+      </div>
+      <h1 class="hero-title">
+        <span data-i18n="hero.title1">Your Tactical</span><br>
+        <span class="text-accent" data-i18n="hero.title2">Efficiency Weapon</span><br>
+        <span data-i18n="hero.title3">on Desktop</span>
+      </h1>
+      <p class="hero-subtitle" data-i18n="hero.subtitle">
+        An all-in-one developer toolbox that runs <strong>100% locally</strong> —
+        18 built-in tools in a ~10MB app. No cloud. No tracking. No account required.
+      </p>
+      <div class="hero-actions">
+        <a href="https://github.com/bluvenr/a7box/releases/latest" class="btn btn-primary" id="heroDownloadBtn" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span data-i18n="hero.download">Download Now</span>
+        </a>
+        <a href="https://github.com/bluvenr/a7box" class="btn btn-ghost" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span data-i18n="hero.github">View on GitHub</span>
+        </a>
+      </div>
+      <div class="hero-platforms">
+        <span data-i18n="hero.available">Available for:</span>
+        <div class="platform-icons">
+          <span class="platform-tag" data-i18n="hero.win">Windows</span>
+          <span class="platform-tag" data-i18n="hero.mac">macOS</span>
+          <span class="platform-tag">Linux</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="app-screenshot-wrapper">
+        <img src="imgs/app-home-page-en.png" alt="A7Box interface - English" class="app-screenshot" data-lang="en" loading="eager">
+        <img src="imgs/app-home-page-zh.png" alt="A7Box 界面 - 中文" class="app-screenshot" data-lang="zh" loading="eager">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Privacy Pledge ── -->
+<section class="privacy-pledge" id="privacy">
+  <div class="container">
+    <div class="pledge-card">
+      <div class="pledge-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <h2 class="pledge-title" data-i18n="pledge.title">Privacy First — By Design, Not by Policy</h2>
+      <p class="pledge-text" data-i18n="pledge.text">
+        A7Box is <strong>100% local</strong>. Every tool — JSON formatting, screenshot capture,
+        hash generation, file compression — runs entirely on your machine.
+        <strong>No data ever leaves your computer.</strong>
+        No network requests. No telemetry. No account required.
+      </p>
+      <div class="pledge-badges">
+        <span class="pledge-badge"><span class="pledge-check">✓</span> <span data-i18n="pledge.b1">Zero Network Requests</span></span>
+        <span class="pledge-badge"><span class="pledge-check">✓</span> <span data-i18n="pledge.b2">Zero Telemetry</span></span>
+        <span class="pledge-badge"><span class="pledge-check">✓</span> <span data-i18n="pledge.b3">Zero Account Required</span></span>
+        <span class="pledge-badge"><span class="pledge-check">✓</span> <span data-i18n="pledge.b4">Open Source &amp; Auditable</span></span>
+      </div>
+      <p class="pledge-quote" data-i18n="pledge.quote">
+        "In an era where every app wants your data, A7Box respects a simple principle:
+        <strong>your tools should work for you, not against you.</strong>"
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ── -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag" data-i18n="features.tag">Core Highlights</span>
+      <h2 class="section-title" data-i18n="features.title">Built Different</h2>
+      <p class="section-desc" data-i18n="features.desc">Every feature is designed with one goal: maximum output with minimum overhead.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <h3 data-i18n="features.f1.title">Cross-Platform</h3>
+        <p data-i18n="features.f1.desc">Native support for Windows, macOS, and Linux from a single Tauri 2 codebase. One app, three platforms.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 data-i18n="features.f2.title">100% Local & Offline</h3>
+        <p data-i18n="features.f2.desc">All processing on your machine. No internet required. No data ever leaves. Works in airplane mode.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <h3 data-i18n="features.f3.title">Featherweight ~10MB</h3>
+        <p data-i18n="features.f3.desc">Tauri + Rust backend — not Electron. ~10MB installer, minimal memory footprint, instant startup.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </div>
+        <h3 data-i18n="features.f4.title">Spotlight Command Palette</h3>
+        <p data-i18n="features.f4.desc">Fuzzy search, category filtering, keyboard navigation. Hit Ctrl+K — any tool, milliseconds away.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </div>
+        <h3 data-i18n="features.f5.title">Clipboard Quick Actions</h3>
+        <p data-i18n="features.f5.desc">Copy content, press a shortcut, floating window pops up to process — JSON, code, Markdown, QR.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <h3 data-i18n="features.f6.title">Full Screenshot Workflow</h3>
+        <p data-i18n="features.f6.desc">Capture → annotate (pen/rect/text/mosaic/blur) → pin to screen → session history. All in one flow.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <h3 data-i18n="features.f7.title">Pixel-Level Color Picker</h3>
+        <p data-i18n="features.f7.desc">Full-screen transparent overlay with real-time magnifier for precise pixel-level color sampling.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </div>
+        <h3 data-i18n="features.f8.title">LAN Collaboration</h3>
+        <p data-i18n="features.f8.desc">Serve any directory as a website over LAN. P2P transfer files with other A7Box devices on the same network.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <h3 data-i18n="features.f9.title">Highly Customizable</h3>
+        <p data-i18n="features.f9.desc">Custom shortcuts, drag-to-reorder modules, dark/light/system theme, i18n (English / Chinese).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Tools ── -->
+<section class="tools" id="tools">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag" data-i18n="tools.tag">Toolbox</span>
+      <h2 class="section-title" data-i18n="tools.title">18 Tools, One Box</h2>
+      <p class="section-desc" data-i18n="tools.desc">Accessible via sidebar, command palette (Ctrl+K), or global shortcuts.</p>
+    </div>
+    <div class="tool-categories" id="toolGrid"></div>
+  </div>
+</section>
+
+<!-- ── Comparison ── -->
+<section class="compare" id="compare">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag" data-i18n="compare.tag">Comparison</span>
+      <h2 class="section-title" data-i18n="compare.title">How It Compares</h2>
+      <p class="section-desc" data-i18n="compare.desc">See how A7Box stacks up against popular developer toolboxes.</p>
+    </div>
+    <div class="compare-wrapper">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th scope="col" data-i18n="compare.feature">Feature</th>
+            <th scope="col" class="compare-highlight">A7Box</th>
+            <th scope="col">DevToys</th>
+            <th scope="col">IT-Tools</th>
+            <th scope="col">He3</th>
+            <th scope="col">PowerToys</th>
+            <th scope="col">uTools</th>
+          </tr>
+        </thead>
+        <tbody id="compareBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── Brand Story ── -->
+<section class="story" id="story">
+  <div class="container">
+    <div class="story-layout">
+      <div class="story-visual">
+        <div class="story-emblem">
+          <div class="emblem-ring"></div>
+          <div class="emblem-letter">A7</div>
+        </div>
+        <div class="story-values">
+          <div class="value-item">
+            <span class="value-label" data-i18n="story.v1">Reliability</span>
+            <div class="value-bar"><div class="value-fill" style="--w:98%"></div></div>
+          </div>
+          <div class="value-item">
+            <span class="value-label" data-i18n="story.v2">Simplicity</span>
+            <div class="value-bar"><div class="value-fill" style="--w:95%"></div></div>
+          </div>
+          <div class="value-item">
+            <span class="value-label" data-i18n="story.v3">Efficiency</span>
+            <div class="value-bar"><div class="value-fill" style="--w:97%"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="story-content">
+        <span class="section-tag" data-i18n="story.tag">The Story Behind A7</span>
+        <h2 class="story-title" data-i18n="story.title">Engineering, Not Armament</h2>
+        <p data-i18n="story.p1">The name <strong>A7</strong> is deliberate. Take one of the most iconic engineering symbols in history — the AK-47. Extract its first letter <strong>A</strong> and its last digit <strong>7</strong>. You get <strong>A7</strong>.</p>
+        <p data-i18n="story.p2">Not for what it represents as a weapon, but for what it stands for as engineering: <strong>reliability, simplicity, and efficiency</strong>. Maximum output with minimum overhead.</p>
+        <p data-i18n="story.p3">The <strong>"Box"</strong> completes the picture: one container, a full arsenal of tools. From JSON formatting to screenshots, from file compression to LAN transfer — everything a developer reaches for daily, unified in a single ~10MB application.</p>
+        <p class="story-slogan" data-i18n="story.slogan">That's why our slogan reads: <em>Your Tactical Efficiency Weapon on Desktop.</em></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Tech Stack ── -->
+<section class="tech-stack" id="tech">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag" data-i18n="tech.tag">Under the Hood</span>
+      <h2 class="section-title" data-i18n="tech.title">Tech Stack</h2>
+    </div>
+    <div class="tech-grid">
+      <div class="tech-item reveal" style="--tech-color:#ffc857"><span class="tech-name">Tauri 2</span><span class="tech-role" data-i18n="tech.framework">Framework</span></div>
+      <div class="tech-item reveal" style="--tech-color:#61dafb"><span class="tech-name">React 19</span><span class="tech-role" data-i18n="tech.frontend">Frontend</span></div>
+      <div class="tech-item reveal" style="--tech-color:#dea584"><span class="tech-name">Rust</span><span class="tech-role" data-i18n="tech.backend">Backend</span></div>
+      <div class="tech-item reveal" style="--tech-color:#646cff"><span class="tech-name">Vite 7</span><span class="tech-role" data-i18n="tech.build">Build</span></div>
+      <div class="tech-item reveal" style="--tech-color:#3178c6"><span class="tech-name">TypeScript</span><span class="tech-role" data-i18n="tech.types">Type Safety</span></div>
+      <div class="tech-item reveal" style="--tech-color:#38bdf8"><span class="tech-name">Tailwind CSS</span><span class="tech-role" data-i18n="tech.styling">Styling</span></div>
+      <div class="tech-item reveal" style="--tech-color:#8b6f47"><span class="tech-name">Zustand</span><span class="tech-role" data-i18n="tech.state">State</span></div>
+      <div class="tech-item reveal" style="--tech-color:#68a6e1"><span class="tech-name">Monaco Editor</span><span class="tech-role" data-i18n="tech.editor">Editor</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Social Proof ── -->
+<div class="social-proof" id="socialProof">
+  <div class="container social-proof-inner">
+    <span class="proof-item">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)" stroke="none"><path d="M12 .587l3.668 7.431L24 9.75l-6 5.848L19.335 24 12 20.013 4.665 24 6 15.598 0 9.75l8.332-1.732z"/></svg>
+      <span id="starCount">—</span> <span data-i18n="proof.stars">Stars on GitHub</span>
+    </span>
+    <span class="proof-sep">·</span>
+    <span class="proof-item">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span data-i18n="proof.openSource">Free & Open Source</span>
+    </span>
+    <span class="proof-sep">·</span>
+    <span class="proof-item">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span data-i18n="proof.private">100% Private</span>
+    </span>
+  </div>
+</div>
+
+<!-- ── Download CTA ── -->
+<section class="download" id="download">
+  <div class="container">
+    <div class="download-card">
+      <div class="download-glow"></div>
+      <h2 class="download-title" data-i18n="download.title">Ready to Deploy?</h2>
+      <p class="download-desc" data-i18n="download.desc">Download A7Box — 18 tools, ~10MB, no cloud, no account. Just install and use.</p>
+      <div class="download-platforms">
+        <a href="https://github.com/bluvenr/a7box/releases/latest" class="btn btn-primary btn-lg download-btn" data-platform="win" data-default-text="download.win" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span data-i18n="download.win">Download for Windows</span>
+        </a>
+        <a href="https://github.com/bluvenr/a7box/releases/latest" class="btn btn-outline btn-lg download-btn" data-platform="mac" data-default-text="download.mac" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span data-i18n="download.mac">Download for macOS</span>
+        </a>
+        <a href="https://github.com/bluvenr/a7box/releases/latest" class="btn btn-outline btn-lg download-btn" data-platform="linux" data-default-text="download.linux" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span data-i18n="download.linux">Download for Linux</span>
+        </a>
+      </div>
+      <div class="download-formats">
+        <a class="format-tag" data-asset-ext=".exe" data-platform="win" rel="noopener">Windows: .exe / .msi / .zip</a>
+        <a class="format-tag" data-asset-ext=".dmg" data-platform="mac" rel="noopener">macOS: .dmg (Universal)</a>
+        <a class="format-tag" data-asset-ext=".AppImage" data-platform="linux" rel="noopener">Linux: .AppImage / .deb</a>
+      </div>
+      <p class="download-note" data-i18n="download.note">Auto-update supported — get notified when new versions are available.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+</main>
+
+<footer class="footer" aria-label="Site footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <img src="a7box-logo.png" alt="A7Box" width="24" height="24">
+      <span>A7Box</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/bluvenr/a7box" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/bluvenr/a7box/releases" target="_blank" rel="noopener" data-i18n="footer.releases">Releases</a>
+      <a href="https://github.com/bluvenr/a7box/issues" target="_blank" rel="noopener" data-i18n="footer.issues">Issues</a>
+      <a href="https://github.com/bluvenr/a7box/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+    </div>
+    <p class="footer-copy">&copy; 2026 A7Box. <span data-i18n="footer.license">Open source under MIT License.</span></p>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

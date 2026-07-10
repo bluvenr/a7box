@@ -19,6 +19,10 @@
   <img src="https://img.shields.io/github/v/release/bluvenr/a7box" alt="release" />
 </p>
 
+<p align="center">
+  <img src="pages/imgs/app-home-page-en.png" alt="A7Box Screenshot" width="720" />
+</p>
+
 ---
 
 ## 🔒 Privacy First

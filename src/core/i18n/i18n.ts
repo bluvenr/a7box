@@ -6,6 +6,7 @@ import i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import zhCN from '../../locales/zh-CN.json'
 import enUS from '../../locales/en-US.json'
+import { isTauri } from '../../shared/utils'
 
 // Supported languages
 export const SUPPORTED_LANGUAGES = [
@@ -14,10 +15,6 @@ export const SUPPORTED_LANGUAGES = [
 ] as const
 
 export type LanguageCode = typeof SUPPORTED_LANGUAGES[number]['code']
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
 
 // Detect system language
 export function detectLanguage(): LanguageCode {

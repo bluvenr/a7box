@@ -11,10 +11,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { QrCode, Copy, Download, X, FileText, ScanLine } from 'lucide-react'
 import QRCodeLib from 'qrcode'
 import jsQR from 'jsqr'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
+import { isTauri } from '../../../shared/utils'
 
 type Mode = 'generate' | 'decode'
 

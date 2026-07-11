@@ -6,109 +6,18 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ImageIcon, Upload, Download, X, Shield, Layers, RefreshCw, ZoomIn, ZoomOut, RotateCcw, AlertCircle, MousePointerClick } from 'lucide-react'
+import { Upload, Download, X, Shield, Layers, RefreshCw, AlertCircle, MousePointerClick, ImageIcon, RotateCcw, ZoomIn } from 'lucide-react'
 import { useToast } from '../../components/Toast'
 import { usePageActive } from '../../app/layouts/CachedOutlet'
-import { convertToIco, ICO_ALL_SIZES } from './icoEncoder'
-
-type OutputFormat = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/x-icon'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
-
-// Polling constants for right-click file loading
-const _POLL_MS = 300
-const _DEDUP_MS = 2000
-const _consumedPathTimes = new Map<string, number>()
-
-function isRecentlyConsumed(path: string): boolean {
-  const now = Date.now()
-  const last = _consumedPathTimes.get(path)
-  if (last && now - last < _DEDUP_MS) return true
-  _consumedPathTimes.set(path, now)
-  return false
-}
-
-const FORMATS: { value: OutputFormat; label: string; ext: string }[] = [
-  { value: 'image/png', label: 'PNG', ext: 'png' },
-  { value: 'image/jpeg', label: 'JPEG', ext: 'jpg' },
-  { value: 'image/webp', label: 'WebP', ext: 'webp' },
-  { value: 'image/x-icon', label: 'ICO', ext: 'ico' },
-]
-
-/** Infer original format label from file name extension */
-function getOriginalFormat(file: File): string {
-  const ext = file.name.split('.').pop()?.toLowerCase() || ''
-  const map: Record<string, string> = { png: 'PNG', jpg: 'JPEG', jpeg: 'JPEG', webp: 'WebP', bmp: 'BMP', gif: 'GIF', ico: 'ICO' }
-  return map[ext] || ext.toUpperCase()
-}
-
-interface ConvertResult {
-  id: string
-  originalFile: File
-  originalUrl: string
-  convertedBlob: Blob | null
-  convertedUrl: string | null
-  convertedSize: number | null
-  outputFormat: OutputFormat
-  status: 'pending' | 'converting' | 'done' | 'error'
-  error?: string
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
-}
-
-
-/** Convert image using Canvas (PNG/JPEG/WebP) or ICO encoder */
-async function convertImage(
-  file: File,
-  format: OutputFormat,
-  quality: number,
-  icoSizes: number[]
-): Promise<{ blob: Blob; url: string }> {
-  // ICO uses dedicated encoder
-  if (format === 'image/x-icon') {
-    const blob = await convertToIco(file, icoSizes)
-    return { blob, url: URL.createObjectURL(blob) }
-  }
-
-  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new window.Image()
-    const url = URL.createObjectURL(file)
-    image.onload = () => { URL.revokeObjectURL(url); resolve(image) }
-    image.onerror = reject
-    image.src = url
-  })
-
-  const canvas = document.createElement('canvas')
-  canvas.width = img.naturalWidth
-  canvas.height = img.naturalHeight
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Canvas not supported')
-
-  // JPEG doesn't support transparency - fill white background
-  if (format === 'image/jpeg') {
-    ctx.fillStyle = '#FFFFFF'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-  }
-
-  ctx.drawImage(img, 0, 0)
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (b) => b ? resolve(b) : reject(new Error('Conversion failed')),
-      format,
-      quality
-    )
-  })
-
-  return { blob, url: URL.createObjectURL(blob) }
-}
+import { isTauri } from '../../shared/utils'
+import { ICO_ALL_SIZES } from './icoEncoder'
+import {
+  type OutputFormat, type ConvertResult,
+  _POLL_MS, isRecentlyConsumed, FORMATS,
+  formatBytes, convertImage,
+} from './utils'
+import { ConvertCard } from './components/ConvertCard'
+import { PreviewModal } from './components/PreviewModal'
 
 export default function ImageConvert() {
   const { t } = useTranslation()
@@ -429,7 +338,7 @@ export default function ImageConvert() {
 
   return (
     <div className="relative flex h-full flex-col">
-      {/* Header - large style consistent with ImageCompress */}
+      {/* Header */}
       <div className="flex shrink-0 items-center gap-3 border-b border-border-subtle bg-bg-elevated px-4 py-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <ImageIcon size={20} />
@@ -456,7 +365,7 @@ export default function ImageConvert() {
           <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
         </div>
 
-        {/* Controls — always visible below upload zone */}
+        {/* Controls */}
         <div className="mb-4 flex flex-wrap items-center gap-4 rounded-lg border border-border-subtle bg-bg-elevated/50 px-4 py-3">
           <div className="flex items-center gap-2">
             <label className="text-xs text-text-secondary">{t('modules.imageConvert.ui.outputLabel')}</label>
@@ -502,7 +411,6 @@ export default function ImageConvert() {
             </div>
           )}
 
-          {/* Reconvert button – only when params changed */}
           {paramsChanged && (
             <button onClick={reconvertAll} className="flex cursor-pointer items-center gap-1 rounded-md bg-yellow-500/10 px-2 py-1 text-xs text-yellow-600 hover:bg-yellow-500/20 dark:text-yellow-400">
               <RotateCcw className="h-3.5 w-3.5" /> {t('modules.imageConvert.ui.reconvertBtn')}
@@ -511,7 +419,6 @@ export default function ImageConvert() {
 
           <div className="flex-1" />
 
-          {/* Batch actions – only when results exist */}
           {doneItems.length > 0 && (
             <div className="flex items-center gap-2">
               <button onClick={downloadAll} className="flex cursor-pointer items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/20">
@@ -524,10 +431,9 @@ export default function ImageConvert() {
           )}
         </div>
 
-        {/* Landing features – shown when no images */}
+        {/* Landing features */}
         {results.length === 0 && (
           <div className="pointer-events-none mt-12 select-none">
-            {/* Right-click hint – Tauri desktop only, placed above feature cards */}
             {isTauri() && (
               <p className="mb-16 flex items-center justify-center gap-1.5 text-[11px] text-text-disabled">
                 <MousePointerClick size={12} />
@@ -596,7 +502,7 @@ export default function ImageConvert() {
         </div>
       )}
 
-      {/* Floating params-changed pill – clickable to re-convert */}
+      {/* Floating params-changed pill */}
       {paramsChanged && !batchProgress && (
         <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2">
           <button
@@ -612,283 +518,6 @@ export default function ImageConvert() {
 
       {/* Preview Modal */}
       {previewImage ? <PreviewModal item={previewImage} onClose={() => setPreviewImage(null)} onDownload={downloadItem} /> : null}
-    </div>
-  )
-}
-
-// ── Convert Card ──
-
-function ConvertCard({
-  item,
-  onRemove,
-  onDownload,
-  onPreview,
-}: {
-  item: ConvertResult
-  onRemove: (id: string) => void
-  onDownload: (item: ConvertResult) => void
-  onPreview: (item: ConvertResult) => void
-}) {
-  const { t } = useTranslation()
-  return (
-    <div
-      className={`group rounded-lg border border-border-subtle bg-bg-elevated overflow-hidden transition-colors ${
-        item.status === 'done' ? 'cursor-pointer hover:border-primary/40' : ''
-      }`}
-      onClick={() => { if (item.status === 'done') onPreview(item) }}
-    >
-      {/* Thumbnail */}
-      <div className="relative h-32 overflow-hidden bg-bg-base">
-        <img
-          src={item.originalUrl}
-          alt={item.originalFile.name}
-          className={`h-full w-full object-cover transition-transform duration-200 ${item.status === 'done' ? 'group-hover:scale-105' : ''}`}
-        />
-        {item.status === 'done' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
-            <ZoomIn className="h-5 w-5 text-white opacity-0 drop-shadow transition-opacity group-hover:opacity-100" />
-          </div>
-        )}
-        <button
-          onClick={(e) => { e.stopPropagation(); onRemove(item.id) }}
-          className="absolute right-1 top-1 cursor-pointer rounded-full bg-black/60 p-1 text-white/80 opacity-0 transition-opacity hover:!opacity-100 hover:text-white group-hover:opacity-70"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
-      {/* Info */}
-      <div className="p-3">
-        <p className="truncate text-xs font-medium text-text-primary" title={item.originalFile.name}>
-          {item.originalFile.name}
-        </p>
-
-        {item.status === 'converting' && (
-          <p className="mt-1 text-xs text-text-muted animate-pulse">{t('modules.imageConvert.ui.statusConverting')}</p>
-        )}
-
-        {item.status === 'done' && item.convertedSize !== null && (
-          <div className="mt-2 flex items-center justify-between">
-            <div className="text-xs">
-              <span className="text-text-muted">{formatBytes(item.originalFile.size)}</span>
-              <span className="mx-1 text-text-disabled">→</span>
-              <span className="text-text-primary font-medium">{formatBytes(item.convertedSize)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="rounded bg-bg-hover px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
-                {getOriginalFormat(item.originalFile)}
-              </span>
-              <span className="text-[10px] text-text-disabled">→</span>
-              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                {FORMATS.find(f => f.value === item.outputFormat)?.label}
-              </span>
-              <button
-                onClick={(e) => { e.stopPropagation(); onDownload(item) }}
-                className="cursor-pointer rounded-md bg-bg-hover p-1.5 text-text-secondary hover:text-text-primary"
-                title={t('common.download', { defaultValue: 'Download' })}
-              >
-                <Download className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {item.status === 'error' && (
-          <p className="mt-1 text-xs text-error">{item.error ?? t('modules.imageConvert.ui.convertFailed')}</p>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── Preview Modal with synchronized zoom & pan ──
-
-function PreviewModal({ item, onClose, onDownload }: { item: ConvertResult; onClose: () => void; onDownload: (item: ConvertResult) => void }) {
-  const { t } = useTranslation()
-  const [origDataUrl, setOrigDataUrl] = useState<string | null>(null)
-  const [compDataUrl, setCompDataUrl] = useState<string | null>(null)
-  const [zoom, setZoom] = useState(1)
-  const [pan, setPan] = useState({ x: 0, y: 0 })
-  const isDraggingRef = useRef(false)
-  const lastPosRef = useRef({ x: 0, y: 0 })
-  const leftRef = useRef<HTMLDivElement>(null)
-  const rightRef = useRef<HTMLDivElement>(null)
-  const origBaseScaleRef = useRef(1)
-  const compBaseScaleRef = useRef(1)
-  const [origImgSize, setOrigImgSize] = useState<{ w: number; h: number } | null>(null)
-  const [compImgSize, setCompImgSize] = useState<{ w: number; h: number } | null>(null)
-
-  useEffect(() => {
-    const reader = new FileReader()
-    reader.onload = () => setOrigDataUrl(reader.result as string)
-    reader.readAsDataURL(item.originalFile)
-  }, [item.originalFile])
-
-  useEffect(() => {
-    if (item.convertedBlob) {
-      const reader = new FileReader()
-      reader.onload = () => setCompDataUrl(reader.result as string)
-      reader.readAsDataURL(item.convertedBlob)
-    }
-  }, [item.convertedBlob])
-
-  const handleOrigLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const container = leftRef.current
-    if (!container) return
-    const cw = container.clientWidth
-    const ch = container.clientHeight
-    const iw = e.currentTarget.naturalWidth
-    const ih = e.currentTarget.naturalHeight
-    if (iw > 0 && ih > 0) {
-      origBaseScaleRef.current = Math.min(cw / iw, ch / ih)
-      setOrigImgSize({ w: iw, h: ih })
-    }
-  }, [])
-
-  const handleCompLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const container = rightRef.current
-    if (!container) return
-    const cw = container.clientWidth
-    const ch = container.clientHeight
-    const iw = e.currentTarget.naturalWidth
-    const ih = e.currentTarget.naturalHeight
-    if (iw > 0 && ih > 0) {
-      compBaseScaleRef.current = Math.min(cw / iw, ch / ih)
-      setCompImgSize({ w: iw, h: ih })
-    }
-  }, [])
-
-  // ESC to close
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [onClose])
-
-  // Wheel zoom
-  useEffect(() => {
-    const els = [leftRef.current, rightRef.current].filter(Boolean) as HTMLElement[]
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault()
-      setZoom((prev) => {
-        const factor = e.deltaY < 0 ? 1.25 : 0.8
-        const next = Math.max(1, Math.min(5, prev * factor))
-        if (Math.abs(next - 1) < 0.01) setPan({ x: 0, y: 0 })
-        return next
-      })
-    }
-    els.forEach((el) => el.addEventListener('wheel', handleWheel, { passive: false }))
-    return () => els.forEach((el) => el.removeEventListener('wheel', handleWheel))
-  }, [])
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (zoom <= 1) return
-    isDraggingRef.current = true
-    lastPosRef.current = { x: e.clientX, y: e.clientY }
-  }, [zoom])
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDraggingRef.current) return
-    const dx = e.clientX - lastPosRef.current.x
-    const dy = e.clientY - lastPosRef.current.y
-    lastPosRef.current = { x: e.clientX, y: e.clientY }
-    setPan((prev) => ({ x: prev.x + dx, y: prev.y + dy }))
-  }, [])
-
-  const handleMouseUp = useCallback(() => { isDraggingRef.current = false }, [])
-  const resetView = useCallback(() => { setZoom(1); setPan({ x: 0, y: 0 }) }, [])
-
-  const isZoomed = zoom > 1.01
-  const origTotalScale = origBaseScaleRef.current * zoom
-  const compTotalScale = compBaseScaleRef.current * zoom
-  const origTx = origImgSize ? (pan.x - origTotalScale * origImgSize.w / 2) : 0
-  const origTy = origImgSize ? (pan.y - origTotalScale * origImgSize.h / 2) : 0
-  const compTx = compImgSize ? (pan.x - compTotalScale * compImgSize.w / 2) : 0
-  const compTy = compImgSize ? (pan.y - compTotalScale * compImgSize.h / 2) : 0
-  const noTransition = isDraggingRef.current
-  const origStyle: React.CSSProperties = {
-    transform: `translate(${origTx}px, ${origTy}px) scale(${origTotalScale})`,
-    transformOrigin: '0 0',
-    opacity: origImgSize ? 1 : 0,
-    transition: noTransition ? 'none' : 'transform 0.15s ease-out',
-  }
-  const compStyle: React.CSSProperties = {
-    transform: `translate(${compTx}px, ${compTy}px) scale(${compTotalScale})`,
-    transformOrigin: '0 0',
-    opacity: compImgSize ? 1 : 0,
-    transition: noTransition ? 'none' : 'transform 0.15s ease-out',
-  }
-
-  const panelProps = {
-    onMouseDown: handleMouseDown,
-    onMouseMove: handleMouseMove,
-    onMouseUp: handleMouseUp,
-    onMouseLeave: handleMouseUp,
-    className: `relative h-[55vh] min-h-[240px] overflow-hidden rounded-lg bg-bg-base cursor-grab active:cursor-grabbing`,
-  }
-
-  return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="relative mx-4 w-[90vw] max-w-5xl rounded-xl border border-border-subtle bg-bg-elevated shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
-          <h3 className="truncate text-sm font-semibold text-text-primary" title={item.originalFile.name}>{item.originalFile.name}</h3>
-          <button onClick={onClose} className="cursor-pointer text-text-muted hover:text-text-primary p-1"><X size={16} /></button>
-        </div>
-        {/* Images comparison with sync zoom/pan */}
-        <div className="relative grid grid-cols-2 gap-4 p-4">
-          <div>
-            <p className="mb-2 text-center text-xs font-medium text-text-muted">{t('modules.imageConvert.ui.previewOriginal')}</p>
-            <div ref={leftRef} {...panelProps}>
-              {origDataUrl
-                ? <img src={origDataUrl} alt="original" className="pointer-events-none absolute left-1/2 top-1/2 max-w-none" style={origStyle} draggable={false} onLoad={handleOrigLoad} />
-                : <span className="flex h-full items-center justify-center text-xs text-text-disabled">—</span>
-              }
-            </div>
-            <p className="mt-1 text-center text-xs text-text-muted">{formatBytes(item.originalFile.size)}</p>
-          </div>
-          <div>
-            <p className="mb-2 text-center text-xs font-medium text-text-muted">{t('modules.imageConvert.ui.previewConverted')}</p>
-            <div ref={rightRef} {...panelProps}>
-              {compDataUrl
-                ? <img src={compDataUrl} alt="converted" className="pointer-events-none absolute left-1/2 top-1/2 max-w-none" style={compStyle} draggable={false} onLoad={handleCompLoad} />
-                : <span className="flex h-full items-center justify-center text-xs text-text-disabled">—</span>
-              }
-            </div>
-            <p className="mt-1 text-center text-xs text-text-primary font-medium">{item.convertedSize !== null ? formatBytes(item.convertedSize) : '—'}</p>
-          </div>
-          {/* Floating zoom toolbar */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-0.5 rounded-full border border-border-subtle bg-bg-elevated/95 px-1 py-1 shadow-lg backdrop-blur-sm">
-            <button onClick={() => setZoom((p) => Math.max(1, p * 0.8))} disabled={!isZoomed} className="cursor-pointer rounded-full p-1.5 text-text-muted hover:text-text-primary hover:bg-bg-hover disabled:opacity-30 disabled:cursor-not-allowed"><ZoomOut size={14} /></button>
-            <button onClick={resetView} className="min-w-[3rem] cursor-pointer rounded-full px-1.5 py-1 text-center text-xs font-medium text-text-secondary hover:bg-bg-hover">{Math.round(zoom * 100)}%</button>
-            <button onClick={() => setZoom((p) => Math.min(5, p * 1.25))} disabled={zoom >= 5} className="cursor-pointer rounded-full p-1.5 text-text-muted hover:text-text-primary hover:bg-bg-hover disabled:opacity-30 disabled:cursor-not-allowed"><ZoomIn size={14} /></button>
-            {isZoomed && (
-              <>
-                <div className="mx-0.5 h-3 w-px bg-border-subtle" />
-                <button onClick={resetView} className="cursor-pointer rounded-full p-1.5 text-text-muted hover:text-text-primary hover:bg-bg-hover" title={t('modules.imageConvert.ui.previewReset', { defaultValue: 'Reset' })}><RotateCcw size={13} /></button>
-              </>
-            )}
-          </div>
-        </div>
-        {/* Stats + download */}
-        <div className="flex items-center justify-between border-t border-border-subtle px-4 py-3">
-          <div className="flex items-center gap-3 text-xs">
-            {item.convertedSize !== null && (
-              <span className="text-text-muted">{formatBytes(item.originalFile.size)} → <span className="text-text-primary font-medium">{formatBytes(item.convertedSize)}</span></span>
-            )}
-            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-              {FORMATS.find(f => f.value === item.outputFormat)?.label}
-            </span>
-          </div>
-          <button
-            onClick={() => onDownload(item)}
-            disabled={item.status !== 'done'}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download size={14} /> {t('common.download', { defaultValue: 'Download' })}
-          </button>
-        </div>
-      </div>
     </div>
   )
 }

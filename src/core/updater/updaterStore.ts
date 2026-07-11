@@ -5,10 +5,7 @@
  */
 
 import { create } from 'zustand'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
+import { isTauri } from '../../shared/utils'
 
 // LocalStorage keys for persisting dismiss/remind decisions
 const SKIP_KEY = 'a7box-skip-version'

@@ -8,6 +8,7 @@ import {
   Regex, Copy, CheckCircle2, AlertTriangle, X,
   ArrowLeftRight, ClipboardPaste, Replace, AlertCircle, Search, ChevronDown, ChevronUp,
 } from 'lucide-react'
+import { isTauri } from '../../shared/utils'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,10 +29,6 @@ interface RegexResult {
 const MAX_MATCHES = 1000
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
 
 function runRegex(pattern: string, flags: string, text: string): RegexResult {
   if (!pattern.trim()) return { matches: [], error: null, truncated: false }

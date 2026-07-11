@@ -7,10 +7,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Minus, Square, X, Maximize2 } from 'lucide-react'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
+import { isTauri } from '../shared/utils'
 
 type Platform = 'windows' | 'macos' | 'linux'
 

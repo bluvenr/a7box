@@ -7,15 +7,12 @@ import { useTranslation } from 'react-i18next'
 import { Fingerprint, FileText, Upload, Copy, ClipboardCopy, CheckCircle2, X, CaseSensitive, Loader2 } from 'lucide-react'
 import { useToast } from '../../components/Toast'
 import { usePageActive } from '../../app/layouts/CachedOutlet'
+import { isTauri } from '../../shared/utils'
 
 type HashAlgo = 'MD5' | 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512'
 type InputMode = 'text' | 'file'
 
 const ALGOS: HashAlgo[] = ['MD5', 'SHA-1', 'SHA-256', 'SHA-384', 'SHA-512']
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
 
 /** MD5 from raw bytes (RFC 1321) */
 function md5(bytes: Uint8Array): string {

@@ -12,10 +12,7 @@ import { gfm } from 'turndown-plugin-gfm'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import { applyTaskListPlugin, applyKatexPlugin, applyMermaidPlugin } from '../../../modules/markdown-preview/shared/mdPlugins'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
+import { isTauri } from '../../../shared/utils'
 
 const turndownService = new TurndownService({
   headingStyle: 'atx',

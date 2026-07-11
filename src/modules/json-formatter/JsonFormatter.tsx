@@ -20,11 +20,7 @@ import { useSettingsStore } from '../../core'
 import { useConfirm } from '../../components/Dialog'
 import { useShortcutStore } from '../../core/shortcuts'
 import { usePageActive } from '../../app/layouts/CachedOutlet'
-import { formatShortcut, formatPlainShortcuts } from '../../shared/utils'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
+import { formatShortcut, formatPlainShortcuts, isTauri } from '../../shared/utils'
 
 // Lazy load Monaco Editor
 const Editor = lazy(() =>

@@ -8,15 +8,11 @@ import { useTranslation } from 'react-i18next'
 import { Search, Box, ArrowRight } from 'lucide-react'
 import { allModules } from '../../../modules'
 import { useModuleRegistry } from '../../../core/registry'
-import { formatShortcut, getAllHistory } from '../../../shared/utils'
+import { formatShortcut, getAllHistory, isTauri } from '../../../shared/utils'
 import { useShortcutStore } from '../../../core/shortcuts/shortcutStore'
 import { CommandSearchEngine } from '../../../core/command-palette/SearchEngine'
 import type { CommandSearchItem } from '../../../core/types'
 import type { LucideIcon } from 'lucide-react'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
 
 // Shared search engine instance
 const engine = new CommandSearchEngine({ threshold: 0.35, limit: 30 })

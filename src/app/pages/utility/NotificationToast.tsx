@@ -15,6 +15,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Bell, CheckCircle, Clock, Eye, X } from 'lucide-react'
+import { isTauri } from '../../../shared/utils'
 
 export interface ToastReminderData {
   id: string
@@ -23,10 +24,6 @@ export interface ToastReminderData {
   triggerAt: number
   status: string
   isOverdue: boolean
-}
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 }
 
 function closeWindow() {

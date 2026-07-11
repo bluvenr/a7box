@@ -10,11 +10,8 @@ import { initUsageHistory } from './core/command-palette'
 import { useModuleRegistry } from './core/registry'
 import { allModules } from './modules'
 import { ToastProvider } from './shared/components'
+import { isTauri } from './shared/utils'
 import { useThemeProvider } from './core/theme/ThemeProvider'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
 
 function App() {
   const registerAll = useModuleRegistry((state) => state.registerAll)

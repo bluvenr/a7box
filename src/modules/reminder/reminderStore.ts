@@ -1,11 +1,10 @@
 /**
  * Reminder Store
- * Zustand store with localStorage persistence for managing reminders
+ * Zustand store with persist middleware for managing reminders
  */
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { Reminder, ReminderStatus, ReminderFormData, RepeatConfig } from './types'
-
-const STORAGE_KEY = 'a7box-reminders'
 
 interface ReminderState {
   reminders: Reminder[]
@@ -22,36 +21,19 @@ interface ReminderState {
   getPendingCount: () => number
   getNextReminder: () => Reminder | null
   getById: (id: string) => Reminder | undefined
-
-  // Lifecycle
-  loadFromStorage: () => void
 }
 
-function loadReminders(): Reminder[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (!stored) return []
-    const reminders = JSON.parse(stored) as Reminder[]
-    // Migrate deprecated single monthDay → monthDays array
-    let migrated = false
-    for (const r of reminders) {
-      if (r.repeat?.monthDay !== undefined && !r.repeat.monthDays) {
-        r.repeat.monthDays = [r.repeat.monthDay]
-        delete r.repeat.monthDay
-        migrated = true
-      }
+/** Migrate deprecated single monthDay → monthDays array (in-place) */
+function migrateReminders(reminders: Reminder[]): Reminder[] {
+  let migrated = false
+  for (const r of reminders) {
+    if (r.repeat?.monthDay !== undefined && !r.repeat.monthDays) {
+      r.repeat.monthDays = [r.repeat.monthDay]
+      delete r.repeat.monthDay
+      migrated = true
     }
-    if (migrated) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(reminders))
-    }
-    return reminders
-  } catch {
-    return []
   }
-}
-
-function saveReminders(reminders: Reminder[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(reminders))
+  return migrated ? [...reminders] : reminders
 }
 
 /** Calculate next trigger time for a repeat config after a given time */
@@ -121,100 +103,101 @@ export function calcNextTrigger(repeat: RepeatConfig, afterTime: number): number
   return null
 }
 
-export const useReminderStore = create<ReminderState>((set, get) => ({
-  reminders: loadReminders(),
+export const useReminderStore = create<ReminderState>()(
+  persist(
+    (set, get) => ({
+      reminders: [],
 
-  addReminder: (data) => {
-    const now = Date.now()
-    const reminder: Reminder = {
-      id: crypto.randomUUID(),
-      title: data.title.slice(0, 100),
-      note: data.note ? data.note.slice(0, 500) : undefined,
-      triggerAt: data.triggerAt,
-      repeat: data.repeat,
-      status: 'pending',
-      createdAt: now,
-      updatedAt: now,
-    }
-    set((s) => {
-      const next = [...s.reminders, reminder]
-      saveReminders(next)
-      return { reminders: next }
-    })
-    return reminder
-  },
-
-  updateReminder: (id, data) => {
-    set((s) => {
-      const next = s.reminders.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              ...data,
-              title: data.title !== undefined ? data.title.slice(0, 100) : r.title,
-              note: data.note !== undefined ? data.note?.slice(0, 500) : r.note,
-              updatedAt: Date.now(),
-            }
-          : r
-      )
-      saveReminders(next)
-      return { reminders: next }
-    })
-  },
-
-  deleteReminder: (id) => {
-    set((s) => {
-      const next = s.reminders.filter((r) => r.id !== id)
-      saveReminders(next)
-      return { reminders: next }
-    })
-  },
-
-  updateStatus: (id, status, snoozeUntil) => {
-    set((s) => {
-      const next = s.reminders.map((r) => {
-        if (r.id !== id) return r
-        const updated: Reminder = { ...r, status, updatedAt: Date.now() }
-        if (status === 'snoozed' && snoozeUntil) {
-          updated.snoozeUntil = snoozeUntil
-        } else {
-          updated.snoozeUntil = undefined
+      addReminder: (data) => {
+        const now = Date.now()
+        const reminder: Reminder = {
+          id: crypto.randomUUID(),
+          title: data.title.slice(0, 100),
+          note: data.note ? data.note.slice(0, 500) : undefined,
+          triggerAt: data.triggerAt,
+          repeat: data.repeat,
+          status: 'pending',
+          createdAt: now,
+          updatedAt: now,
         }
-        return updated
-      })
-      saveReminders(next)
-      return { reminders: next }
-    })
-  },
+        set((s) => ({ reminders: [...s.reminders, reminder] }))
+        return reminder
+      },
 
-  getActiveReminders: () => {
-    return get().reminders.filter((r) => r.status !== 'completed')
-  },
+      updateReminder: (id, data) => {
+        set((s) => ({
+          reminders: s.reminders.map((r) =>
+            r.id === id
+              ? {
+                  ...r,
+                  ...data,
+                  title: data.title !== undefined ? data.title.slice(0, 100) : r.title,
+                  note: data.note !== undefined ? data.note?.slice(0, 500) : r.note,
+                  updatedAt: Date.now(),
+                }
+              : r
+          ),
+        }))
+      },
 
-  getOverdueCount: () => {
-    const now = Date.now()
-    return get().reminders.filter(
-      (r) => r.status === 'pending' && r.triggerAt <= now
-    ).length
-  },
+      deleteReminder: (id) => {
+        set((s) => ({ reminders: s.reminders.filter((r) => r.id !== id) }))
+      },
 
-  getPendingCount: () => {
-    return get().reminders.filter((r) => r.status === 'pending').length
-  },
+      updateStatus: (id, status, snoozeUntil) => {
+        set((s) => ({
+          reminders: s.reminders.map((r) => {
+            if (r.id !== id) return r
+            const updated: Reminder = { ...r, status, updatedAt: Date.now() }
+            if (status === 'snoozed' && snoozeUntil) {
+              updated.snoozeUntil = snoozeUntil
+            } else {
+              updated.snoozeUntil = undefined
+            }
+            return updated
+          }),
+        }))
+      },
 
-  getNextReminder: () => {
-    const now = Date.now()
-    const pending = get().reminders
-      .filter((r) => r.status === 'pending' && r.triggerAt > now)
-      .sort((a, b) => a.triggerAt - b.triggerAt)
-    return pending[0] ?? null
-  },
+      getActiveReminders: () => {
+        return get().reminders.filter((r) => r.status !== 'completed')
+      },
 
-  getById: (id) => {
-    return get().reminders.find((r) => r.id === id)
-  },
+      getOverdueCount: () => {
+        const now = Date.now()
+        return get().reminders.filter(
+          (r) => r.status === 'pending' && r.triggerAt <= now
+        ).length
+      },
 
-  loadFromStorage: () => {
-    set({ reminders: loadReminders() })
-  },
-}))
+      getPendingCount: () => {
+        return get().reminders.filter((r) => r.status === 'pending').length
+      },
+
+      getNextReminder: () => {
+        const now = Date.now()
+        const pending = get().reminders
+          .filter((r) => r.status === 'pending' && r.triggerAt > now)
+          .sort((a, b) => a.triggerAt - b.triggerAt)
+        return pending[0] ?? null
+      },
+
+      getById: (id) => {
+        return get().reminders.find((r) => r.id === id)
+      },
+    }),
+    {
+      name: 'a7box-reminders',
+      version: 1,
+      partialize: (state: ReminderState) => ({ reminders: state.reminders }),
+      merge: (persistedState: unknown, currentState: ReminderState): ReminderState => {
+        const stored = (persistedState as Partial<ReminderState> | undefined)?.reminders
+        if (!stored) return currentState
+        return {
+          ...currentState,
+          reminders: migrateReminders(stored as Reminder[]),
+        }
+      },
+    }
+  )
+)

@@ -7,10 +7,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { Palette, Copy, Pipette, X, Check } from 'lucide-react'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
+import { isTauri } from '../../../shared/utils'
 
 // ── Color conversion utilities (duplicated from ColorTool for float isolation) ──
 

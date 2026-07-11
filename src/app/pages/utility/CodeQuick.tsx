@@ -12,10 +12,7 @@ import {
   minifyCode, beautifyCode, detectLanguage,
   type Language, type IndentType,
 } from '../../../modules/code-minify/utils/minifier'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
+import { isTauri } from '../../../shared/utils'
 
 const LANGUAGES: { value: Language; label: string }[] = [
   { value: 'javascript', label: 'JavaScript' },

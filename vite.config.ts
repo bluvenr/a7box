@@ -2,6 +2,10 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import pkg from "./package.json";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -12,8 +16,24 @@ export default defineConfig(async () => ({
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
 
+  resolve: {
+    alias: {
+      "@core": path.resolve(__dirname, "src/core"),
+      "@modules": path.resolve(__dirname, "src/modules"),
+      "@shared": path.resolve(__dirname, "src/shared"),
+      "@components": path.resolve(__dirname, "src/components"),
+      "@app": path.resolve(__dirname, "src/app"),
+      "@styles": path.resolve(__dirname, "src/styles"),
+    },
+  },
+
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
+  // Restrict dependency scanning to actual app entries (avoid src-tauri/target/doc/*.html)
+  optimizeDeps: {
+    entries: ["index.html", "src/**/*.html"],
+  },
+
   // 1. prevent Vite from obscuring rust errors
   clearScreen: false,
   // 2. tauri expects a fixed port, fail if that port is not available

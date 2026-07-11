@@ -1,9 +1,10 @@
 /**
  * Shortcut Configuration Store
- * Manages global keyboard shortcuts with localStorage persistence.
+ * Manages global keyboard shortcuts with zustand persist middleware.
  * Keys use Tauri format: CommandOrControl+Shift+Q (cross-platform)
  */
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 export interface ShortcutConfig {
   action: string
@@ -22,8 +23,6 @@ interface ShortcutState {
   toggleShortcut: (action: string, enabled: boolean) => void
   resetDefaults: () => void
 }
-
-const STORAGE_KEY = 'a7box-shortcuts'
 
 const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
   // ── Core controls ──
@@ -104,53 +103,44 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
   },
 ]
 
-function loadShortcuts(): ShortcutConfig[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (!stored) return DEFAULT_SHORTCUTS
+export const useShortcutStore = create<ShortcutState>()(
 
-    const parsed: ShortcutConfig[] = JSON.parse(stored)
-    // Merge with defaults: keep user customizations, add new defaults
-    const map = new Map(parsed.map((s) => [s.action, s]))
-    return DEFAULT_SHORTCUTS.map((def) => {
-      const user = map.get(def.action)
-      return user
-        ? { ...def, keys: user.keys, enabled: user.enabled }
-        : def
-    })
-  } catch {
-    return DEFAULT_SHORTCUTS
-  }
-}
+  persist(
+    (set) => ({
+      shortcuts: DEFAULT_SHORTCUTS,
 
-function saveShortcuts(shortcuts: ShortcutConfig[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(shortcuts))
-}
+      updateShortcut: (action, keys) =>
+        set((state) => ({
+          shortcuts: state.shortcuts.map((s) =>
+            s.action === action ? { ...s, keys } : s
+          ),
+        })),
 
-export const useShortcutStore = create<ShortcutState>((set) => ({
-  shortcuts: loadShortcuts(),
+      toggleShortcut: (action, enabled) =>
+        set((state) => ({
+          shortcuts: state.shortcuts.map((s) =>
+            s.action === action ? { ...s, enabled } : s
+          ),
+        })),
 
-  updateShortcut: (action, keys) =>
-    set((state) => {
-      const next = state.shortcuts.map((s) =>
-        s.action === action ? { ...s, keys } : s
-      )
-      saveShortcuts(next)
-      return { shortcuts: next }
+      resetDefaults: () => set({ shortcuts: DEFAULT_SHORTCUTS }),
     }),
-
-  toggleShortcut: (action, enabled) =>
-    set((state) => {
-      const next = state.shortcuts.map((s) =>
-        s.action === action ? { ...s, enabled } : s
-      )
-      saveShortcuts(next)
-      return { shortcuts: next }
-    }),
-
-  resetDefaults: () =>
-    set(() => {
-      saveShortcuts(DEFAULT_SHORTCUTS)
-      return { shortcuts: DEFAULT_SHORTCUTS }
-    }),
-}))
+    {
+      name: 'a7box-shortcuts',
+      version: 1,
+      partialize: (state: ShortcutState) => ({ shortcuts: state.shortcuts }),
+      merge: (persistedState: unknown, currentState: ShortcutState): ShortcutState => {
+        const stored = (persistedState as Partial<ShortcutState> | undefined)?.shortcuts
+        if (!stored) return currentState
+        const map = new Map(stored.map((s) => [s.action, s]))
+        return {
+          ...currentState,
+          shortcuts: DEFAULT_SHORTCUTS.map((def) => {
+            const user = map.get(def.action)
+            return user ? { ...def, keys: user.keys, enabled: user.enabled } : def
+          }),
+        }
+      },
+    }
+  )
+)

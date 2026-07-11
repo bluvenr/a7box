@@ -6,12 +6,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Camera, Clock, Download, Eye, Trash2, X } from 'lucide-react'
-import { formatShortcut } from '../../shared/utils'
+import { formatShortcut, isTauri } from '../../shared/utils'
 import { useShortcutStore } from '../../core/shortcuts'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
 
 interface SessionCapture {
   tempPath: string

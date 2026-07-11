@@ -24,12 +24,8 @@ import { useReminderStore } from '../../modules/reminder/reminderStore'
 import { startReminderChecker, stopReminderChecker, rescheduleAllReminders, setupToastListeners } from '../../modules/reminder/notificationBridge'
 import { useSettingsStore } from '../../core/settings'
 import { useUpdaterStore } from '../../core/updater'
-import { recordUsage } from '../../shared/utils'
+import { recordUsage, isTauri } from '../../shared/utils'
 import type { LucideIcon } from 'lucide-react'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
 
 // LocalStorage key for sidebar state
 const SIDEBAR_KEY = 'a7box-sidebar-collapsed'
@@ -115,12 +111,12 @@ export function MainLayout() {
       })
     }
 
-    // When QuickCreate window creates a reminder → reload store from localStorage
+    // When QuickCreate window creates a reminder → rehydrate store from localStorage
     let unlistenCreated: (() => void) | null = null
     if (isTauri()) {
       import('@tauri-apps/api/event').then(({ listen }) => {
         listen('reminder-created', () => {
-          useReminderStore.getState().loadFromStorage()
+          useReminderStore.persist.rehydrate()
           rescheduleAllReminders()
         }).then((fn) => { unlistenCreated = fn })
       })

@@ -13,7 +13,10 @@
     "tauri:dev": "npx tauri dev",
     "tauri:build": "npx tauri build",
     "postversion": "node scripts/sync-version.mjs",
-    "kill:port": "powershell -Command \"Stop-Process -Name 'node','a7box' -Force -ErrorAction SilentlyContinue; Write-Host 'Port 1420 freed'\""
+    "kill:port": "powershell -Command \"Stop-Process -Name 'node','a7box' -Force -ErrorAction SilentlyContinue; Write-Host 'Port 1420 freed'\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -52,15 +55,19 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.1",
     "@tauri-apps/cli": "^2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/js-beautify": "^1.14.3",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.5.0",
+    "jsdom": "^29.1.1",
     "postcss": "^8.5.15",
     "tailwindcss": "^4.3.1",
     "typescript": "~5.8.3",
-    "vite": "^7.0.4"
+    "vite": "^7.0.4",
+    "vitest": "^4.1.10"
   }
 }

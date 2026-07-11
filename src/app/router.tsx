@@ -1,36 +1,21 @@
 /**
  * A7Box Router Configuration
+ *
+ * Module routes are auto-generated from allModules — no manual enumeration needed.
+ * Adding a new module only requires joining the allModules array.
  */
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import type { RouteObject } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
+import type { ComponentType } from 'react'
 import { MainLayout } from './layouts/MainLayout'
 import { ErrorBoundary, ModuleSkeleton } from '../shared/components'
+import { allModules } from '../modules'
 
 // Core pages (lazy loaded)
 const Home = lazy(() => import('./pages/Home'))
 const Settings = lazy(() => import('./pages/Settings'))
-
-// Tool modules (lazy loaded)
-const JsonFormatter = lazy(() => import('../modules/json-formatter/JsonFormatter'))
-const QrCode = lazy(() => import('../modules/qr-code/QrCode'))
-const MarkdownPreview = lazy(() => import('../modules/markdown-preview/MarkdownPreview'))
-const CodeMinify = lazy(() => import('../modules/code-minify/CodeMinify'))
-const ImageCompress = lazy(() => import('../modules/image-compress/ImageCompress'))
-const HashGenerator = lazy(() => import('../modules/hash-generator/HashGenerator'))
-const ImageConvert = lazy(() => import('../modules/image-convert/ImageConvert'))
-const ColorTool = lazy(() => import('../modules/color-tool/ColorTool'))
-const Base64Tool = lazy(() => import('../modules/base64-tool/Base64Tool'))
-const TimestampConverter = lazy(() => import('../modules/timestamp-converter/TimestampConverter'))
-const UuidGenerator = lazy(() => import('../modules/uuid-generator/UuidGenerator'))
-const JwtDecoder = lazy(() => import('../modules/jwt-decoder/JwtDecoder'))
-const RegexTester = lazy(() => import('../modules/regex-tester/RegexTester'))
-const TextDiff = lazy(() => import('../modules/text-diff/TextDiff'))
-const Screenshot = lazy(() => import('../modules/screenshot/Screenshot'))
-const HttpServer = lazy(() => import('../modules/http-server/HttpServer'))
-const P2PTransfer = lazy(() => import('../modules/p2p-transfer/P2PTransfer'))
-const Reminder = lazy(() => import('../modules/reminder/Reminder'))
 
 // Utility windows (standalone, no layout)
 const QrQuick = lazy(() => import('./pages/utility/QrQuick'))
@@ -56,6 +41,35 @@ function ModuleRoute({ moduleId, children }: { moduleId: string; children: React
   )
 }
 
+// Cache lazy components — lazy() must NOT be called inside render (creates infinite loop)
+const lazyCache = new WeakMap<Function, React.LazyExoticComponent<ComponentType>>()
+function getLazyComponent(component: () => Promise<{ default: ComponentType }>) {
+  let cached = lazyCache.get(component)
+  if (!cached) {
+    cached = lazy(component)
+    lazyCache.set(component, cached)
+  }
+  return cached
+}
+
+function DynamicModule({ component }: { component: () => Promise<{ default: ComponentType }> }) {
+  const LazyComp = getLazyComponent(component)
+  return <LazyComp />
+}
+
+// Auto-generate module routes from allModules
+const moduleRoutes: RouteObject[] = allModules
+  .filter((mod) => mod.component)
+  .map((mod) => ({
+    path: mod.meta.id,
+    handle: { moduleId: mod.meta.id },
+    element: (
+      <ModuleRoute moduleId={mod.meta.id}>
+        <DynamicModule component={mod.component!} />
+      </ModuleRoute>
+    ),
+  }))
+
 // Main app child routes (shared between router and CachedOutlet)
 export const mainAppChildren: RouteObject[] = [
   {
@@ -74,97 +88,7 @@ export const mainAppChildren: RouteObject[] = [
       </Suspense>
     ),
   },
-  // Tool module routes
-  {
-    path: 'json-formatter',
-    handle: { moduleId: 'json-formatter' },
-    element: <ModuleRoute moduleId="json-formatter"><JsonFormatter /></ModuleRoute>,
-  },
-  {
-    path: 'qr-code',
-    handle: { moduleId: 'qr-code' },
-    element: <ModuleRoute moduleId="qr-code"><QrCode /></ModuleRoute>,
-  },
-  {
-    path: 'markdown-preview',
-    handle: { moduleId: 'markdown-preview' },
-    element: <ModuleRoute moduleId="markdown-preview"><MarkdownPreview /></ModuleRoute>,
-  },
-  {
-    path: 'code-minify',
-    handle: { moduleId: 'code-minify' },
-    element: <ModuleRoute moduleId="code-minify"><CodeMinify /></ModuleRoute>,
-  },
-  {
-    path: 'image-compress',
-    handle: { moduleId: 'image-compress' },
-    element: <ModuleRoute moduleId="image-compress"><ImageCompress /></ModuleRoute>,
-  },
-  {
-    path: 'hash-generator',
-    handle: { moduleId: 'hash-generator' },
-    element: <ModuleRoute moduleId="hash-generator"><HashGenerator /></ModuleRoute>,
-  },
-  {
-    path: 'image-convert',
-    handle: { moduleId: 'image-convert' },
-    element: <ModuleRoute moduleId="image-convert"><ImageConvert /></ModuleRoute>,
-  },
-  {
-    path: 'color-tool',
-    handle: { moduleId: 'color-tool' },
-    element: <ModuleRoute moduleId="color-tool"><ColorTool /></ModuleRoute>,
-  },
-  {
-    path: 'base64-tool',
-    handle: { moduleId: 'base64-tool' },
-    element: <ModuleRoute moduleId="base64-tool"><Base64Tool /></ModuleRoute>,
-  },
-  {
-    path: 'timestamp-converter',
-    handle: { moduleId: 'timestamp-converter' },
-    element: <ModuleRoute moduleId="timestamp-converter"><TimestampConverter /></ModuleRoute>,
-  },
-  {
-    path: 'uuid-generator',
-    handle: { moduleId: 'uuid-generator' },
-    element: <ModuleRoute moduleId="uuid-generator"><UuidGenerator /></ModuleRoute>,
-  },
-  {
-    path: 'jwt-decoder',
-    handle: { moduleId: 'jwt-decoder' },
-    element: <ModuleRoute moduleId="jwt-decoder"><JwtDecoder /></ModuleRoute>,
-  },
-  {
-    path: 'regex-tester',
-    handle: { moduleId: 'regex-tester' },
-    element: <ModuleRoute moduleId="regex-tester"><RegexTester /></ModuleRoute>,
-  },
-  {
-    path: 'text-diff',
-    handle: { moduleId: 'text-diff' },
-    element: <ModuleRoute moduleId="text-diff"><TextDiff /></ModuleRoute>,
-  },
-  {
-    path: 'screenshot',
-    handle: { moduleId: 'screenshot' },
-    element: <ModuleRoute moduleId="screenshot"><Screenshot /></ModuleRoute>,
-  },
-  {
-    path: 'http-server',
-    handle: { moduleId: 'http-server' },
-    element: <ModuleRoute moduleId="http-server"><HttpServer /></ModuleRoute>,
-  },
-  {
-    path: 'p2p-transfer',
-    handle: { moduleId: 'p2p-transfer' },
-    element: <ModuleRoute moduleId="p2p-transfer"><P2PTransfer /></ModuleRoute>,
-  },
-  {
-    path: 'reminder',
-    handle: { moduleId: 'reminder' },
-    element: <ModuleRoute moduleId="reminder"><Reminder /></ModuleRoute>,
-  },
+  ...moduleRoutes,
 ]
 
 // Router configuration

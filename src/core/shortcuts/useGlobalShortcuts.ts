@@ -7,10 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCommandPalette } from '../command-palette'
 import { useShortcutStore } from './shortcutStore'
 import { useModuleRegistry } from '../registry'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
+import { isTauri } from '../../shared/utils'
 
 export function useGlobalShortcuts() {
   const navigate = useNavigate()
@@ -21,28 +18,20 @@ export function useGlobalShortcuts() {
   useEffect(() => {
     if (!isTauri()) return
 
-    const STORAGE_KEY = 'a7box-shortcuts'
-
     const syncShortcuts = (enabledIds: Set<string>) => {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY)
-        const shortcuts: Array<{ action: string; keys: string; enabled: boolean; moduleId?: string | null }> =
-          stored ? JSON.parse(stored) : useShortcutStore.getState().shortcuts
+      const shortcuts = useShortcutStore.getState().shortcuts
 
-        import('@tauri-apps/api/core').then(({ invoke }) => {
-          for (const sc of shortcuts) {
-            const moduleEnabled = !sc.moduleId || enabledIds.has(sc.moduleId)
-            const shouldRegister = sc.enabled && moduleEnabled
-            invoke('update_shortcut', {
-              action: sc.action,
-              keys: sc.keys,
-              enabled: shouldRegister,
-            }).catch(() => {})
-          }
-        }).catch(() => {})
-      } catch {
-        // localStorage not available or invalid JSON
-      }
+      import('@tauri-apps/api/core').then(({ invoke }) => {
+        for (const sc of shortcuts) {
+          const moduleEnabled = !sc.moduleId || enabledIds.has(sc.moduleId)
+          const shouldRegister = sc.enabled && moduleEnabled
+          invoke('update_shortcut', {
+            action: sc.action,
+            keys: sc.keys,
+            enabled: shouldRegister,
+          }).catch(() => {})
+        }
+      }).catch(() => {})
     }
 
     // Check if modules are already registered

@@ -17,10 +17,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { useShortcutStore } from '../../core/shortcuts'
 import { KeyCapture } from '../../components/KeyCapture'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
+import { isTauri } from '../../shared/utils'
 
 export default function Settings() {
   const { t } = useTranslation()

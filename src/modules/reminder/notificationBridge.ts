@@ -11,6 +11,7 @@
 import { create } from 'zustand'
 import { useReminderStore, calcNextTrigger } from './reminderStore'
 import type { Reminder } from './types'
+import { isTauri } from '../../shared/utils'
 
 // ─── In-App Banner Store ───────────────────────────────────────────────────────
 
@@ -68,10 +69,6 @@ let onReminderDue: OnReminderDueCallback | null = null
 const firedSet = new Set<string>()
 
 let checkTimer: ReturnType<typeof setInterval> | null = null
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
 
 /** Bring the main window to front.
  *  Always calls show() + setFocus() regardless of current visibility state,

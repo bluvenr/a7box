@@ -6,6 +6,7 @@
 import { create } from 'zustand'
 import type { A7Module, CommandSearchItem } from '../types'
 import { i18n } from '../i18n'
+import { useSettingsStore } from '../settings/settingsStore'
 
 interface ModuleRegistryState {
   /** All registered modules */
@@ -36,11 +37,13 @@ export const useModuleRegistry = create<ModuleRegistryState>((set, get) => ({
   enabledModuleIds: new Set(),
 
   register: (module) => {
+    const settings = useSettingsStore.getState()
     set((state) => {
       const newModules = new Map(state.modules)
       newModules.set(module.meta.id, module)
       const newEnabled = new Set(state.enabledModuleIds)
-      if (module.meta.enabledByDefault !== false) {
+      // Use settingsStore as source of truth (defaults to true for new modules)
+      if (settings.isModuleEnabled(module.meta.id)) {
         newEnabled.add(module.meta.id)
       }
       return { modules: newModules, enabledModuleIds: newEnabled }
@@ -48,12 +51,16 @@ export const useModuleRegistry = create<ModuleRegistryState>((set, get) => ({
   },
 
   registerAll: (modules) => {
+    const settings = useSettingsStore.getState()
+    // Sync module order: add new modules, remove deleted ones
+    settings.syncModuleOrder(modules.map((m) => m.meta.id))
     set((state) => {
       const newModules = new Map(state.modules)
-      const newEnabled = new Set(state.enabledModuleIds)
+      const newEnabled = new Set<string>()
       modules.forEach((module) => {
         newModules.set(module.meta.id, module)
-        if (module.meta.enabledByDefault !== false) {
+        // Use settingsStore as source of truth (defaults to true for new modules)
+        if (settings.isModuleEnabled(module.meta.id)) {
           newEnabled.add(module.meta.id)
         }
       })
@@ -65,6 +72,8 @@ export const useModuleRegistry = create<ModuleRegistryState>((set, get) => ({
     const module = get().modules.get(moduleId)
     if (!module) return
     await module.onActivate?.()
+    // Write to settingsStore (source of truth) so state persists across restarts
+    useSettingsStore.getState().setModuleEnabled(moduleId, true)
     set((state) => {
       const newEnabled = new Set(state.enabledModuleIds)
       newEnabled.add(moduleId)
@@ -76,6 +85,8 @@ export const useModuleRegistry = create<ModuleRegistryState>((set, get) => ({
     const module = get().modules.get(moduleId)
     if (!module) return
     await module.onDeactivate?.()
+    // Write to settingsStore (source of truth) so state persists across restarts
+    useSettingsStore.getState().setModuleEnabled(moduleId, false)
     set((state) => {
       const newEnabled = new Set(state.enabledModuleIds)
       newEnabled.delete(moduleId)

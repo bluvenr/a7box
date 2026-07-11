@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Globe, Play, Square, Copy, Wifi, WifiOff, FolderOpen, ChevronDown, ChevronUp, QrCode, Trash2, RotateCcw } from 'lucide-react'
+import { Globe, Play, Square, FolderOpen, Trash2, RotateCcw, WifiOff } from 'lucide-react'
 import QRCode from 'qrcode'
 import {
   httpStartServer,
@@ -15,42 +15,13 @@ import {
 import { useHttpServiceStatus } from './httpServiceStore'
 import { useToast } from '../../components/Toast'
 import { useConfirm } from '../../components/Dialog'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
-
-const GUIDE_KEY = 'a7box-http-guide-seen'
-const HISTORY_KEY = 'a7box-http-history'
-const ACTIVE_KEY = 'a7box-http-active'
-const MAX_HISTORY = 5
-
-interface HistoryItem { directory: string; port: number; stoppedAt: number }
-interface ActiveEntry { directory: string; port: number }
-
-function loadHistory(): HistoryItem[] {
-  try {
-    const items: HistoryItem[] = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')
-    // Deduplicate by directory (keep the most recent one)
-    const seen = new Set<string>()
-    return items.filter((item) => {
-      if (seen.has(item.directory)) return false
-      seen.add(item.directory)
-      return true
-    })
-  } catch { return [] }
-}
-function saveHistory(items: HistoryItem[]) {
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, MAX_HISTORY)))
-}
-function loadActive(): ActiveEntry[] {
-  try { return JSON.parse(localStorage.getItem(ACTIVE_KEY) || '[]') } catch { return [] }
-}
-function saveActive(entries: ActiveEntry[]) {
-  localStorage.setItem(ACTIVE_KEY, JSON.stringify(entries))
-}
-
-// ── Component ─────────────────────────────────────────────────────────────
+import { isTauri } from '../../shared/utils'
+import {
+  GUIDE_KEY, MAX_HISTORY,
+  type HistoryItem,
+  loadHistory, saveHistory, loadActive, saveActive,
+} from './utils'
+import { InstanceCard } from './components/InstanceCard'
 
 export default function HttpServer() {
   const { t } = useTranslation()
@@ -79,15 +50,12 @@ export default function HttpServer() {
     if (!isTauri() || synced.current) return
     synced.current = true
 
-    // Show guide for first-time users
     if (!localStorage.getItem(GUIDE_KEY)) setShowGuide(true)
 
-    // Restore running instances + check for cold-start deep link dir
     ;(async () => {
       const list = await httpListServers()
       if (list.length > 0) setInstances(list)
 
-      // Merge previously active instances (app was closed without stopping)
       const prevActive = loadActive()
       const runningDirs = new Set(list.map((i: HttpInstanceInfo) => i.directory))
       const orphaned = prevActive.filter((a) => !runningDirs.has(a.directory))
@@ -108,10 +76,8 @@ export default function HttpServer() {
           return next
         })
       }
-      // Save current running instances for crash recovery
       saveActive(list.map((i: HttpInstanceInfo) => ({ directory: i.directory, port: i.port })))
 
-      // Fetch pending HTTP serve dir from Rust (cold-start from context menu)
       try {
         const { invoke } = await import('@tauri-apps/api/core')
         const dir = await invoke<string | null>('get_pending_http_serve_dir')
@@ -133,7 +99,6 @@ export default function HttpServer() {
             }
           }
           startingDirRef.current = null
-          // Track recently started to prevent duplicate from delayed events
           recentlyStartedRef.current.set(dir, Date.now())
         }
       } catch { /* ignore */ }
@@ -145,19 +110,17 @@ export default function HttpServer() {
     saveActive(instances.map((i) => ({ directory: i.directory, port: i.port })))
   }, [instances])
 
-  // ── Consume pending directory from deep link (Windows context menu) ──
+  // ── Consume pending directory from deep link ──
   useEffect(() => {
     if (pendingDirectory && !startingDirRef.current) {
       const dir = pendingDirectory
       setPendingDirectory('')
-      // Skip if same directory was started very recently (prevents race condition)
       const recent = recentlyStartedRef.current.get(dir)
       if (recent && Date.now() - recent < 5000) return
       startingDirRef.current = dir
       ;(async () => {
         setStarting(true)
         try {
-          // Re-check against latest instances
           const list = await httpListServers()
           const alreadyRunning = list.some((i: HttpInstanceInfo) => i.directory === dir)
           if (alreadyRunning) {
@@ -257,17 +220,13 @@ export default function HttpServer() {
     })
     if (!ok) return
 
-    // Start fade-out animation
     setStoppingId(inst.id)
     await httpStopServer(inst.id)
-
-    // Wait for animation to complete
     await new Promise((r) => setTimeout(r, 420))
 
     removeInstance(inst.id)
     setStoppingId(null)
     setQrCache((prev) => { const next = { ...prev }; delete next[inst.id]; return next })
-    // Save to history
     const newItem: HistoryItem = { directory: inst.directory, port: inst.port, stoppedAt: Date.now() }
     setRecentHistory((prev) => {
       const next = [newItem, ...prev.filter((h) => h.directory !== inst.directory)].slice(0, MAX_HISTORY)
@@ -291,18 +250,15 @@ export default function HttpServer() {
       danger: true,
     })
     if (!ok) return
-    // Stop all in parallel
     const stopped = instances.map((inst) => ({
       inst,
       promise: httpStopServer(inst.id).then(() => inst).catch(() => null),
     }))
     const results = await Promise.all(stopped.map((s) => s.promise))
-    // Remove all from state
     results.forEach((inst) => {
       if (inst) removeInstance(inst.id)
     })
     setStoppingId(null)
-    // Save to history
     const now = Date.now()
     const newItems: HistoryItem[] = results
       .filter(Boolean)
@@ -344,7 +300,7 @@ export default function HttpServer() {
     if (showGuide) {
       guideRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       guideRef.current?.classList.remove('guide-flash')
-      void guideRef.current?.offsetWidth // force reflow
+      void guideRef.current?.offsetWidth
       guideRef.current?.classList.add('guide-flash')
     } else {
       setShowGuide(true)
@@ -354,13 +310,11 @@ export default function HttpServer() {
   // ── Reuse a history item (restart service) ──
   const handleRestart = useCallback(async (item: HistoryItem) => {
     try {
-      // Try with stored port first
       const info = await httpStartServer(item.directory, item.port)
       if (info) {
         addInstance(info)
         setHighlightId(info.id)
         setTimeout(() => setHighlightId(null), 2500)
-        // Remove from history since it's now running
         setRecentHistory((prev) => {
           const next = prev.filter((h) => h.directory !== item.directory)
           saveHistory(next)
@@ -369,10 +323,7 @@ export default function HttpServer() {
         toast(t('modules.httpServer.ui.started', { defaultValue: 'Web service started' }))
         return
       }
-    } catch {
-      // Port might be occupied, try auto port
-    }
-    // Fallback: auto port
+    } catch { /* Port might be occupied */ }
     try {
       const info = await httpStartServer(item.directory, undefined)
       if (info) {
@@ -451,38 +402,16 @@ export default function HttpServer() {
             })}
           </p>
           <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">1</span>
-              <div>
-                <p className="text-xs font-medium text-text-primary">
-                  {t('modules.httpServer.ui.guide.step1', { defaultValue: 'Select the folder to share' })}
-                </p>
+            {[1, 2, 3, 4].map((n) => (
+              <div key={n} className="flex items-start gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">{n}</span>
+                <div>
+                  <p className="text-xs font-medium text-text-primary">
+                    {t(`modules.httpServer.ui.guide.step${n}`)}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">2</span>
-              <div>
-                <p className="text-xs font-medium text-text-primary">
-                  {t('modules.httpServer.ui.guide.step2', { defaultValue: 'Click start, port and URL are auto-generated' })}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">3</span>
-              <div>
-                <p className="text-xs font-medium text-text-primary">
-                  {t('modules.httpServer.ui.guide.step3', { defaultValue: 'Share the URL or scan QR to browse' })}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">4</span>
-              <div>
-                <p className="text-xs font-medium text-text-primary">
-                  {t('modules.httpServer.ui.guide.step4', { defaultValue: 'Tip: Right-click a folder to start web service without opening the app' })}
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       )}
@@ -490,7 +419,6 @@ export default function HttpServer() {
       {/* ── Add New Server Form ── */}
       <div className="mb-6 rounded-xl border border-border-subtle bg-bg-elevated p-4">
         <div className="flex flex-wrap items-end gap-3">
-          {/* Directory picker */}
           <div className="flex-1 min-w-[200px]">
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-text-muted">
               {t('modules.httpServer.ui.directory', { defaultValue: 'Directory' })}
@@ -511,7 +439,6 @@ export default function HttpServer() {
             </button>
           </div>
 
-          {/* Port (optional) */}
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-text-muted">
               {t('modules.httpServer.ui.port', { defaultValue: 'Port' })}
@@ -534,7 +461,6 @@ export default function HttpServer() {
             )}
           </div>
 
-          {/* Start button */}
           <button
             onClick={handleStart}
             disabled={starting || !!portError}
@@ -589,7 +515,6 @@ export default function HttpServer() {
           ))}
         </div>
       ) : (
-        /* Empty state */
         !starting && (
           <div className="rounded-xl border-2 border-dashed border-border-subtle bg-bg-elevated/50 p-10 text-center">
             <WifiOff size={32} className="mx-auto mb-3 text-text-disabled" />
@@ -662,110 +587,6 @@ export default function HttpServer() {
               </div>
             ))}
           </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Instance Card ─────────────────────────────────────────────────────────
-
-function InstanceCard({
-  instance: inst,
-  expandedQr,
-  setExpandedQr,
-  qrCache,
-  getQrCode,
-  onCopy,
-  onStop,
-  isStopping,
-  isHighlight,
-  t,
-}: {
-  instance: HttpInstanceInfo
-  expandedQr: string | null
-  setExpandedQr: (id: string | null) => void
-  qrCache: Record<string, string>
-  getQrCode: (url: string, id: string) => Promise<string>
-  onCopy: (url: string) => void
-  onStop: (inst: HttpInstanceInfo) => void
-  isStopping?: boolean
-  isHighlight?: boolean
-  t: (key: string, opts?: any) => string
-}) {
-  const url = inst.urls[0] || `http://localhost:${inst.port}`
-  const isQrExpanded = expandedQr === inst.id
-  const [qrDataUrl, setQrDataUrl] = useState<string>('')
-
-  const toggleQr = useCallback(async () => {
-    if (isQrExpanded) {
-      setExpandedQr(null)
-    } else {
-      setExpandedQr(inst.id)
-      if (!qrDataUrl) {
-        const dataUrl = await getQrCode(url, inst.id)
-        setQrDataUrl(dataUrl)
-      }
-    }
-  }, [isQrExpanded, inst.id, url, getQrCode, setExpandedQr, qrDataUrl])
-
-  // Update from cache
-  useEffect(() => {
-    if (qrCache[inst.id] && !qrDataUrl) setQrDataUrl(qrCache[inst.id])
-  }, [qrCache, inst.id, qrDataUrl])
-
-  return (
-    <div className={`rounded-xl border bg-green-500/5 p-4 transition-all duration-400 ${isStopping ? 'instance-fadeout border-green-500/20' : isHighlight ? 'instance-highlight' : 'border-green-500/20'}`}>
-      {/* Top row: directory + status */}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Wifi size={13} className="text-green-400 shrink-0" />
-            <span className="text-xs font-semibold text-green-400">
-              {t('modules.httpServer.ui.instanceRunning', { defaultValue: 'Running' })}
-              <span className="text-text-muted font-normal ml-1">· 端口 {inst.port}</span>
-            </span>
-          </div>
-          <p className="font-mono text-sm text-text-primary truncate" title={inst.directory}>
-            {inst.directory}
-          </p>
-        </div>
-        <button
-          onClick={() => onStop(inst)}
-          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-text-muted hover:text-red-400 hover:bg-red-500/10 transition cursor-pointer"
-          title={t('modules.httpServer.ui.stop', { defaultValue: 'Stop' })}
-        >
-          <Square size={12} />
-          <span className="hidden sm:inline">{t('modules.httpServer.ui.stop', { defaultValue: 'Stop' })}</span>
-        </button>
-      </div>
-
-      {/* URL + actions */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <code className="flex-1 min-w-0 rounded bg-bg-base px-3 py-1.5 text-sm text-primary truncate">
-          {url}
-        </code>
-        <button
-          onClick={() => onCopy(url)}
-          className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-text-secondary hover:text-primary transition cursor-pointer"
-        >
-          <Copy size={12} />
-          {t('modules.httpServer.ui.copy', { defaultValue: 'Copy' })}
-        </button>
-        <button
-          onClick={toggleQr}
-          className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-text-secondary hover:text-primary transition cursor-pointer"
-        >
-          <QrCode size={12} />
-          {t('modules.httpServer.ui.qr', { defaultValue: 'QR Code' })}
-          {isQrExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-        </button>
-      </div>
-
-      {/* QR code (expandable) */}
-      {isQrExpanded && qrDataUrl && (
-        <div className="mt-3 flex justify-center">
-          <img src={qrDataUrl} alt="QR Code" className="rounded-lg" width={160} height={160} />
         </div>
       )}
     </div>

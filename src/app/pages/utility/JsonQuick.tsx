@@ -8,10 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { Copy, X, Sparkles, Minimize2, Check, AlertCircle, ChevronRight, ChevronsDownUp, ChevronsUpDown } from 'lucide-react'
 import { useSettingsStore } from '../../../core'
-
-function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
+import { isTauri } from '../../../shared/utils'
 
 // ─── Collapsible JSON Tree — Monaco-matching color palettes ────────────
 

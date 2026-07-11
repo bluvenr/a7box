@@ -18,24 +18,35 @@ export {
 } from './tauriBridge'
 export type { CaptureResult, ServerInfo } from './tauriBridge'
 
-// ── Cross-platform shortcut display helpers ──
+// ── Environment detection ──
 
-const _isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0
+/** Detect whether running in Tauri context (vs plain browser) */
+export function isTauri(): boolean {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+}
+
+/** Detect whether running on macOS */
+export function isMac(): boolean {
+  return typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0
+}
+
+// ── Cross-platform shortcut display helpers ──
 
 /** Format a Tauri shortcut string (e.g. "CommandOrControl+Shift+A") for display with platform symbols. */
 export function formatShortcut(keys: string): string {
+  const mac = isMac()
   return keys
-    .replace(/CommandOrControl/g, _isMac ? '⌘' : 'Ctrl')
+    .replace(/CommandOrControl/g, mac ? '⌘' : 'Ctrl')
     .replace(/Command/g, '⌘')
-    .replace(/Control/g, _isMac ? '⌃' : 'Ctrl')
-    .replace(/Shift/g, _isMac ? '⇧' : 'Shift')
-    .replace(/Alt/g, _isMac ? '⌥' : 'Alt')
-    .replace(/Super/g, _isMac ? '⌘' : 'Win')
-    .replace(/\+/g, _isMac ? '' : '+')
+    .replace(/Control/g, mac ? '⌃' : 'Ctrl')
+    .replace(/Shift/g, mac ? '⇧' : 'Shift')
+    .replace(/Alt/g, mac ? '⌥' : 'Alt')
+    .replace(/Super/g, mac ? '⌘' : 'Win')
+    .replace(/\+/g, mac ? '' : '+')
 }
 
 /** Format plain-text shortcut hints (e.g. "Alt+F Format · Alt+M Compress") with macOS ⌥ symbol. */
 export function formatPlainShortcuts(text: string): string {
-  if (!_isMac) return text
+  if (!isMac()) return text
   return text.replace(/Alt\+/g, '⌥')
 }

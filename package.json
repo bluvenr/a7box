@@ -13,6 +13,8 @@
     "tauri:dev": "npx tauri dev",
     "tauri:build": "npx tauri build",
     "postversion": "node scripts/sync-version.mjs",
+    "version:check": "node scripts/sync-version.mjs",
+    "version:bump": "node scripts/sync-version.mjs",
     "kill:port": "powershell -Command \"Stop-Process -Name 'node','a7box' -Force -ErrorAction SilentlyContinue; Write-Host 'Port 1420 freed'\"",
     "test": "vitest run",
     "test:watch": "vitest",

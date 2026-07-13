@@ -46,6 +46,15 @@ function App() {
     return () => { i18n.off('languageChanged', updateTitle) }
   }, [getWindowTitle])
 
+  // Disable browser default context menu (desktop app should not show web menus)
+  useEffect(() => {
+    const preventContextMenu = (e: MouseEvent) => {
+      e.preventDefault()
+    }
+    document.addEventListener('contextmenu', preventContextMenu)
+    return () => { document.removeEventListener('contextmenu', preventContextMenu) }
+  }, [])
+
   // Initialization
   useEffect(() => {
     initUsageHistory()

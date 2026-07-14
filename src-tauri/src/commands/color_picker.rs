@@ -68,7 +68,6 @@ pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), 
         .map(|w| w.is_visible().unwrap_or(false))
         .unwrap_or(false);
 
-    #[cfg(not(target_os = "macos"))]
     let builder = WebviewWindowBuilder::new(
         &app, "pick-overlay", WebviewUrl::App("/utility/live-picker".into()),
     )
@@ -84,21 +83,6 @@ pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), 
     .initialization_script(crate::state::lang_init_script(&app))
     .background_color(tauri::window::Color(0, 0, 0, 0))
     .transparent(true);
-    #[cfg(target_os = "macos")]
-    let builder = WebviewWindowBuilder::new(
-        &app, "pick-overlay", WebviewUrl::App("/utility/live-picker".into()),
-    )
-    .title("")
-    .inner_size(vw as f64, vh as f64)
-    .position(vx as f64, vy as f64)
-    .resizable(false)
-    .decorations(false)
-    .shadow(false)
-    .always_on_top(true)
-    .visible(false)
-    .skip_taskbar(true)
-    .initialization_script(crate::state::lang_init_script(&app))
-    .background_color(tauri::window::Color(0, 0, 0, 0));
     let _overlay = builder.build()
         .map_err(|e| format!("Failed to create overlay: {}", e))?;
 

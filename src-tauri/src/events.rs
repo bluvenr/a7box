@@ -258,7 +258,6 @@ fn register_screenshot_events(app: &tauri::App) {
             };
 
             use tauri::{WebviewUrl, WebviewWindowBuilder};
-            #[cfg(not(target_os = "macos"))]
             let builder = WebviewWindowBuilder::new(
                 &app_handle, "utility-region-picker",
                 WebviewUrl::App("/utility/region-picker".into()),
@@ -274,22 +273,6 @@ fn register_screenshot_events(app: &tauri::App) {
                 .skip_taskbar(true)
                 .background_color(tauri::window::Color(0, 0, 0, 0))
                 .transparent(true)
-                .initialization_script(crate::state::utility_init_script(&app_handle));
-            #[cfg(target_os = "macos")]
-            let builder = WebviewWindowBuilder::new(
-                &app_handle, "utility-region-picker",
-                WebviewUrl::App("/utility/region-picker".into()),
-            )
-                .title("")
-                .inner_size(vw as f64, vh as f64)
-                .position(vx as f64, vy as f64)
-                .resizable(false)
-                .decorations(false)
-                .shadow(false)
-                .always_on_top(true)
-                .visible(false)
-                .skip_taskbar(true)
-                .background_color(tauri::window::Color(0, 0, 0, 0))
                 .initialization_script(crate::state::utility_init_script(&app_handle));
             let _ = builder.build();
         });

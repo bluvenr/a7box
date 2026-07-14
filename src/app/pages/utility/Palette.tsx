@@ -31,23 +31,8 @@ export default function Palette() {
   const [selectedIdx, setSelectedIdx] = useState(0)
   const [ready, setReady] = useState(false)
 
-  // Override html/body/#root background to transparent so CSS rounded corners show
-  useEffect(() => {
-    const htmlEl = document.documentElement
-    const bodyEl = document.body
-    const rootEl = document.getElementById('root')
-    const prevHtml = htmlEl.style.background
-    const prevBody = bodyEl.style.background
-    const prevRoot = rootEl?.style.background ?? ''
-    htmlEl.style.background = 'transparent'
-    bodyEl.style.background = 'transparent'
-    if (rootEl) rootEl.style.background = 'transparent'
-    return () => {
-      htmlEl.style.background = prevHtml
-      bodyEl.style.background = prevBody
-      if (rootEl) rootEl.style.background = prevRoot
-    }
-  }, [])
+  // Palette window uses opaque background matching content color (bg-bg-elevated),
+  // consistent with other utility windows (JsonQuick, CodeQuick, etc.).
 
   // Register all modules on mount (palette window has its own React instance)
   useEffect(() => {
@@ -209,7 +194,7 @@ export default function Palette() {
 
   return (
     <div
-      className="flex h-screen w-screen flex-col overflow-hidden rounded-xl border border-border-base bg-bg-elevated"
+      className="flex h-screen flex-col bg-bg-elevated"
       onKeyDown={handleKeyDown}
     >
       {/* Search input */}

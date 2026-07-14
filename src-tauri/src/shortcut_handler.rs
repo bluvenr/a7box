@@ -33,8 +33,6 @@ fn handle_toggle_palette(app: &AppHandle) {
         let _ = existing.close();
         // Don't create a new one — this is toggle off
     } else {
-        // macOS: rely on background_color alpha channel (no transparent() without macos-private-api)
-        #[cfg(not(target_os = "macos"))]
         let builder = WebviewWindowBuilder::new(app, label, WebviewUrl::App("/utility/palette".into()))
             .title("A7Box")
             .inner_size(520.0, 420.0)
@@ -44,20 +42,7 @@ fn handle_toggle_palette(app: &AppHandle) {
             .visible(false)
             .skip_taskbar(true)
             .center()
-            .background_color(tauri::window::Color(0, 0, 0, 0))
-            .transparent(true)
-            .initialization_script(crate::state::lang_init_script(app));
-        #[cfg(target_os = "macos")]
-        let builder = WebviewWindowBuilder::new(app, label, WebviewUrl::App("/utility/palette".into()))
-            .title("A7Box")
-            .inner_size(520.0, 420.0)
-            .resizable(false)
-            .decorations(false)
-            .always_on_top(true)
-            .visible(false)
-            .skip_taskbar(true)
-            .center()
-            .background_color(tauri::window::Color(0, 0, 0, 0))
+            .background_color(tauri::window::Color(20, 20, 22, 255))
             .initialization_script(crate::state::lang_init_script(app));
         let _ = builder.build();
         // Window shown by util-window-ready listener

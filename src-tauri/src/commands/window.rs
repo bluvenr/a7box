@@ -63,7 +63,6 @@ pub async fn show_notification_toast(app: AppHandle) -> bool {
         let y = (mon_pos.y as f64 + mon_size.height as f64) / scale - win_h - margin;
 
         use tauri::{WebviewUrl, WebviewWindowBuilder};
-        #[cfg(not(target_os = "macos"))]
         let result = WebviewWindowBuilder::new(&app, label, WebviewUrl::App("/utility/notification-toast".into()))
             .title("")
             .inner_size(win_w, win_h)
@@ -75,20 +74,6 @@ pub async fn show_notification_toast(app: AppHandle) -> bool {
             .visible(false)
             .skip_taskbar(true)
             .transparent(true)
-            .background_color(tauri::window::Color(0, 0, 0, 0))
-            .initialization_script(crate::state::utility_init_script(&app))
-            .build();
-        #[cfg(target_os = "macos")]
-        let result = WebviewWindowBuilder::new(&app, label, WebviewUrl::App("/utility/notification-toast".into()))
-            .title("")
-            .inner_size(win_w, win_h)
-            .position(x, y)
-            .resizable(false)
-            .decorations(false)
-            .shadow(false)
-            .always_on_top(true)
-            .visible(false)
-            .skip_taskbar(true)
             .background_color(tauri::window::Color(0, 0, 0, 0))
             .initialization_script(crate::state::utility_init_script(&app))
             .build();

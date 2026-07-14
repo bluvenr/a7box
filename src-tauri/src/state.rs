@@ -42,16 +42,18 @@ pub fn lang_init_script(app_ref: &tauri::AppHandle<tauri::Wry>) -> String {
     format!("window.__A7BOX_LANG__='{}';", current_lang(app_ref))
 }
 
-/// Init script for utility windows that need transparent background (region-picker, capture-toolbar).
-/// Sets transparent backgrounds immediately on page load to prevent black flash.
+/// Init script for utility windows that need transparent background (region-picker, capture-toolbar, palette).
+/// Sets transparent backgrounds immediately to prevent any flash of opaque background.
+/// `document.documentElement` (html) is available at script injection time,
+/// while `body` and `#root` require DOMContentLoaded.
 pub fn utility_init_script(app_ref: &tauri::AppHandle<tauri::Wry>) -> String {
     format!(
         r#"window.__A7BOX_LANG__='{}';
+document.documentElement.style.background='transparent';
 document.addEventListener('DOMContentLoaded',function(){{
   var s='background:transparent!important';
-  document.documentElement.style.cssText+=s;
-  document.body.style.cssText+=s;
-  var r=document.getElementById('root');if(r)r.style.cssText+=s;
+  document.body.style.cssText+=';'+s;
+  var r=document.getElementById('root');if(r)r.style.cssText+=';'+s;
 }});"#,
         current_lang(app_ref)
     )

@@ -216,6 +216,30 @@ async function checkDueReminders() {
 
   const newDue: Reminder[] = []
 
+  // ── Auto-advance repeat reminders whose occurrence was already fired ──────
+  // When a repeat reminder was notified but not completed (user ignored/dismissed),
+  // advance triggerAt to the next future occurrence so it fires again.
+  for (const reminder of store.reminders) {
+    if (reminder.status !== 'pending') continue
+    if (!reminder.repeat) continue
+    if (!firedSet.has(reminder.id)) continue
+
+    let next = calcNextTrigger(reminder.repeat, reminder.triggerAt)
+    let safety = 0
+    while (next && next <= now && safety < 10000) {
+      next = calcNextTrigger(reminder.repeat, next)
+      safety++
+    }
+    if (next && next > now && (!reminder.repeat.endDate || next <= reminder.repeat.endDate)) {
+      store.updateReminder(reminder.id, { triggerAt: next })
+      clearFiredEntry(reminder.id)
+    } else if (!next || (reminder.repeat.endDate && next > reminder.repeat.endDate)) {
+      // No valid next occurrence — auto-complete the repeat reminder
+      store.updateStatus(reminder.id, 'completed')
+      clearFiredEntry(reminder.id)
+    }
+  }
+
   // Check pending reminders
   for (const reminder of store.reminders) {
     if (reminder.status !== 'pending') continue

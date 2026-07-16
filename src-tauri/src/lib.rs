@@ -66,9 +66,7 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             // Bring existing window to foreground when triggered from context menu
             if let Some(window) = app.get_webview_window("main") {
-                let _ = window.unminimize();
-                let _ = window.show();
-                let _ = window.set_focus();
+                state::bring_window_to_front(&window);
             }
             // Parse args and emit events (warm start)
             deep_link::parse_args(app, &args, true);

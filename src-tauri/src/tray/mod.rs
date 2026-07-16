@@ -75,9 +75,7 @@ fn build_tray<R: Runtime>(app: &tauri::AppHandle<R>, lang: &str) -> Result<(), B
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => {
                 if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.show();
-                    let _ = window.unminimize();
-                    let _ = window.set_focus();
+                    crate::state::bring_window_to_front(&window);
                 }
             }
             "quit" => {
@@ -100,9 +98,7 @@ fn build_tray<R: Runtime>(app: &tauri::AppHandle<R>, lang: &str) -> Result<(), B
                     if is_vis && !is_min {
                         let _ = window.hide();
                     } else {
-                        let _ = window.show();
-                        let _ = window.unminimize();
-                        let _ = window.set_focus();
+                        crate::state::bring_window_to_front(&window);
                     }
                 }
             }

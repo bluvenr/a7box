@@ -59,6 +59,18 @@ document.addEventListener('DOMContentLoaded',function(){{
     )
 }
 
+/// Bring a window to the foreground, overcoming Windows' SetForegroundWindow restrictions.
+/// Uses the always-on-top toggle trick: briefly enable then disable always_on_top
+/// to force the window above other applications (e.g. when triggered from Explorer context menu).
+pub fn bring_window_to_front<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>) {
+    let _ = window.unminimize();
+    let _ = window.show();
+    let _ = window.set_focus();
+    // Windows foreground trick: toggle always-on-top
+    let _ = window.set_always_on_top(true);
+    let _ = window.set_always_on_top(false);
+}
+
 /// Read PNG width/height from the IHDR chunk in a base64 data URL.
 /// Returns (width, height) or None if parsing fails.
 pub fn read_png_dims_from_base64(data: &str) -> Option<(u32, u32)> {

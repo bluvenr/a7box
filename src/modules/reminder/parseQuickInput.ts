@@ -326,12 +326,27 @@ export function parseQuickInput(input: string, lang: string): ParsedResult | nul
       }
     } else {
       baseDate.setHours(parsedTime.hour, parsedTime.minute, 0, 0)
-      if (baseDate.getTime() <= now.getTime() && !parsedDate) {
+      // Smart PM inference for bare times (1-11h without explicit 上午/下午 prefix):
+      // e.g. "3点半" at 2PM → try 15:30 today before rolling to tomorrow
+      if (baseDate.getTime() <= now.getTime() && !parsedDate && parsedTime.hour <= 12) {
+        const pmDate = new Date(baseDate)
+        pmDate.setHours(parsedTime.hour + 12, parsedTime.minute, 0, 0)
+        if (pmDate.getTime() > now.getTime()) {
+          baseDate = pmDate
+        } else {
+          baseDate.setDate(baseDate.getDate() + 1)
+        }
+      } else if (baseDate.getTime() <= now.getTime() && !parsedDate) {
         baseDate.setDate(baseDate.getDate() + 1)
       }
     }
   } else {
     baseDate.setHours(9, 0, 0, 0)
+  }
+
+  // Strip colloquial time-context words from title (these imply "later" but are not needed in the reminder title)
+  if (isZh) {
+    title = title.replace(/[待等]会儿?/g, '').replace(/一会儿|等一下|稍后/g, '')
   }
 
   title = title.replace(/^[\s,，.。!！?？]+/, '').replace(/[\s,，.。!！?？]+$/, '')

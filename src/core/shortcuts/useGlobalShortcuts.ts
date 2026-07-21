@@ -89,6 +89,7 @@ export function useGlobalShortcuts() {
 
     let unlisten: (() => void) | undefined
     let unlistenPalette: (() => void) | undefined
+    let unlistenSettings: (() => void) | undefined
 
     (async () => {
       try {
@@ -116,12 +117,17 @@ export function useGlobalShortcuts() {
             navigate(path)
           }
         })
+
+        // Listen for tray "Open Settings" event
+        unlistenSettings = await listen('tray-open-settings', () => {
+          navigate('/settings')
+        })
       } catch {
         // Tauri API not available
       }
     })()
 
-    return () => { unlisten?.(); unlistenPalette?.() }
+    return () => { unlisten?.(); unlistenPalette?.(); unlistenSettings?.() }
   }, [navigate])
 
   // Also listen for Ctrl+K / Ctrl+Shift+P keyboard shortcuts (browser fallback)

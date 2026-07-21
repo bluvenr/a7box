@@ -3,9 +3,9 @@
 // Supports dynamic language switching via update_tray_language()
 
 use tauri::{
-    menu::{Menu, MenuItem},
+    menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, Runtime,
+    Emitter, Manager, Wry,
 };
 #[cfg(target_os = "macos")]
 use tauri::image::Image;
@@ -13,20 +13,39 @@ use tauri::image::Image;
 /// Tray icon fixed ID for removal/rebuild
 pub const TRAY_ID: &str = "main-tray";
 
+/// i18n labels for tray menu items
+struct TrayLabels {
+    show: &'static str,
+    palette: &'static str,
+    settings: &'static str,
+    website: &'static str,
+    about_author: &'static str,
+    quit: &'static str,
+    tooltip: &'static str,
+}
+
 /// Get i18n labels based on language code
-fn get_labels(lang: &str) -> (&'static str, &'static str, &'static str) {
+fn get_labels(lang: &str) -> TrayLabels {
     if lang.starts_with("zh") {
-        (
-            "\u{663e}\u{793a} A7\u{5323}",                          // 显示 A7匣
-            "\u{9000}\u{51fa}",                                      // 退出
-            "A7\u{5323} - \u{684c}\u{9762}\u{6218}\u{672f}\u{7ea7}\u{6548}\u{7387}\u{6b66}\u{5668}", // A7匣 - 桌面战术级效率武器
-        )
+        TrayLabels {
+            show: "\u{663e}\u{793a} A7\u{5323}",                    // 显示 A7匣
+            palette: "\u{547d}\u{4ee4}\u{9762}\u{677f}",            // 命令面板
+            settings: "\u{6253}\u{5f00}\u{8bbe}\u{7f6e}",            // 打开设置
+            website: "\u{4ea7}\u{54c1}\u{5b98}\u{7f51}",              // 产品官网
+            about_author: "\u{5173}\u{4e8e}\u{4f5c}\u{8005}",        // 关于作者
+            quit: "\u{9000}\u{51fa}",                                  // 退出
+            tooltip: "A7\u{5323} - \u{684c}\u{9762}\u{6218}\u{672f}\u{7ea7}\u{6548}\u{7387}\u{6b66}\u{5668}", // A7匣 - 桌面战术级效率武器
+        }
     } else {
-        (
-            "Show A7Box",
-            "Quit",
-            "A7Box - Your Tactical Efficiency Weapon",
-        )
+        TrayLabels {
+            show: "Show A7Box",
+            palette: "Command Palette",
+            settings: "Open Settings",
+            website: "Website",
+            about_author: "About Author",
+            quit: "Quit",
+            tooltip: "A7Box - Your Tactical Efficiency Weapon",
+        }
     }
 }
 
@@ -46,19 +65,38 @@ fn detect_locale() -> String {
 const TRAY_ICON: Image<'_> = tauri::include_image!("icons/a7box-tray-22.png");
 
 /// Build (or rebuild) the system tray with the given language
-fn build_tray<R: Runtime>(app: &tauri::AppHandle<R>, lang: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let (show_label, quit_label, tooltip) = get_labels(lang);
+fn build_tray(app: &tauri::AppHandle<Wry>, lang: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let labels = get_labels(lang);
 
     // Remove existing tray if present
     let _ = app.remove_tray_by_id(TRAY_ID);
 
-    let show = MenuItem::with_id(app, "show", show_label, true, None::<&str>)?;
-    let quit = MenuItem::with_id(app, "quit", quit_label, true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show, &quit])?;
+    // Build menu items
+    let show = MenuItem::with_id(app, "show", labels.show, true, None::<&str>)?;
+    let sep1 = PredefinedMenuItem::separator(app)?;
+    let palette = MenuItem::with_id(app, "palette", labels.palette, true, None::<&str>)?;
+    let sep2 = PredefinedMenuItem::separator(app)?;
+    let settings = MenuItem::with_id(app, "settings", labels.settings, true, None::<&str>)?;
+    let sep3 = PredefinedMenuItem::separator(app)?;
+    let website = MenuItem::with_id(app, "website", labels.website, true, None::<&str>)?;
+    let about_author = MenuItem::with_id(app, "about-author", labels.about_author, true, None::<&str>)?;
+    let sep4 = PredefinedMenuItem::separator(app)?;
+    let quit = MenuItem::with_id(app, "quit", labels.quit, true, None::<&str>)?;
+
+    let menu = Menu::with_items(app, &[
+        &show, &sep1,
+        &palette,
+        &sep2, &settings,
+        &sep3, &website, &about_author,
+        &sep4, &quit,
+    ])?;
 
     let mut builder = TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
-        .tooltip(tooltip);
+        .tooltip(labels.tooltip);
+
+    // Left-click toggles window visibility; right-click shows context menu (all platforms)
+    builder = builder.show_menu_on_left_click(false);
 
     // macOS: use monochrome template icon for proper light/dark menu bar adaptation
     #[cfg(target_os = "macos")]
@@ -77,6 +115,22 @@ fn build_tray<R: Runtime>(app: &tauri::AppHandle<R>, lang: &str) -> Result<(), B
                 if let Some(window) = app.get_webview_window("main") {
                     crate::state::bring_window_to_front(&window);
                 }
+            }
+            "palette" => {
+                // Command palette is a standalone floating window, no need to show main window
+                crate::shortcut_handler::execute_action(app, "toggle-command-palette");
+            }
+            "settings" => {
+                if let Some(window) = app.get_webview_window("main") {
+                    crate::state::bring_window_to_front(&window);
+                }
+                let _ = app.emit("tray-open-settings", "");
+            }
+            "website" => {
+                let _ = open::that("https://a7box.virapi.com/");
+            }
+            "about-author" => {
+                let _ = open::that("https://bluvenr.virapi.com/");
             }
             "quit" => {
                 app.exit(0);
@@ -109,13 +163,13 @@ fn build_tray<R: Runtime>(app: &tauri::AppHandle<R>, lang: &str) -> Result<(), B
 }
 
 /// Initial tray setup (uses system locale)
-pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn setup_tray(app: &tauri::App<Wry>) -> Result<(), Box<dyn std::error::Error>> {
     let locale = detect_locale();
     build_tray(app.handle(), &locale)
 }
 
 /// Update tray language (called from frontend when language changes)
-pub fn update_tray_language<R: Runtime>(app: &tauri::AppHandle<R>, lang: &str) {
+pub fn update_tray_language(app: &tauri::AppHandle<Wry>, lang: &str) {
     if let Err(e) = build_tray(app, lang) {
         eprintln!("[WARN] Failed to update tray language: {}", e);
     }

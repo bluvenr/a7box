@@ -109,6 +109,8 @@
     "moveUp": "上移",
     "moveDown": "下移",
     "githubRepo": "GitHub 仓库",
+    "officialWebsite": "产品官网",
+    "aboutAuthor": "关于作者",
     "autoStart": "开机自启",
     "autoStartDesc": "系统启动时自动运行 A7匣",
     "minimizeToTray": "最小化到托盘",

@@ -490,6 +490,24 @@ export default function Settings() {
             >
               {t('settings.githubRepo')}
             </a>
+            <div className="flex gap-4">
+              <a
+                href="https://a7box.virapi.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:text-primary-hover"
+              >
+                {t('settings.officialWebsite')}
+              </a>
+              <a
+                href="https://bluvenr.virapi.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:text-primary-hover"
+              >
+                {t('settings.aboutAuthor')}
+              </a>
+            </div>
 
             {/* Update section */}
             <div className="mt-4 border-t border-border-subtle pt-4">

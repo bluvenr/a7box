@@ -109,6 +109,8 @@
         "moveUp": "Move up",
         "moveDown": "Move down",
     "githubRepo": "GitHub Repository",
+    "officialWebsite": "Official Website",
+    "aboutAuthor": "About Author",
     "autoStart": "Start on Boot",
     "autoStartDesc": "Automatically start A7Box when system starts",
     "minimizeToTray": "Minimize to Tray",

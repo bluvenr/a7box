@@ -3,6 +3,11 @@
 use crate::p2p::P2PStateArc;
 use std::path::PathBuf;
 
+/// Temp directory for session screenshots (same as screenshot module)
+fn temp_screenshot_dir() -> PathBuf {
+    std::env::temp_dir().join("a7box_screenshots")
+}
+
 /// Returns cache sizes in bytes for each cache category
 #[tauri::command]
 pub fn get_cache_sizes(state: tauri::State<'_, P2PStateArc>) -> serde_json::Value {
@@ -10,12 +15,9 @@ pub fn get_cache_sizes(state: tauri::State<'_, P2PStateArc>) -> serde_json::Valu
     let dl_dir = state.inner().get_download_dir();
     let (p2p_downloads, p2p_file_count) = dir_size_and_count(&dl_dir);
 
-    // Screenshots: ~/Pictures/A7Box/Screenshots
-    let ss_dir = dirs::picture_dir()
-        .map(|p| p.join("A7Box").join("Screenshots"));
-    let (screenshots, ss_file_count) = ss_dir.as_ref()
-        .map(|p| dir_size_and_count(p))
-        .unwrap_or((0, 0));
+    // Screenshots: temp directory (same as screenshot module)
+    let ss_dir = temp_screenshot_dir();
+    let (screenshots, ss_file_count) = dir_size_and_count(&ss_dir);
 
     // P2P transfers history count
     let transfer_count = state.inner().transfers.lock().unwrap().len();
@@ -25,9 +27,7 @@ pub fn get_cache_sizes(state: tauri::State<'_, P2PStateArc>) -> serde_json::Valu
         "p2pDownloadsPath": dl_dir.to_string_lossy(),
         "p2pFileCount": p2p_file_count,
         "screenshots": screenshots,
-        "screenshotsPath": ss_dir
-            .map(|p| p.to_string_lossy().to_string())
-            .unwrap_or_default(),
+        "screenshotsPath": ss_dir.to_string_lossy(),
         "screenshotFileCount": ss_file_count,
         "transferCount": transfer_count,
     })
@@ -35,7 +35,7 @@ pub fn get_cache_sizes(state: tauri::State<'_, P2PStateArc>) -> serde_json::Valu
 
 /// Clear a specific cache category. `category` is one of:
 /// - "p2pDownloads": delete files in the download directory
-/// - "screenshots": delete files in the screenshots directory
+/// - "screenshots": delete files in the temp screenshots directory
 /// - "transferHistory": clear in-memory transfer records
 #[tauri::command]
 pub fn clear_cache(
@@ -49,9 +49,7 @@ pub fn clear_cache(
             Ok(true)
         }
         "screenshots" => {
-            let ss_dir = dirs::picture_dir()
-                .map(|p| p.join("A7Box").join("Screenshots"))
-                .unwrap_or_else(|| PathBuf::from("."));
+            let ss_dir = temp_screenshot_dir();
             clear_dir_contents(&ss_dir)?;
             Ok(true)
         }
@@ -60,6 +58,22 @@ pub fn clear_cache(
             Ok(true)
         }
         _ => Err(format!("Unknown cache category: {}", category)),
+    }
+}
+
+/// Open a cache directory in system file explorer
+#[tauri::command]
+pub fn open_cache_dir(category: String, state: tauri::State<'_, P2PStateArc>) -> Result<bool, String> {
+    let dir = match category.as_str() {
+        "p2pDownloads" => state.inner().get_download_dir(),
+        "screenshots" => temp_screenshot_dir(),
+        _ => return Err(format!("Unknown cache category: {}", category)),
+    };
+    if dir.exists() {
+        open::that(&dir).map_err(|e| format!("Failed to open folder: {}", e))?;
+        Ok(true)
+    } else {
+        Ok(false)
     }
 }
 

@@ -487,6 +487,14 @@ export async function clearCache(category: 'p2pDownloads' | 'screenshots' | 'tra
   } catch { return false }
 }
 
+export async function openCacheDir(category: 'p2pDownloads' | 'screenshots'): Promise<boolean> {
+  const invoke = await getInvoke()
+  if (!invoke) return false
+  try {
+    return await invoke<boolean>('open_cache_dir', { category })
+  } catch { return false }
+}
+
 // P2P event listeners
 export async function onP2PPeerDiscovered(callback: (peer: P2PPeer) => void): Promise<(() => void) | null> {
   const listen = await getListen()

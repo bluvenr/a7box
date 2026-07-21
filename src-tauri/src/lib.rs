@@ -143,6 +143,7 @@ pub fn run() {
             // Cache Management
             commands::cache::get_cache_sizes,
             commands::cache::clear_cache,
+            commands::cache::open_cache_dir,
             // Shortcut Management
             commands::shortcut::update_shortcut,
             // Utility Windows

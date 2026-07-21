@@ -6,9 +6,10 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSettingsStore, SUPPORTED_LANGUAGES, changeLanguage, useUpdater } from '../../core'
 import { useModuleRegistry } from '../../core/registry'
-import { getCacheSizes, clearCache } from '../../shared/utils/tauriBridge'
+import { getCacheSizes, clearCache, openCacheDir } from '../../shared/utils/tauriBridge'
 import type { CacheSizes as CacheSizesType } from '../../shared/utils/tauriBridge'
 import { useConfirm } from '../../components/Dialog'
+import { useToast } from '../../components/Toast'
 import {
   Globe, Palette, Box, Info, RefreshCw, Download,
   CheckCircle, AlertCircle, Loader2, GripVertical,
@@ -713,6 +714,7 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
   const [loading, setLoading] = useState(true)
   const [clearing, setClearing] = useState<string | null>(null)
   const confirm = useConfirm()
+  const toast = useToast()
 
   const loadSizes = async () => {
     setLoading(true)
@@ -733,20 +735,37 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
 
   const handleClear = async (category: 'p2pDownloads' | 'screenshots' | 'transferHistory') => {
     setClearing(category)
-    await clearCache(category)
+    const ok = await clearCache(category)
     await loadSizes()
     setClearing(null)
+    if (ok) {
+      toast(t('settings.cacheCleared', { defaultValue: 'Cleared successfully' }), 'success')
+    } else {
+      toast(t('settings.cacheClearFailed', { defaultValue: 'Failed to clear' }), 'error')
+    }
   }
 
   const totalSize = cacheSizes ? cacheSizes.p2pDownloads + cacheSizes.screenshots : 0
 
   const handleClearAll = async () => {
     setClearing('all')
-    await clearCache('p2pDownloads')
-    await clearCache('screenshots')
-    await clearCache('transferHistory')
+    const r1 = await clearCache('p2pDownloads')
+    const r2 = await clearCache('screenshots')
+    const r3 = await clearCache('transferHistory')
     await loadSizes()
     setClearing(null)
+    if (r1 && r2 && r3) {
+      toast(t('settings.cacheCleared', { defaultValue: 'Cleared successfully' }), 'success')
+    } else {
+      toast(t('settings.cacheClearFailed', { defaultValue: 'Some items failed to clear' }), 'error')
+    }
+  }
+
+  const handleOpenDir = async (category: 'p2pDownloads' | 'screenshots') => {
+    const opened = await openCacheDir(category)
+    if (!opened) {
+      toast(t('settings.cacheDirNotFound', { defaultValue: 'Directory does not exist yet' }), 'info')
+    }
   }
 
   return (
@@ -801,6 +820,14 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
                 {loading ? '...' : formatSize(cacheSizes?.p2pDownloads ?? 0)}
               </span>
               <button
+                onClick={() => handleOpenDir('p2pDownloads')}
+                disabled={loading || clearing !== null}
+                className="text-text-muted hover:text-primary cursor-pointer disabled:opacity-30 transition"
+                title={t('settings.cacheOpenFolder', { defaultValue: 'Open folder' })}
+              >
+                <FolderOpen size={13} />
+              </button>
+              <button
                 onClick={async () => {
                   const ok = await confirm({
                     title: t('settings.cacheDownloads', { defaultValue: 'Transfer downloads' }),
@@ -837,6 +864,14 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
               <span className="text-xs text-text-secondary tabular-nums">
                 {loading ? '...' : formatSize(cacheSizes?.screenshots ?? 0)}
               </span>
+              <button
+                onClick={() => handleOpenDir('screenshots')}
+                disabled={loading || clearing !== null}
+                className="text-text-muted hover:text-primary cursor-pointer disabled:opacity-30 transition"
+                title={t('settings.cacheOpenFolder', { defaultValue: 'Open folder' })}
+              >
+                <FolderOpen size={13} />
+              </button>
               <button
                 onClick={async () => {
                   const ok = await confirm({

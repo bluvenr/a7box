@@ -103,10 +103,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest'   # Apple Silicon (arm64)
-          - platform: 'macos-13'       # Intel (x86_64)
-          - platform: 'ubuntu-22.04'   # Linux
-          - platform: 'windows-latest' # Windows
+          - platform: 'macos-latest'
+            target: 'aarch64-apple-darwin'    # Apple Silicon (native)
+          - platform: 'macos-latest'
+            target: 'x86_64-apple-darwin'     # Intel (cross-compile on ARM runner)
+          - platform: 'ubuntu-22.04'
+          - platform: 'windows-latest'
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -120,6 +122,10 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Add Rust target for macOS cross-compile
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: rustup target add x86_64-apple-darwin
 
       - name: Install Apple certificate (macOS)
         if: startsWith(matrix.platform, 'macos')
@@ -178,3 +184,4 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           releaseId: ${{ needs.prepare.outputs.release_id }}
+          args: ${{ matrix.target && format('--target {0}', matrix.target) || '' }}

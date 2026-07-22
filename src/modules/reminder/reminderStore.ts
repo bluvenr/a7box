@@ -126,17 +126,22 @@ export const useReminderStore = create<ReminderState>()(
 
       updateReminder: (id, data) => {
         set((s) => ({
-          reminders: s.reminders.map((r) =>
-            r.id === id
-              ? {
-                  ...r,
-                  ...data,
-                  title: data.title !== undefined ? data.title.slice(0, 100) : r.title,
-                  note: data.note !== undefined ? data.note?.slice(0, 500) : r.note,
-                  updatedAt: Date.now(),
-                }
-              : r
-          ),
+          reminders: s.reminders.map((r) => {
+            if (r.id !== id) return r
+            const updated = {
+              ...r,
+              ...data,
+              title: data.title !== undefined ? data.title.slice(0, 100) : r.title,
+              note: data.note !== undefined ? data.note?.slice(0, 500) : r.note,
+              updatedAt: Date.now(),
+            }
+            // If editing a snoozed reminder, cancel the snooze — user is rescheduling
+            if (r.status === 'snoozed') {
+              updated.status = 'pending'
+              updated.snoozeUntil = undefined
+            }
+            return updated
+          }),
         }))
       },
 

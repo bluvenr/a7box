@@ -185,3 +185,68 @@ jobs:
         with:
           releaseId: ${{ needs.prepare.outputs.release_id }}
           args: ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
+
+  # ── Phase 3: Patch latest.json with release notes (tauri-action leaves notes empty) ──
+  finalize:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Patch latest.json notes field
+        uses: actions/github-script@v7
+        env:
+          RELEASE_ID: ${{ needs.prepare.outputs.release_id }}
+        with:
+          script: |
+            const releaseId = parseInt(process.env.RELEASE_ID);
+
+            // 1. Find the latest.json asset
+            const { data: assets } = await github.rest.repos.listReleaseAssets({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: releaseId,
+            });
+            const asset = assets.find(a => a.name === 'latest.json');
+            if (!asset) {
+              core.warning('latest.json not found in release assets, skipping.');
+              return;
+            }
+
+            // 2. Download latest.json content
+            const { data: raw } = await github.request({
+              url: asset.browser_download_url,
+              headers: { Accept: 'application/octet-stream' },
+            });
+            const json = JSON.parse(Buffer.from(raw).toString('utf-8'));
+
+            // 3. Skip if notes already populated
+            if (json.notes) {
+              core.info('notes already populated, skipping.');
+              return;
+            }
+
+            // 4. Get release body from API
+            const { data: release } = await github.rest.repos.getRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: releaseId,
+            });
+            json.notes = release.body || '';
+
+            // 5. Delete old asset and re-upload patched version
+            await github.rest.repos.deleteReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              asset_id: asset.id,
+            });
+            const patched = JSON.stringify(json, null, 2);
+            await github.rest.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: releaseId,
+              name: 'latest.json',
+              data: patched,
+              headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(patched) },
+            });
+            core.info('latest.json patched with release notes.');

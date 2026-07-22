@@ -67,12 +67,12 @@ export default function JsonFormatter() {
   }, [])
 
   const handleFoldAll = useCallback(() => {
-    editorRef.current?.getAction('editor.foldLevel2')?.run()
+    editorRef.current?.trigger('fold-button', 'editor.foldLevel2', {})
     setIsAllFolded(true)
   }, [])
 
   const handleUnfoldAll = useCallback(() => {
-    editorRef.current?.getAction('editor.unfoldAll')?.run()
+    editorRef.current?.trigger('fold-button', 'editor.unfoldAll', {})
     setIsAllFolded(false)
   }, [])
 

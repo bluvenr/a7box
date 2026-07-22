@@ -12,7 +12,7 @@ import { isTauri } from '../../../shared/utils'
 
 // ─── Collapsible JSON Tree — Monaco-matching color palettes ────────────
 
-type JsonColors = { key: string; str: string; num: string; bool: string; nil: string; bracket: string; muted: string }
+type JsonColors = { key: string; str: string; num: string; bool: string; nil: string; bracket: string; muted: string; bg: string; guideline: string }
 
 const COLORS: { dark: JsonColors; light: JsonColors } = {
   dark: {
@@ -23,6 +23,8 @@ const COLORS: { dark: JsonColors; light: JsonColors } = {
     nil: '#569cd6',
     bracket: '#d4d4d4',
     muted: '#808080',
+    bg: '#1e1e1e',
+    guideline: '#404040',
   },
   light: {
     key: '#0451a5',
@@ -32,6 +34,8 @@ const COLORS: { dark: JsonColors; light: JsonColors } = {
     nil: '#0000ff',
     bracket: '#000000',
     muted: '#808080',
+    bg: '#ffffff',
+    guideline: '#d3d3d3',
   },
 }
 
@@ -114,16 +118,20 @@ function JsonTree({ data, expandAll, colors }: {
       return next
     })
   }, [expanded])
+
+  // renderVal: renders a value with optional trailing separator (comma)
+  // For collapsible objects/arrays, the separator is attached to the closing bracket
   const renderVal = useCallback(
-    (val: unknown, path: string, depth: number): React.ReactNode => {
-      if (val === null) return <span style={{ color: colors.nil }}>null</span>
+    (val: unknown, path: string, depth: number, trailing?: string): React.ReactNode => {
+      if (val === null)
+        return <><span style={{ color: colors.nil }}>null</span>{trailing && <span style={{ color: colors.bracket }}>{trailing}</span>}</>
       const t = typeof val
       if (t === 'string')
-        return <span style={{ color: colors.str }}>"{val as string}"</span>
+        return <><span style={{ color: colors.str }}>"{val as string}"</span>{trailing && <span style={{ color: colors.bracket }}>{trailing}</span>}</>
       if (t === 'number')
-        return <span style={{ color: colors.num }}>{String(val)}</span>
+        return <><span style={{ color: colors.num }}>{String(val)}</span>{trailing && <span style={{ color: colors.bracket }}>{trailing}</span>}</>
       if (t === 'boolean')
-        return <span style={{ color: colors.bool }}>{String(val)}</span>
+        return <><span style={{ color: colors.bool }}>{String(val)}</span>{trailing && <span style={{ color: colors.bracket }}>{trailing}</span>}</>
 
       const isArr = Array.isArray(val)
       const entries = isArr
@@ -136,46 +144,65 @@ function JsonTree({ data, expandAll, colors }: {
       const label = isArr ? `${len} item${len !== 1 ? 's' : ''}` : `${len} key${len !== 1 ? 's' : ''}`
 
       if (len === 0)
-        return <span style={{ color: colors.bracket }}>{open}{close}</span>
+        return <span style={{ color: colors.bracket }}>{open}{close}{trailing}</span>
 
+      if (!isExp) {
+        // Collapsed inline: ▶ { 3 keys },
+        return (
+          <span className="inline-flex items-baseline">
+            <span
+              className="inline-flex cursor-pointer items-baseline gap-1 rounded px-0.5 -mx-0.5 transition-colors hover:bg-white/[0.06]"
+              onClick={(e) => { e.stopPropagation(); toggle(path) }}
+            >
+              <ChevronRight
+                size={14}
+                className="shrink-0 transition-transform duration-150 relative top-[3px]"
+                style={{ color: colors.muted }}
+              />
+              <span style={{ color: colors.bracket }}>{open}</span>
+              <span className="text-[11px]" style={{ color: colors.muted }}>{label}</span>
+              <span style={{ color: colors.bracket }}>{close}</span>
+            </span>
+            {trailing && <span style={{ color: colors.bracket }}>{trailing}</span>}
+          </span>
+        )
+      }
+
+      // Expanded:
+      //   ▶ {
+      //   │  "key": value,
+      //   │  "nested": ▶ { 2 keys },
+      //   },
       return (
         <span>
           <span
-            className="inline-flex cursor-pointer items-center gap-0.5"
+            className="inline-flex cursor-pointer items-baseline gap-1 rounded px-0.5 -mx-0.5 transition-colors hover:bg-white/[0.06]"
             onClick={(e) => { e.stopPropagation(); toggle(path) }}
           >
             <ChevronRight
-              size={11}
-              className={`shrink-0 transition-transform duration-150 ${isExp ? 'rotate-90' : ''}`}
+              size={14}
+              className="shrink-0 rotate-90 transition-transform duration-150 relative top-[3px]"
               style={{ color: colors.muted }}
             />
             <span style={{ color: colors.bracket }}>{open}</span>
-            {!isExp && (
-              <span className="text-[11px]" style={{ color: colors.muted }}>
-                {' '}{label}{' '}
-              </span>
-            )}
-            {!isExp && <span style={{ color: colors.bracket }}>{close}</span>}
           </span>
-          {isExp && (
-            <>
-              <div className="pl-4">
-                {entries.map(([k, v], i) => (
-                  <div key={k} className="flex flex-wrap items-baseline">
-                    {!isArr && (
-                      <>
-                        <span style={{ color: colors.key }}>"{k}"</span>
-                        <span className="pr-1" style={{ color: colors.bracket }}>:</span>
-                      </>
-                    )}
-                    {renderVal(v, `${path}.${k}`, depth + 1)}
-                    {i < len - 1 && <span style={{ color: colors.bracket }}>,</span>}
-                  </div>
-                ))}
-              </div>
-              <span style={{ color: colors.bracket }}>{close}</span>
-            </>
-          )}
+          <div className="pl-5" style={{ borderLeft: `1px solid ${colors.guideline}`, marginLeft: 7 }}>
+            {entries.map(([k, v], i) => {
+              const comma = i < len - 1 ? ',' : undefined
+              return (
+                <div key={k}>
+                  {!isArr && (
+                    <>
+                      <span style={{ color: colors.key }}>"{k}"</span>
+                      <span style={{ color: colors.bracket }}>{': '}</span>
+                    </>
+                  )}
+                  {renderVal(v, `${path}.${k}`, depth + 1, comma)}
+                </div>
+              )
+            })}
+          </div>
+          <span style={{ color: colors.bracket }}>{close}{trailing}</span>
         </span>
       )
     },
@@ -183,7 +210,7 @@ function JsonTree({ data, expandAll, colors }: {
   )
 
   return (
-    <div className="text-sm leading-relaxed select-text" style={{ fontFamily: '"JetBrains Mono", "Fira Code", Consolas, monospace', color: colors.bracket }}>
+    <div className="text-[13px] leading-[22px] select-text" style={{ fontFamily: '"JetBrains Mono", "Fira Code", Consolas, monospace', color: colors.bracket }}>
       {renderVal(data, '$', 0)}
     </div>
   )
@@ -430,14 +457,16 @@ export default function JsonQuick() {
             </div>
 
             {/* Output */}
-            <div className="flex-1 overflow-auto p-4 select-text">
-              {mode === 'format' && parsedData !== null ? (
-                <JsonTree data={parsedData} expandAll={expandAll} colors={jsonColors} />
-              ) : (
-                <pre className="whitespace-pre-wrap text-sm text-text-primary leading-relaxed break-all" style={{ fontFamily: '"JetBrains Mono", "Fira Code", Consolas, monospace' }}>
-                  <JsonHighlight text={output} colors={jsonColors} />
-                </pre>
-              )}
+            <div className="flex-1 overflow-auto select-text" style={{ backgroundColor: jsonColors.bg }}>
+              <div className="p-4">
+                {mode === 'format' && parsedData !== null ? (
+                  <JsonTree data={parsedData} expandAll={expandAll} colors={jsonColors} />
+                ) : (
+                  <pre className="whitespace-pre-wrap text-[13px] leading-[22px] break-all" style={{ fontFamily: '"JetBrains Mono", "Fira Code", Consolas, monospace', color: jsonColors.bracket }}>
+                    <JsonHighlight text={output} colors={jsonColors} />
+                  </pre>
+                )}
+              </div>
             </div>
           </>
         )}

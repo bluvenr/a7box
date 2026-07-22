@@ -17,6 +17,7 @@ import type { A7Module } from '../../core/types'
 import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
 import { useHttpServiceStatus } from '../../modules/http-server/httpServiceStore'
 import { useReminderStore } from '../../modules/reminder/reminderStore'
+import { useTimerStore } from '../../modules/timer/timerStore'
 import { usePageActive } from '../layouts/CachedOutlet'
 
 export default function Home() {
@@ -168,9 +169,12 @@ function ModuleCard({
   const p2pRunning = useP2PStatus((s) => s.running)
   const httpCount = useHttpServiceStatus((s) => s.count)
   const reminderPending = useReminderStore((s) => s.getOverdueCount())
+  const timerRunningCount = useTimerStore((s) => s.countdowns.filter((c) => c.status === 'running').length)
+  const timerSwRunning = useTimerStore((s) => s.stopwatch.running)
   const isP2pRunning = module.meta.id === 'p2p-transfer' && p2pRunning
   const isHttpActive = module.meta.id === 'http-server' && httpCount > 0
   const isReminderActive = module.meta.id === 'reminder' && reminderPending > 0
+  const isTimerActive = module.meta.id === 'timer' && (timerRunningCount > 0 || timerSwRunning)
 
   // Use i18n name/description if available, fallback to static name
   const displayName = module.meta.nameI18n ? t(module.meta.nameI18n) : module.meta.name
@@ -197,6 +201,14 @@ function ModuleCard({
       {isReminderActive && (
         <span className="absolute top-1.5 right-1.5 flex items-center justify-center rounded-full bg-error px-1.5 py-0.5">
           <span className="text-[9px] font-bold text-white">{reminderPending}</span>
+        </span>
+      )}
+      {isTimerActive && (
+        <span className="absolute top-1.5 right-1.5 flex items-center gap-0.5 rounded-full bg-primary px-1.5 py-0.5">
+          {timerRunningCount > 0
+            ? <span className="text-[9px] font-bold text-white">{timerRunningCount}</span>
+            : <span className="h-1.5 w-1.5 rounded-full bg-white" />
+          }
         </span>
       )}
       <div

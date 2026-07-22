@@ -1031,6 +1031,56 @@
           "completed": "已完成"
         }
       }
+    },
+    "timer": {
+      "name": "计时器",
+      "description": "倒计时与秒表，时间管理好帮手",
+      "commands": { "open": "计时器", "openDesc": "打开倒计时和秒表" },
+      "ui": {
+        "tab": { "countdown": "倒计时", "stopwatch": "秒表" },
+        "running": "运行中",
+        "inputPlaceholder": "例如：5m、1:30:00、10分钟 泡面",
+        "parseHint": "支持：5m、1h30m、90s、1:30:00 或直接输入数字（秒）",
+        "quickPresets": "快捷",
+        "custom": "自定义",
+        "recents": "最近",
+        "start": "开始",
+        "pause": "暂停",
+        "resume": "继续",
+        "reset": "重置",
+        "delete": "删除",
+        "restart": "再来一次",
+        "completed": "已完成",
+        "paused": "已暂停",
+        "clickToEdit": "点击编辑标题",
+        "addTime": "加 {{n}} 分钟",
+        "subTime": "减 {{n}} 分钟",
+        "titleOptional": "标题（可选）",
+        "defaultTitle": "{{duration}} 计时",
+        "empty": "暂无计时器",
+        "emptyHint": "使用上方输入框或快捷预设开始",
+        "section": { "completed": "已完成" },
+        "copied": "已复制到剪贴板",
+        "copyFailed": "复制失败",
+        "currentLap": "当前圈",
+        "lap": "计次",
+        "lapTime": "分段",
+        "totalTime": "累计",
+        "copyAll": "复制全部",
+        "clickToCopy": "点击复制",
+        "fastest": "最快",
+        "slowest": "最慢",
+        "lapHint": "点击计次记录分段用时",
+        "stopwatchEmpty": "点击开始计时",
+        "units": {
+          "h": "时",
+          "m": "分",
+          "s": "秒",
+          "hShort": "h",
+          "mShort": "m",
+          "sShort": "s"
+        }
+      }
     }
   },
   "jsonQuick": {

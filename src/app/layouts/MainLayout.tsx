@@ -21,6 +21,7 @@ import { ReminderBanner } from '../../components/ReminderBanner'
 import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
 import { useHttpServiceStatus } from '../../modules/http-server/httpServiceStore'
 import { useReminderStore } from '../../modules/reminder/reminderStore'
+import { useTimerStore } from '../../modules/timer/timerStore'
 import { startReminderChecker, stopReminderChecker, rescheduleAllReminders, setupToastListeners } from '../../modules/reminder/notificationBridge'
 import { useSettingsStore } from '../../core/settings'
 import { useUpdaterStore } from '../../core/updater'
@@ -331,6 +332,8 @@ function ModuleNavItem({
   const p2pRunning = useP2PStatus((s) => s.running)
   const httpCount = useHttpServiceStatus((s) => s.count)
   const reminderPending = useReminderStore((s) => s.getOverdueCount())
+  const timerRunningCount = useTimerStore((s) => s.countdowns.filter((c) => c.status === 'running').length)
+  const timerSwRunning = useTimerStore((s) => s.stopwatch.running)
 
   // Periodic tick: refresh overdue badge every 60s (Date.now() changes without store mutation)
   const [, setReminderTick] = useState(0)
@@ -343,6 +346,7 @@ function ModuleNavItem({
   const showDot = moduleId === 'p2p-transfer' && p2pRunning
   const httpActive = moduleId === 'http-server' && httpCount > 0
   const reminderBadge = moduleId === 'reminder' && reminderPending > 0
+  const timerActive = moduleId === 'timer' && (timerRunningCount > 0 || timerSwRunning)
 
   return (
     <button
@@ -370,6 +374,14 @@ function ModuleNavItem({
       {reminderBadge && (
         <span className={`flex items-center justify-center rounded-full bg-error px-1.5 py-0.5 text-[9px] font-bold text-white ${collapsed ? 'absolute -top-0.5 -right-0.5 min-w-[16px]' : 'ml-auto min-w-[18px]'}`}>
           {reminderPending}
+        </span>
+      )}
+      {timerActive && (
+        <span className={`flex items-center gap-1 ${collapsed ? 'absolute -top-0.5 -right-0.5' : 'ml-auto'}`}>
+          <span className="h-2 w-2 shrink-0 rounded-full bg-primary animate-pulse" />
+          {timerRunningCount > 0 && (
+            <span className="text-[10px] font-medium leading-none text-primary">{timerRunningCount}</span>
+          )}
         </span>
       )}
     </button>

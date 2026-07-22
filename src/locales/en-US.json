@@ -1031,6 +1031,56 @@
           "completed": "Completed"
         }
       }
+    },
+    "timer": {
+      "name": "Timer",
+      "description": "Countdown timers and stopwatch for time management",
+      "commands": { "open": "Timer", "openDesc": "Open countdown timers and stopwatch" },
+      "ui": {
+        "tab": { "countdown": "Countdown", "stopwatch": "Stopwatch" },
+        "running": "running",
+        "inputPlaceholder": "e.g. 5m, 1:30:00, 10min coffee break",
+        "parseHint": "Try: 5m, 1h30m, 90s, 1:30:00, or a number (seconds)",
+        "quickPresets": "Quick",
+        "custom": "Custom",
+        "recents": "Recent",
+        "start": "Start",
+        "pause": "Pause",
+        "resume": "Resume",
+        "reset": "Reset",
+        "delete": "Delete",
+        "restart": "Restart",
+        "completed": "Completed",
+        "paused": "Paused",
+        "clickToEdit": "Click to edit title",
+        "addTime": "Add {{n}} min",
+        "subTime": "Subtract {{n}} min",
+        "titleOptional": "Title (optional)",
+        "defaultTitle": "{{duration}} timer",
+        "empty": "No timers running",
+        "emptyHint": "Use the input above or quick presets to start",
+        "section": { "completed": "Completed" },
+        "copied": "Copied to clipboard",
+        "copyFailed": "Copy failed",
+        "currentLap": "Current lap",
+        "lap": "Lap",
+        "lapTime": "Lap",
+        "totalTime": "Total",
+        "copyAll": "Copy All",
+        "clickToCopy": "Click to copy",
+        "fastest": "Fastest",
+        "slowest": "Slowest",
+        "lapHint": "Press Lap to record split times",
+        "stopwatchEmpty": "Press Start to begin timing",
+        "units": {
+          "h": "Hours",
+          "m": "Minutes",
+          "s": "Seconds",
+          "hShort": "h",
+          "mShort": "m",
+          "sShort": "s"
+        }
+      }
     }
   },
   "jsonQuick": {

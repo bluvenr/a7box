@@ -20,6 +20,7 @@ import { screenshotModule } from './screenshot'
 import { httpServerModule } from './http-server'
 import { p2pTransferModule } from './p2p-transfer'
 import { reminderModule } from './reminder'
+import { timerModule } from './timer'
 import type { A7Module } from '../core/types'
 
 /** All available modules */
@@ -42,6 +43,7 @@ export const allModules: A7Module[] = [
   httpServerModule,
   p2pTransferModule,
   reminderModule,
+  timerModule,
 ]
 
 /** Export modules for registry */
@@ -64,4 +66,5 @@ export {
   httpServerModule,
   p2pTransferModule,
   reminderModule,
+  timerModule,
 }

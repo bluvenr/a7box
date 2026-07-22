@@ -64,8 +64,8 @@ pub fn scan_screenshot_history(limit: Option<usize>) -> Result<Vec<screenshot::C
 }
 
 #[tauri::command]
-pub fn set_capture_from_page(value: bool) {
-    super::CAPTURE_FROM_PAGE.store(value, Ordering::SeqCst);
+pub fn set_capture_from_page(cs: tauri::State<'_, crate::state::CaptureSession>, value: bool) {
+    cs.from_page.store(value, Ordering::SeqCst);
 }
 
 #[tauri::command]

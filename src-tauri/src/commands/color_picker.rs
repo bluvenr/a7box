@@ -1,34 +1,27 @@
 // A7Box Color Picker Commands
 
 use std::sync::atomic::Ordering;
-use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
-
-/// Stores base64 image data for pin preview windows to fetch on mount.
-/// Uses a queue (Vec) to support multiple concurrent pin windows.
-pub static PENDING_PIN_DATA: Mutex<Vec<String>> = Mutex::new(Vec::new());
-
-/// Counter for unique capture-preview window labels
-pub static PIN_WINDOW_COUNTER: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+use crate::state::PickerSession;
 
 /// Pop the next pending pin data (FIFO)
 #[tauri::command]
-pub fn get_pending_pin_data() -> Option<String> {
-    let mut queue = PENDING_PIN_DATA.lock().unwrap();
+pub fn get_pending_pin_data(ps: tauri::State<'_, PickerSession>) -> Option<String> {
+    let mut queue = ps.pending_pin_data.lock().unwrap();
     if queue.is_empty() { None } else { Some(queue.remove(0)) }
 }
 
 /// Get the last color picked from the screen overlay.
 #[tauri::command]
-pub fn get_last_picked_color() -> String {
-    super::LAST_PICKED_COLOR.lock().unwrap().clone()
+pub fn get_last_picked_color(ps: tauri::State<'_, PickerSession>) -> String {
+    ps.last_color.lock().unwrap().clone()
 }
 
 /// Get the current pick source ("global", "float", "page").
 /// Called by LivePicker on mount to reliably determine the entry point.
 #[tauri::command]
-pub fn get_pick_source() -> String {
-    super::PICK_SOURCE.lock()
+pub fn get_pick_source(ps: tauri::State<'_, PickerSession>) -> String {
+    ps.source.lock()
         .map(|s| if s.is_empty() { "global".to_string() } else { s.clone() })
         .unwrap_or_else(|_| "global".to_string())
 }
@@ -36,11 +29,12 @@ pub fn get_pick_source() -> String {
 /// Start live screen color picking: create a full-screen transparent overlay
 /// that covers all monitors. The overlay captures all mouse/keyboard input
 /// and shows a crosshair cursor. A floating card displays real-time pixel color.
-/// `page_mode`: if Some, forces PICK_FROM_PAGE to the given value (for event-driven entries).
+/// `page_mode`: if Some, forces picker from_page to the given value (for event-driven entries).
 ///              if None, auto-detects from main window visibility (for direct calls like global shortcut).
 #[tauri::command]
 pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), String> {
     use tauri::{WebviewUrl, WebviewWindowBuilder};
+    let ps = app.state::<PickerSession>();
 
     if let Some(existing) = app.get_webview_window("pick-overlay") {
         let _ = existing.close();
@@ -105,7 +99,7 @@ pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), 
         }
     }
 
-    super::PICK_FROM_PAGE.store(page_mode.unwrap_or(main_was_visible), Ordering::SeqCst);
+    ps.from_page.store(page_mode.unwrap_or(main_was_visible), Ordering::SeqCst);
 
     let app_clone = app.clone();
     std::thread::spawn(move || {
@@ -124,7 +118,7 @@ pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), 
                     .unwrap_or_else(|_| last_color.clone());
                 if color != last_color {
                     let _ = app_clone.emit("cursor-color", &color);
-                    if let Ok(mut stored) = super::LAST_PICKED_COLOR.lock() {
+                    if let Ok(mut stored) = app_clone.state::<PickerSession>().last_color.lock() {
                         *stored = color.clone();
                     }
                     last_color = color;

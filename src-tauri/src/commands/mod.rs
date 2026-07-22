@@ -13,25 +13,7 @@ pub mod shortcut;
 pub mod window;
 pub mod color_picker;
 
-use std::sync::atomic::AtomicBool;
-use std::sync::Mutex;
 use tauri::AppHandle;
-
-// ── Shared State (used by multiple sub-modules and event listeners) ──────────
-
-/// Tracks whether the current pick session was started from within the app (page mode)
-/// vs from global shortcut (global mode). Affects ESC/cancel behavior.
-pub static PICK_FROM_PAGE: AtomicBool = AtomicBool::new(false);
-
-/// Tracks whether the current screenshot capture flow was initiated from the page
-pub static CAPTURE_FROM_PAGE: AtomicBool = AtomicBool::new(false);
-
-/// Stores the last color picked from the screen overlay (for late-joining windows)
-pub static LAST_PICKED_COLOR: Mutex<String> = Mutex::new(String::new());
-
-/// Stores the pick source for the current session ("global", "float", "page").
-/// Re-emitted on "picker-ready" so the overlay receives it after loading.
-pub static PICK_SOURCE: Mutex<String> = Mutex::new(String::new());
 
 // ── Tray Commands (small, kept inline) ───────────────────────────────────────
 

@@ -2,6 +2,7 @@
 // State structs, language helpers, and utility init scripts.
 
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, AtomicU32};
 use std::sync::Mutex;
 use tauri::Manager;
 
@@ -24,6 +25,28 @@ pub struct PendingConvertFile(pub Mutex<Vec<String>>);
 /// Shared app language state (synced from frontend when user changes language).
 /// Used to pass language to utility windows via initialization script.
 pub struct AppLanguage(pub Mutex<String>);
+
+/// Color picker session state — replaces global statics for thread-safe managed access.
+#[derive(Default)]
+pub struct PickerSession {
+    /// Whether the current pick session was started from within the app (page mode)
+    pub from_page: AtomicBool,
+    /// Last color picked from the screen overlay
+    pub last_color: Mutex<String>,
+    /// Pick source for the current session ("global", "float", "page")
+    pub source: Mutex<String>,
+    /// Base64 image data queue for pin preview windows
+    pub pending_pin_data: Mutex<Vec<String>>,
+    /// Counter for unique capture-preview window labels
+    pub pin_window_counter: AtomicU32,
+}
+
+/// Screenshot capture session state — replaces global static for thread-safe managed access.
+#[derive(Default)]
+pub struct CaptureSession {
+    /// Whether the current capture flow was initiated from the page
+    pub from_page: AtomicBool,
+}
 
 /// Get the current language for the given app handle.
 pub fn current_lang(app_ref: &tauri::AppHandle<tauri::Wry>) -> &'static str {

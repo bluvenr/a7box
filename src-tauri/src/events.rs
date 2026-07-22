@@ -3,6 +3,8 @@
 // Organized by domain: picker events, screenshot events, utility window events, window close.
 
 use tauri::{Emitter, Listener, Manager};
+use crate::state::{PickerSession, CaptureSession};
+use std::sync::atomic::Ordering;
 
 /// Register all event listeners for the application.
 pub fn register_all_events(app: &tauri::App) {
@@ -48,7 +50,7 @@ fn register_picker_events(app: &tauri::App) {
     {
         let app_handle = app.handle().clone();
         app.listen("picker-ready", move |_event| {
-            let source = crate::commands::PICK_SOURCE.lock()
+            let source = app_handle.state::<PickerSession>().source.lock()
                 .map(|s| if s.is_empty() { "global".to_string() } else { s.clone() })
                 .unwrap_or_else(|_| "global".to_string());
             let _ = app_handle.emit("pick-source", &source);
@@ -67,7 +69,7 @@ fn register_picker_events(app: &tauri::App) {
                 let _ = cq.show();
                 let _ = cq.set_focus();
             }
-            let color = crate::commands::LAST_PICKED_COLOR.lock()
+            let color = app_handle.state::<PickerSession>().last_color.lock()
                 .map(|s| s.clone())
                 .unwrap_or_default();
             if !color.is_empty() {
@@ -100,7 +102,7 @@ fn register_picker_events(app: &tauri::App) {
                 })
                 .unwrap_or_default();
 
-            let from_page = crate::commands::PICK_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst);
+            let from_page = app_handle.state::<PickerSession>().from_page.load(Ordering::SeqCst);
             if mode == "quick" && from_page {
                 if let Some(main) = app_handle.get_webview_window("main") {
                     let _ = main.unminimize();
@@ -122,7 +124,9 @@ fn register_picker_events(app: &tauri::App) {
             let app_clone = app_handle.clone();
             std::thread::spawn(move || {
                 std::thread::sleep(std::time::Duration::from_millis(250));
-                if let Ok(mut src) = crate::commands::PICK_SOURCE.lock() {
+                {
+                    let ps = app_clone.state::<PickerSession>();
+                    let mut src = ps.source.lock().unwrap();
                     *src = "float".into();
                 }
                 if let Err(e) = crate::commands::color_picker::start_screen_pick(app_clone, Some(false)) {
@@ -143,7 +147,9 @@ fn register_picker_events(app: &tauri::App) {
             let app_clone = app_handle.clone();
             std::thread::spawn(move || {
                 std::thread::sleep(std::time::Duration::from_millis(250));
-                if let Ok(mut src) = crate::commands::PICK_SOURCE.lock() {
+                {
+                    let ps = app_clone.state::<PickerSession>();
+                    let mut src = ps.source.lock().unwrap();
                     *src = "page".into();
                 }
                 if let Err(e) = crate::commands::color_picker::start_screen_pick(app_clone, Some(true)) {
@@ -164,12 +170,12 @@ fn register_picker_events(app: &tauri::App) {
 
             let picked_hex = event.payload().trim_matches('"').to_string();
             if !picked_hex.is_empty() {
-                if let Ok(mut stored) = crate::commands::LAST_PICKED_COLOR.lock() {
+                if let Ok(mut stored) = app_handle.state::<PickerSession>().last_color.lock() {
                     *stored = picked_hex.clone();
                 }
             }
 
-            let from_page = crate::commands::PICK_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst);
+            let from_page = app_handle.state::<PickerSession>().from_page.load(Ordering::SeqCst);
             if from_page {
                 if let Some(main) = app_handle.get_webview_window("main") {
                     let _ = main.unminimize();
@@ -211,7 +217,7 @@ fn register_picker_events(app: &tauri::App) {
                 let _ = overlay.hide();
                 let _ = overlay.close();
             }
-            if crate::commands::PICK_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst) {
+            if app_handle.state::<PickerSession>().from_page.load(Ordering::SeqCst) {
                 if let Some(main) = app_handle.get_webview_window("main") {
                     let _ = main.unminimize();
                     let _ = main.show();
@@ -319,7 +325,7 @@ fn register_screenshot_events(app: &tauri::App) {
                 if let Some(rp) = app_handle.get_webview_window("utility-region-picker") {
                     let _ = rp.close();
                 }
-                let from_page = crate::commands::CAPTURE_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst);
+                let from_page = app_handle.state::<CaptureSession>().from_page.load(Ordering::SeqCst);
                 if from_page {
                     if let Some(main) = app_handle.get_webview_window("main") {
                         let _ = main.show();
@@ -335,7 +341,7 @@ fn register_screenshot_events(app: &tauri::App) {
             }
 
             let capture_ah = app_handle.clone();
-            let from_page_cap = crate::commands::CAPTURE_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst);
+            let from_page_cap = app_handle.state::<CaptureSession>().from_page.load(Ordering::SeqCst);
             std::thread::spawn(move || {
                 std::thread::sleep(std::time::Duration::from_millis(250));
 
@@ -392,7 +398,7 @@ fn register_screenshot_events(app: &tauri::App) {
     {
         let app_handle = app.handle().clone();
         app.listen("capture-done", move |_event| {
-            let from_page = crate::commands::CAPTURE_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst);
+            let from_page = app_handle.state::<CaptureSession>().from_page.load(Ordering::SeqCst);
 
             if let Some(rp) = app_handle.get_webview_window("utility-region-picker") {
                 let _ = rp.hide();
@@ -443,7 +449,7 @@ fn register_screenshot_events(app: &tauri::App) {
                 let _ = rp.close();
             }
 
-            let from_page = crate::commands::CAPTURE_FROM_PAGE.load(std::sync::atomic::Ordering::SeqCst);
+            let from_page = app_handle.state::<CaptureSession>().from_page.load(Ordering::SeqCst);
             if from_page {
                 if let Some(main) = app_handle.get_webview_window("main") {
                     let _ = main.show();
@@ -462,7 +468,7 @@ fn register_screenshot_events(app: &tauri::App) {
             let win_w = ((img_w as f64 * fit_scale) as f64).max(300.0);
             let win_h = ((img_h as f64 * fit_scale) as f64 + chrome_h).max(200.0);
 
-            let counter = crate::commands::color_picker::PIN_WINDOW_COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            let counter = app_handle.state::<PickerSession>().pin_window_counter.fetch_add(1, Ordering::SeqCst);
             let label = format!("capture-preview-{}", counter);
 
             use tauri::{WebviewUrl, WebviewWindowBuilder};
@@ -482,7 +488,7 @@ fn register_screenshot_events(app: &tauri::App) {
                 .initialization_script(crate::state::lang_init_script(&app_handle))
                 .build();
 
-            if let Ok(mut q) = crate::commands::color_picker::PENDING_PIN_DATA.lock() {
+            if let Ok(mut q) = app_handle.state::<PickerSession>().pending_pin_data.lock() {
                 q.push(payload_str);
             }
         });

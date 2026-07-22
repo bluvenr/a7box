@@ -24,7 +24,7 @@ use std::collections::HashMap;
 use tauri::Manager;
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
-use state::{ShortcutRegistry, PendingHttpServeDir, PendingImageFile, PendingConvertFile, AppLanguage};
+use state::{ShortcutRegistry, PendingHttpServeDir, PendingImageFile, PendingConvertFile, AppLanguage, PickerSession, CaptureSession};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -38,6 +38,8 @@ pub fn run() {
     let app_language = AppLanguage(Mutex::new(
         sys_locale::get_locale().unwrap_or_else(|| "en".to_string()),
     ));
+    let picker_session = PickerSession::default();
+    let capture_session = CaptureSession::default();
 
     // P2P state: use app data dir for persistence
     let data_dir = dirs::data_local_dir()
@@ -81,6 +83,8 @@ pub fn run() {
         .manage(pending_convert_file)
         .manage(shortcut_registry)
         .manage(app_language)
+        .manage(picker_session)
+        .manage(capture_session)
         // Commands
         .invoke_handler(tauri::generate_handler![
             // Clipboard

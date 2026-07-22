@@ -4,6 +4,7 @@
 
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
 use std::sync::atomic::Ordering;
+use crate::state::{PickerSession, CaptureSession};
 
 /// Execute the action associated with a global shortcut.
 /// Called from both lib.rs setup() and commands/mod.rs update_shortcut().
@@ -68,7 +69,7 @@ fn handle_open_screenshot(app: &AppHandle) {
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.hide();
     }
-    crate::commands::CAPTURE_FROM_PAGE.store(false, Ordering::SeqCst);
+    app.state::<CaptureSession>().from_page.store(false, Ordering::SeqCst);
     let _ = app.emit("start-capture-flow", "");
 }
 
@@ -84,7 +85,9 @@ fn handle_open_color_picker(app: &AppHandle) {
     let app_clone = app.clone();
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_millis(250));
-        if let Ok(mut src) = crate::commands::PICK_SOURCE.lock() {
+        {
+            let ps = app_clone.state::<PickerSession>();
+            let mut src = ps.source.lock().unwrap();
             *src = "global".into();
         }
         if let Err(e) = crate::commands::color_picker::start_screen_pick(app_clone, None) {

@@ -60,7 +60,6 @@ export default function JsonFormatter() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   // Monaco editor ref for fold/unfold commands
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef = useRef<any>(null)
 
   const handleEditorMount = useCallback((editor: unknown) => {

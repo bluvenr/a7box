@@ -17,7 +17,6 @@ type TimeResult =
   | { hour: number; minute: number }
   | { relativeTimestamp: number }
   | null
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Extractor<T> = (...args: any[]) => T
 
 const ZH_TIME_PATTERNS: [RegExp, Extractor<TimeResult>][] = [

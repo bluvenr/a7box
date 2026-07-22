@@ -38,7 +38,6 @@ export function applyTaskListPlugin(md: MarkdownIt, interactive = false): void {
       }
 
       // Create checkbox HTML token
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const cbToken = new (state as any).Token('html_inline', '', 0)
       cbToken.content = `<input type="checkbox" class="task-checkbox" ${checked ? 'checked' : ''} ${interactive ? '' : 'disabled'} /> `
 

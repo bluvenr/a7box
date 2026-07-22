@@ -72,7 +72,6 @@ export default function Screenshot() {
         setFailedThumbs(prev => new Set([...prev, ...failed]))
       }
     } catch { /* ignore */ }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => { refreshHistory() }, [refreshHistory])

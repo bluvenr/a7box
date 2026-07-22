@@ -18,7 +18,11 @@
     "kill:port": "powershell -Command \"Stop-Process -Name 'node','a7box' -Force -ErrorAction SilentlyContinue; Write-Host 'Port 1420 freed'\"",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write src/",
+    "format:check": "prettier --check src/"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -33,8 +37,6 @@
     "@tauri-apps/plugin-shell": "^2.3.5",
     "@tauri-apps/plugin-store": "^2.4.3",
     "@tauri-apps/plugin-updater": "^2.10.1",
-    "@types/markdown-it": "^14.1.2",
-    "@types/turndown": "^5.0.6",
     "browser-image-compression": "^2.0.2",
     "fuse.js": "^7.4.2",
     "highlight.js": "^11.11.1",
@@ -55,20 +57,29 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.1",
     "@tauri-apps/cli": "^2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/js-beautify": "^1.14.3",
+    "@types/markdown-it": "^14.1.2",
     "@types/qrcode": "^1.5.6",
+    "@types/turndown": "^5.0.6",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.5.0",
+    "eslint": "^10.7.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.15",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4.3.1",
     "typescript": "~5.8.3",
+    "typescript-eslint": "^8.65.0",
     "vite": "^7.0.4",
     "vitest": "^4.1.10"
   }

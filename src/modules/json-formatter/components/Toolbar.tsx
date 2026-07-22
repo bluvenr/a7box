@@ -109,11 +109,12 @@ export function Toolbar({
 
       <div className="flex-1" />
 
-      {/* Fold/Unfold toggle — hidden in compress mode */}
+      {/* Fold/Unfold toggle — hidden in compress mode, disabled when invalid */}
       {!isCompressed && hasContent && (
         <button
           onClick={isAllFolded ? onUnfoldAll : onFoldAll}
-          className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary"
+          disabled={!isValid}
+          className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
           title={isAllFolded
             ? t('modules.jsonFormatter.ui.unfoldAll', { defaultValue: 'Expand All' })
             : t('modules.jsonFormatter.ui.foldAll', { defaultValue: 'Collapse All' })}

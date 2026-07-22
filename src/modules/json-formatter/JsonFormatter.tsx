@@ -59,20 +59,35 @@ export default function JsonFormatter() {
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>(() => loadHistory())
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
-  // Monaco editor ref for fold/unfold commands
+  // Monaco editor ref for fold/unfold commands and direct content access
   const editorRef = useRef<any>(null)
 
   const handleEditorMount = useCallback((editor: unknown) => {
     editorRef.current = editor
+    // Set initial content (e.g. from clipboard quick-trigger) without using controlled `value` prop
+    if (input) {
+      (editor as any).setValue(input)
+    }
+  }, [input])
+
+  /** Read current editor content (always fresh, no stale state) */
+  const getEditorContent = useCallback((): string => {
+    return editorRef.current?.getValue() ?? ''
+  }, [])
+
+  /** Push content to editor (only for programmatic changes, preserves folding) */
+  const pushToEditor = useCallback((text: string) => {
+    editorRef.current?.setValue(text)
   }, [])
 
   const handleFoldAll = useCallback(() => {
-    editorRef.current?.trigger('fold-button', 'editor.foldLevel2', {})
+    // Use getAction().run() — bypasses context precondition checks that may fail after editing
+    editorRef.current?.getAction?.('editor.foldAll')?.run()
     setIsAllFolded(true)
   }, [])
 
   const handleUnfoldAll = useCallback(() => {
-    editorRef.current?.trigger('fold-button', 'editor.unfoldAll', {})
+    editorRef.current?.getAction?.('editor.unfoldAll')?.run()
     setIsAllFolded(false)
   }, [])
 
@@ -99,53 +114,64 @@ export default function JsonFormatter() {
     setTimeout(() => setToast(null), 2000)
   }, [])
 
-  // Handle editor content change (debounced validation)
+  // Handle editor content change (debounced validation only, no state sync)
   const handleEditorChange = useCallback(
     (value: string | undefined) => {
       const text = value ?? ''
-      setInput(text)
+      setInput(text) // for stats/error tracking only — not fed back to editor
       if (text.trim()) {
         debouncedValidate(text)
+      } else {
+        // Clear error when empty
+        validate('')
       }
     },
-    [setInput, debouncedValidate]
+    [setInput, debouncedValidate, validate]
   )
 
-  // Format handler
+  // Format handler — reads from hook state, pushes result to editor
   const handleFormat = useCallback(() => {
-    const result = format()
+    const currentInput = getEditorContent()
+    const result = format(currentInput)
     if (result.success) {
-      const items = addHistory({ input, action: 'format' })
+      pushToEditor(result.output!)
+      setInput(result.output!) // sync state for stats
+      const items = addHistory({ input: currentInput, action: 'format' })
       setHistoryItems(items)
       showToast(t('modules.jsonFormatter.ui.toastFormatted'))
     } else {
       showToast(result.error ?? t('modules.jsonFormatter.ui.toastFormatFailed'), 'error')
     }
-  }, [format, input, showToast, t])
+  }, [format, getEditorContent, pushToEditor, setInput, showToast, t])
 
   // Compress handler
   const handleCompress = useCallback(() => {
-    const result = compress()
+    const currentInput = getEditorContent()
+    const result = compress(currentInput)
     if (result.success) {
-      const items = addHistory({ input, action: 'compress' })
+      pushToEditor(result.output!)
+      setInput(result.output!) // sync state for stats
+      const items = addHistory({ input: currentInput, action: 'compress' })
       setHistoryItems(items)
       showToast(t('modules.jsonFormatter.ui.toastCompressed'))
     } else {
       showToast(result.error ?? t('modules.jsonFormatter.ui.toastCompressFailed'), 'error')
     }
-  }, [compress, input, showToast, t])
+  }, [compress, getEditorContent, pushToEditor, setInput, showToast, t])
 
-  // Copy handler — copies current content (valid or not)
+  // Copy handler — copies current editor content (valid or not)
   const handleCopy = useCallback(async () => {
-    if (input) {
-      await navigator.clipboard.writeText(input)
+    const content = getEditorContent()
+    if (content) {
+      await navigator.clipboard.writeText(content)
       showToast(t('modules.jsonFormatter.ui.toastCopied'))
     }
-  }, [input, showToast, t])
+  }, [getEditorContent, showToast, t])
 
   // Export handler — Tauri save dialog + browser fallback
   const handleExport = useCallback(async () => {
-    if (!input) return
+    const content = getEditorContent()
+    if (!content) return
     const filename = `formatted-${Date.now()}.json`
 
     // Tauri: native save dialog
@@ -158,7 +184,7 @@ export default function JsonFormatter() {
           filters: [{ name: 'JSON File', extensions: ['json'] }],
         })
         if (filePath) {
-          await writeTextFile(filePath, input)
+          await writeTextFile(filePath, content)
           showToast(t('modules.jsonFormatter.ui.toastExported'))
         }
         return
@@ -166,7 +192,7 @@ export default function JsonFormatter() {
     }
 
     // Browser fallback
-    const blob = new Blob([input], { type: 'application/json' })
+    const blob = new Blob([content], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -174,11 +200,12 @@ export default function JsonFormatter() {
     a.click()
     URL.revokeObjectURL(url)
     showToast(t('modules.jsonFormatter.ui.toastExported'))
-  }, [input, showToast, t])
+  }, [getEditorContent, showToast, t])
 
   // Clear handler — with confirmation dialog
   const handleClear = useCallback(async () => {
-    if (!input) return
+    const content = getEditorContent()
+    if (!content) return
     const ok = await confirm({
       title: t('modules.jsonFormatter.ui.clearConfirmTitle', { defaultValue: 'Clear content' }),
       message: t('modules.jsonFormatter.ui.clearConfirmMsg', { defaultValue: 'This will clear all content in the editor. This cannot be undone.' }),
@@ -187,19 +214,22 @@ export default function JsonFormatter() {
       danger: true,
     })
     if (ok) {
+      pushToEditor('')
       setInput('')
       showToast(t('modules.jsonFormatter.ui.toastCleared'))
     }
-  }, [input, confirm, setInput, showToast, t])
+  }, [getEditorContent, confirm, pushToEditor, setInput, showToast, t])
 
   // History restore handler
   const handleHistoryRestore = useCallback(
     (item: HistoryItem) => {
+      pushToEditor(item.input)
       setInput(item.input)
+      validate(item.input)
       setShowHistory(false)
       showToast(t('modules.jsonFormatter.ui.toastRestored'))
     },
-    [setInput, showToast, t]
+    [pushToEditor, setInput, validate, showToast, t]
   )
 
   // History clear handler
@@ -258,11 +288,12 @@ export default function JsonFormatter() {
     const file = e.dataTransfer.files[0]
     if (file && (file.name.endsWith('.json') || file.type === 'application/json')) {
       const text = await file.text()
+      pushToEditor(text)
       setInput(text)
       validate(text)
       showToast(t('modules.jsonFormatter.ui.toastFileImported', { defaultValue: 'File imported' }))
     }
-  }, [setInput, validate, showToast, t])
+  }, [pushToEditor, setInput, validate, showToast, t])
 
   // Tauri native file drop
   useEffect(() => {
@@ -289,6 +320,7 @@ export default function JsonFormatter() {
             if (/\.json$/i.test(filePath)) {
               try {
                 const text = await readTextFile(filePath)
+                pushToEditor(text)
                 setInput(text)
                 validate(text)
                 showToast(t('modules.jsonFormatter.ui.toastFileImported', { defaultValue: 'File imported' }))
@@ -304,7 +336,7 @@ export default function JsonFormatter() {
       cleanedUp = true
       if (unlistenFn) { unlistenFn(); unlistenFn = undefined }
     }
-  }, [setInput, validate, showToast, t, pageActive])
+  }, [pushToEditor, setInput, validate, showToast, t, pageActive])
 
   // Statistics
   const stats = useMemo(() => getStats(), [input, getStats])
@@ -348,7 +380,6 @@ export default function JsonFormatter() {
           <Editor
             height="100%"
             defaultLanguage="json"
-            value={input}
             onChange={handleEditorChange}
             onMount={handleEditorMount}
             theme={monacoTheme}

@@ -29,6 +29,9 @@ const RegionPicker = lazy(() => import('./pages/utility/RegionPicker'))
 const CapturePreview = lazy(() => import('./pages/utility/CapturePreview'))
 const ReminderQuick = lazy(() => import('../modules/reminder/QuickCreate'))
 const NotificationToast = lazy(() => import('./pages/utility/NotificationToast'))
+const StopwatchWidget = lazy(() => import('./pages/utility/StopwatchWidget'))
+const CountdownWidget = lazy(() => import('./pages/utility/CountdownWidget'))
+const CdItemWidget = lazy(() => import('./pages/utility/CdItemWidget'))
 
 // Wrap a module component with ErrorBoundary + Suspense
 function ModuleRoute({ moduleId, children }: { moduleId: string; children: React.ReactNode }) {
@@ -179,6 +182,30 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <NotificationToast />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/sw-widget',
+    element: (
+      <Suspense fallback={null}>
+        <StopwatchWidget />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/cd-widget',
+    element: (
+      <Suspense fallback={null}>
+        <CountdownWidget />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/cd-item',
+    element: (
+      <Suspense fallback={null}>
+        <CdItemWidget />
       </Suspense>
     ),
   },

@@ -7,8 +7,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Timer as TimerIcon, Bell } from 'lucide-react'
 import { useTimerStore } from './timerStore'
+import type { CountdownTimer } from './types'
 import CountdownTab from './CountdownTab'
 import StopwatchTab from './StopwatchTab'
+import { isTauri } from '../../shared/utils'
 
 /** Reusable AudioContext singleton — avoids creating a new context per beep */
 let sharedAudioCtx: AudioContext | null = null
@@ -34,6 +36,150 @@ export default function TimerPage() {
   // Running count for badge (also used for tick condition)
   const runningCount = countdowns.filter((c) => c.status === 'running').length
   const needsTick = runningCount > 0 || swRunning
+
+  const setCdWidgetPinned = useTimerStore((s) => s.setCdWidgetPinned)
+  const setSwWidgetPinned = useTimerStore((s) => s.setSwWidgetPinned)
+  const removeCdItemPinned = useTimerStore((s) => s.removeCdItemPinned)
+
+  // On mount: sync pinned state with actual window existence + restore pinned cards
+  useEffect(() => {
+    if (!isTauri()) return
+    import('@tauri-apps/api/window').then(({ getAllWindows }) => {
+      getAllWindows().then((wins) => {
+        const labels = wins.map((w) => w.label)
+        // Always trust actual window existence — no auto-open for aggregate widgets
+        setSwWidgetPinned(labels.includes('sw-widget'))
+        setCdWidgetPinned(labels.includes('cd-widget'))
+      }).catch(() => {})
+    }).catch(() => {})
+
+    // Restore pinned countdown cards on startup
+    const restoreCards = async () => {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core')
+        const state = useTimerStore.getState()
+        const idsToRestore = new Set<string>()
+
+        // From cdAutoSpawn: all running/paused timers should have cards
+        if (state.cdAutoSpawn) {
+          state.countdowns
+            .filter((c) => c.status === 'running' || c.status === 'paused')
+            .forEach((c) => idsToRestore.add(c.id))
+        }
+
+        // From cdItemPinned: individual pinned timers
+        state.cdItemPinned.forEach((id) => {
+          // Only restore if timer still exists and is active
+          const timer = state.countdowns.find((c) => c.id === id)
+          if (timer && (timer.status === 'running' || timer.status === 'paused' || timer.status === 'completed')) {
+            idsToRestore.add(id)
+          }
+        })
+
+        // Spawn cards for all collected IDs
+        let i = 0
+        for (const id of idsToRestore) {
+          await invoke('show_cd_item_widget', { timerId: id, index: i })
+          i++
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Delay slightly to avoid race with window initialization
+    const restoreTimer = setTimeout(restoreCards, 300)
+    return () => clearTimeout(restoreTimer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Listen for widget events + track widget state
+  useEffect(() => {
+    if (!isTauri()) return
+    let closeUnlisten: (() => void) | null = null
+    let reqUnlisten: (() => void) | null = null
+    let swClosedUnlisten: (() => void) | null = null
+    let cdClosedUnlisten: (() => void) | null = null
+    let cdReqUnlisten: (() => void) | null = null
+    let swStartUnlisten: (() => void) | null = null
+    let swPauseUnlisten: (() => void) | null = null
+    let swResetUnlisten: (() => void) | null = null
+    let swLapUnlisten: (() => void) | null = null
+    let cdMutUnlisten: (() => void) | null = null
+    let cdItemClosedUnlisten: (() => void) | null = null
+
+    import('@tauri-apps/api/event').then(({ listen, emitTo }) => {
+      // Widget requests current stopwatch state (sent on widget mount)
+      listen('sw-state-request', () => {
+        const sw = useTimerStore.getState().stopwatch
+        emitTo('sw-widget', 'sw-state-update', {
+          running: sw.running,
+          elapsed: sw.elapsed,
+          startedAt: sw.startedAt,
+        }).catch(() => {})
+      }).then((fn) => { reqUnlisten = fn })
+
+      // Track widget window lifecycle — sync store state
+      listen('tauri://destroyed', async (e) => {
+        const label = (e as any).payload?.label ?? ''
+        if (label === 'sw-widget') setSwWidgetPinned(false)
+        if (label === 'cd-widget') setCdWidgetPinned(false)
+        // cd-item-* destroyed: remove from pinned list
+        if (label.startsWith('cd-item-')) {
+          const shortId = label.replace('cd-item-', '')
+          const state = useTimerStore.getState()
+          const matchingId = state.cdItemPinned.find((id) => id.startsWith(shortId))
+          if (matchingId) removeCdItemPinned(matchingId)
+        }
+      }).then((fn) => { closeUnlisten = fn })
+
+      // Widget closed via its own close button (explicit, reliable)
+      listen('sw-widget-closed', () => { setSwWidgetPinned(false) }).then((fn) => { swClosedUnlisten = fn })
+      listen('cd-widget-closed', () => { setCdWidgetPinned(false) }).then((fn) => { cdClosedUnlisten = fn })
+
+      // Individual countdown card closed (top-right × button)
+      listen<{ id: string }>('cd-item-closed', (e) => {
+        removeCdItemPinned(e.payload.id)
+      }).then((fn) => { cdItemClosedUnlisten = fn })
+
+      // Countdown widget requests current state (sent on widget mount)
+      listen('cd-state-request', () => {
+        import('@tauri-apps/api/event').then(({ emit }) => {
+          const cds = useTimerStore.getState().countdowns
+          const payload = cds.map((c) => ({
+            id: c.id, title: c.title, totalDuration: c.totalDuration,
+            endsAt: c.endsAt, remainingMs: c.remainingMs, status: c.status, createdAt: c.createdAt,
+          }))
+          // Broadcast to all windows (cd-widget + cd-item-* cards)
+          emit('cd-state-update', payload).catch(() => {})
+        }).catch(() => {})
+      }).then((fn) => { cdReqUnlisten = fn })
+
+      // ── Stopwatch widget controls ──
+      // Note: swStart/swPause/swReset already emit state to widget internally via emitSwState
+      listen('sw-control-start', () => { useTimerStore.getState().swStart() }).then((fn) => { swStartUnlisten = fn })
+      listen('sw-control-pause', () => { useTimerStore.getState().swPause() }).then((fn) => { swPauseUnlisten = fn })
+      listen('sw-control-reset', () => { useTimerStore.getState().swReset() }).then((fn) => { swResetUnlisten = fn })
+      listen('sw-control-lap', () => { useTimerStore.getState().swLap() }).then((fn) => { swLapUnlisten = fn })
+
+      // ── Countdown widget mutation sync (widget→main) ──
+      listen<CountdownTimer[]>('cd-mutation-sync', (e) => {
+        useTimerStore.setState({ countdowns: e.payload })
+      }).then((fn) => { cdMutUnlisten = fn })
+    }).catch(() => {})
+
+    return () => {
+      closeUnlisten?.()
+      reqUnlisten?.()
+      swClosedUnlisten?.()
+      cdClosedUnlisten?.()
+      cdReqUnlisten?.()
+      swStartUnlisten?.()
+      swPauseUnlisten?.()
+      swResetUnlisten?.()
+      swLapUnlisten?.()
+      cdMutUnlisten?.()
+      cdItemClosedUnlisten?.()
+    }
+  }, [setCdWidgetPinned, setSwWidgetPinned, removeCdItemPinned])
 
   // 100ms tick for smooth display updates (stops when nothing is running)
   const [now, setNow] = useState(Date.now)

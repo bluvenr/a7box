@@ -104,11 +104,23 @@ export function MainLayout() {
 
     // When user clicks a notification → navigate to reminder page
     let unlistenClicked: (() => void) | null = null
+    // When timer widget double-clicked → navigate to timer page + switch tab
+    let unlistenTimerNav: (() => void) | null = null
     if (isTauri()) {
       import('@tauri-apps/api/event').then(({ listen }) => {
         listen<{ reminderId: string }>('notification-reminder-clicked', (evt) => {
           navigate('/reminder', { state: { openReminderId: evt.payload.reminderId } })
         }).then((fn) => { unlistenClicked = fn })
+
+        listen<{ tab: 'countdown' | 'stopwatch' }>('timer-widget-navigate', (evt) => {
+          useTimerStore.getState().setActiveTab(evt.payload.tab)
+          navigate('/timer')
+          import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+            const win = getCurrentWindow()
+            win.show().catch(() => {})
+            win.setFocus().catch(() => {})
+          }).catch(() => {})
+        }).then((fn) => { unlistenTimerNav = fn })
       })
     }
 
@@ -127,6 +139,7 @@ export function MainLayout() {
       stopReminderChecker()
       cleanupToast?.()
       unlistenClicked?.()
+      unlistenTimerNav?.()
       unlistenCreated?.()
     }
   }, [navigate])

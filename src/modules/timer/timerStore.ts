@@ -7,6 +7,35 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CountdownTimer, StopwatchState, StopwatchLap, TimerRecent } from './types'
 
+/** Emit stopwatch state to floating widget windows via Tauri event.
+ *  Uses emitTo for targeted cross-window delivery (Tauri 2 emit is window-scoped). */
+function emitSwState(state: { running: boolean; elapsed: number; startedAt: number | null }) {
+  if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+    import('@tauri-apps/api/event').then(({ emitTo }) => {
+      emitTo('sw-widget', 'sw-state-update', {
+        running: state.running,
+        elapsed: state.elapsed,
+        startedAt: state.startedAt,
+      }).catch(() => {})
+    }).catch(() => {})
+  }
+}
+
+/** Emit countdown list to floating widget window (same pattern as emitSwState). */
+function emitCdState(countdowns: CountdownTimer[]) {
+  if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+    const payload = countdowns.map((c) => ({
+      id: c.id, title: c.title, totalDuration: c.totalDuration,
+      endsAt: c.endsAt, remainingMs: c.remainingMs, status: c.status, createdAt: c.createdAt,
+    }))
+    import('@tauri-apps/api/event').then(({ emitTo, emit }) => {
+      emitTo('cd-widget', 'cd-state-update', payload).catch(() => {})
+      // Broadcast to all windows (cd-item-* cards receive this)
+      emit('cd-state-update', payload).catch(() => {})
+    }).catch(() => {})
+  }
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 
 /** Get remaining ms for a countdown (works for both running and paused) */
@@ -18,9 +47,9 @@ export function getRemaining(timer: CountdownTimer, now?: number): number {
 }
 
 /** Get progress 0..1 (0 = just started, 1 = done) */
-export function getProgress(timer: CountdownTimer): number {
+export function getProgress(timer: CountdownTimer, now?: number): number {
   if (timer.totalDuration <= 0) return 1
-  const remaining = getRemaining(timer)
+  const remaining = getRemaining(timer, now)
   return Math.min(1, Math.max(0, 1 - remaining / timer.totalDuration))
 }
 
@@ -68,6 +97,20 @@ interface TimerStoreState {
   // ── Active tab ──
   activeTab: 'countdown' | 'stopwatch'
   setActiveTab: (tab: 'countdown' | 'stopwatch') => void
+
+  // ── Widget pin state (persisted for preference memory) ──
+  cdWidgetPinned: boolean
+  swWidgetPinned: boolean
+  setCdWidgetPinned: (v: boolean) => void
+  setSwWidgetPinned: (v: boolean) => void
+
+  // ── Countdown item card pin state ──
+  cdItemPinned: string[]
+  toggleCdItemPinned: (id: string) => void
+  removeCdItemPinned: (id: string) => void
+  addCdItemPinned: (id: string) => void
+  cdAutoSpawn: boolean
+  setCdAutoSpawn: (v: boolean) => void
 }
 
 // ─── Store ───────────────────────────────────────────────────────────────────────
@@ -101,6 +144,7 @@ export const useTimerStore = create<TimerStoreState>()(
           createdAt: now,
         }
         set((s) => ({ countdowns: [...s.countdowns, timer] }))
+        emitCdState(get().countdowns)
         // Also add to recents
         get().addRecent(durationMs, timer.title)
         return timer
@@ -108,6 +152,7 @@ export const useTimerStore = create<TimerStoreState>()(
 
       removeCountdown: (id) => {
         set((s) => ({ countdowns: s.countdowns.filter((c) => c.id !== id) }))
+        emitCdState(get().countdowns)
       },
 
       pauseCountdown: (id) => {
@@ -122,6 +167,7 @@ export const useTimerStore = create<TimerStoreState>()(
             }
           }),
         }))
+        emitCdState(get().countdowns)
       },
 
       resumeCountdown: (id) => {
@@ -136,6 +182,7 @@ export const useTimerStore = create<TimerStoreState>()(
             }
           }),
         }))
+        emitCdState(get().countdowns)
       },
 
       resetCountdown: (id) => {
@@ -150,6 +197,7 @@ export const useTimerStore = create<TimerStoreState>()(
             }
           }),
         }))
+        emitCdState(get().countdowns)
       },
 
       addTime: (id, deltaMs) => {
@@ -166,6 +214,7 @@ export const useTimerStore = create<TimerStoreState>()(
             return { ...c, remainingMs: newRemaining }
           }),
         }))
+        emitCdState(get().countdowns)
       },
 
       updateTitle: (id, title) => {
@@ -190,6 +239,7 @@ export const useTimerStore = create<TimerStoreState>()(
           })
           return { countdowns: updated }
         })
+        if (completed.length > 0) emitCdState(get().countdowns)
         return completed
       },
 
@@ -206,6 +256,7 @@ export const useTimerStore = create<TimerStoreState>()(
             },
           }
         })
+        emitSwState(get().stopwatch)
       },
 
       swPause: () => {
@@ -221,10 +272,12 @@ export const useTimerStore = create<TimerStoreState>()(
             },
           }
         })
+        emitSwState(get().stopwatch)
       },
 
       swReset: () => {
         set({ stopwatch: { running: false, elapsed: 0, startedAt: null, laps: [] } })
+        emitSwState(get().stopwatch)
       },
 
       swLap: () => {
@@ -279,6 +332,28 @@ export const useTimerStore = create<TimerStoreState>()(
         })
       },
 
+      // ── Widget pin state ──
+      cdWidgetPinned: false,
+      swWidgetPinned: false,
+      setCdWidgetPinned: (v) => set({ cdWidgetPinned: v }),
+      setSwWidgetPinned: (v) => set({ swWidgetPinned: v }),
+
+      // ── Countdown item card pin state ──
+      cdItemPinned: [],
+      toggleCdItemPinned: (id) => set((s) => ({
+        cdItemPinned: s.cdItemPinned.includes(id)
+          ? s.cdItemPinned.filter((x) => x !== id)
+          : [...s.cdItemPinned, id],
+      })),
+      removeCdItemPinned: (id) => set((s) => ({
+        cdItemPinned: s.cdItemPinned.filter((x) => x !== id),
+      })),
+      addCdItemPinned: (id) => set((s) => ({
+        cdItemPinned: s.cdItemPinned.includes(id) ? s.cdItemPinned : [...s.cdItemPinned, id],
+      })),
+      cdAutoSpawn: false,
+      setCdAutoSpawn: (v) => set({ cdAutoSpawn: v }),
+
       // ── Tab ──
 
       setActiveTab: (tab) => set({ activeTab: tab }),
@@ -290,6 +365,10 @@ export const useTimerStore = create<TimerStoreState>()(
         countdowns: state.countdowns,
         recents: state.recents,
         activeTab: state.activeTab,
+        cdWidgetPinned: state.cdWidgetPinned,
+        swWidgetPinned: state.swWidgetPinned,
+        cdItemPinned: state.cdItemPinned,
+        cdAutoSpawn: state.cdAutoSpawn,
         // stopwatch is intentionally NOT persisted
       }),
       merge: (persisted, current) => {

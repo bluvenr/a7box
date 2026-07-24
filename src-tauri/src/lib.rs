@@ -154,6 +154,10 @@ pub fn run() {
             commands::window::create_utility_window,
             commands::window::close_utility_window,
             commands::window::show_notification_toast,
+            commands::window::show_stopwatch_widget,
+            commands::window::show_countdown_widget,
+            commands::window::show_cd_item_widget,
+            commands::window::close_cd_item_windows,
             // Deep Link
             deep_link::get_pending_http_serve_dir,
             deep_link::get_pending_image_file,

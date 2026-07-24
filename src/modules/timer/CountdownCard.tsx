@@ -5,9 +5,10 @@
  */
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pause, Play, RotateCcw, Trash2, Plus, Minus, CheckCircle, Pencil } from 'lucide-react'
+import { Pause, Play, RotateCcw, Trash2, Plus, Minus, CheckCircle, Pencil, Pin, PinOff } from 'lucide-react'
 import { useTimerStore, getRemaining, getProgress } from './timerStore'
 import { formatHMS } from './utils'
+import { isTauri } from '../../shared/utils'
 import type { CountdownTimer } from './types'
 
 interface Props {
@@ -29,13 +30,30 @@ export default function CountdownCard({ timer, now }: Props) {
   const removeCountdown = useTimerStore((s) => s.removeCountdown)
   const addTime = useTimerStore((s) => s.addTime)
   const updateTitle = useTimerStore((s) => s.updateTitle)
+  const cdItemPinned = useTimerStore((s) => s.cdItemPinned)
+  const toggleCdItemPinned = useTimerStore((s) => s.toggleCdItemPinned)
+  const isPinned = cdItemPinned.includes(timer.id)
+
+  const handleTogglePin = useCallback(async () => {
+    if (!isTauri()) return
+    const willPin = !isPinned
+    toggleCdItemPinned(timer.id)
+    try {
+      const { invoke } = await import('@tauri-apps/api/core')
+      if (willPin) {
+        await invoke('show_cd_item_widget', { timerId: timer.id, index: 0 })
+      } else {
+        await invoke('close_utility_window', { label: `cd-item-${timer.id.slice(0, 8)}` })
+      }
+    } catch { /* ignore */ }
+  }, [isPinned, timer.id, toggleCdItemPinned])
 
   const [editingTitle, setEditingTitle] = useState(false)
   const [draftTitle, setDraftTitle] = useState(timer.title)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const remaining = getRemaining(timer, now)
-  const progress = getProgress(timer)
+  const progress = getProgress(timer, now)
   const isCompleted = timer.status === 'completed'
   const isPaused = timer.status === 'paused'
   const isRunning = timer.status === 'running'
@@ -134,7 +152,7 @@ export default function CountdownCard({ timer, now }: Props) {
 
       {/* Progress bar */}
       {!isCompleted && (
-        <div className="h-1.5 rounded-full bg-bg-hover overflow-hidden mb-3">
+        <div className="h-2 rounded-full bg-bg-hover overflow-hidden mb-3">
           <div
             className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
             style={{ width: `${progress * 100}%` }}
@@ -218,6 +236,19 @@ export default function CountdownCard({ timer, now }: Props) {
             title={t('modules.timer.ui.reset')}
           >
             <RotateCcw size={14} />
+          </button>
+
+          {/* Float window toggle */}
+          <button
+            onClick={handleTogglePin}
+            className={`rounded-md p-1.5 transition-colors cursor-pointer active:scale-90 ${
+              isPinned
+                ? 'text-primary hover:bg-primary/10'
+                : 'text-text-muted hover:text-text-primary hover:bg-bg-hover'
+            }`}
+            title={isPinned ? t('timerWidget.closeCard') : t('timerWidget.openCard')}
+          >
+            {isPinned ? <PinOff size={14} /> : <Pin size={14} />}
           </button>
 
           {/* Delete */}

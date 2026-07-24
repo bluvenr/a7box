@@ -2,13 +2,14 @@
  * CountdownTab - Countdown timer tab content
  * Includes: smart input, quick presets, recents, and active timer list.
  */
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Timer, Check, ChevronDown, ChevronUp, Play, Clock } from 'lucide-react'
+import { Timer, Check, ChevronDown, ChevronUp, Play, Clock, Pin, PinOff, Lightbulb } from 'lucide-react'
 import { parseTimerInput } from './parseTimerInput'
 import { useTimerStore, defaultTitle } from './timerStore'
 import { formatDurationLabel } from './utils'
 import CountdownCard from './CountdownCard'
+import { isTauri } from '../../shared/utils'
 
 /** Quick preset durations in ms */
 const PRESETS = [
@@ -29,6 +30,48 @@ export default function CountdownTab({ now }: Props) {
   const addCountdown = useTimerStore((s) => s.addCountdown)
   const countdowns = useTimerStore((s) => s.countdowns)
   const recents = useTimerStore((s) => s.recents)
+  const cdAutoSpawn = useTimerStore((s) => s.cdAutoSpawn)
+  const setCdAutoSpawn = useTimerStore((s) => s.setCdAutoSpawn)
+  const cdItemPinned = useTimerStore((s) => s.cdItemPinned)
+  const addCdItemPinned = useTimerStore((s) => s.addCdItemPinned)
+
+  // ── First-time tooltip for auto-float button ──
+  const [showFloatTip, setShowFloatTip] = useState(() => {
+    return !localStorage.getItem('a7box-float-tip-seen')
+  })
+  const handleFloatHover = useCallback(() => {
+    if (showFloatTip) {
+      localStorage.setItem('a7box-float-tip-seen', '1')
+      // Hide after 3 seconds
+      setTimeout(() => setShowFloatTip(false), 3000)
+    }
+  }, [showFloatTip])
+
+  // Toggle global auto-spawn: spawn or close all individual countdown cards
+  const toggleAutoSpawn = useCallback(async () => {
+    if (!isTauri()) return
+    try {
+      const { invoke } = await import('@tauri-apps/api/core')
+      if (cdAutoSpawn) {
+        // Turn off: close all item cards and clear pinned list
+        await invoke('close_cd_item_windows')
+        useTimerStore.setState({ cdItemPinned: [] })
+        setCdAutoSpawn(false)
+      } else {
+        // Turn on: spawn cards for all active countdowns
+        const active = useTimerStore.getState().countdowns.filter(
+          (c) => c.status === 'running' || c.status === 'paused'
+        )
+        const newIds: string[] = []
+        for (let i = 0; i < active.length; i++) {
+          await invoke('show_cd_item_widget', { timerId: active[i].id, index: i })
+          newIds.push(active[i].id)
+        }
+        newIds.forEach((id) => addCdItemPinned(id))
+        setCdAutoSpawn(active.length > 0)
+      }
+    } catch { /* ignore */ }
+  }, [cdAutoSpawn, setCdAutoSpawn, addCdItemPinned])
 
   // ── Smart input ──
   const [input, setInput] = useState('')
@@ -77,10 +120,55 @@ export default function CountdownTab({ now }: Props) {
     addCountdown(durationMs, title || defaultTitle(durationMs, t))
   }, [addCountdown, t])
 
+  // ── Auto-spawn card when new countdown created while auto-spawn is active ──
+  const prevIdsRef = useRef(new Set(countdowns.map((c) => c.id)))
+  useEffect(() => {
+    if (!cdAutoSpawn || !isTauri()) return
+    const currentIds = new Set(countdowns.map((c) => c.id))
+    const newIds = [...currentIds].filter((id) => !prevIdsRef.current.has(id))
+    prevIdsRef.current = currentIds
+    if (newIds.length === 0) return
+    // Spawn cards for new running/paused countdowns
+    const activeNow = countdowns.filter((c) => c.status === 'running' || c.status === 'paused')
+    import('@tauri-apps/api/core').then(({ invoke }) => {
+      newIds.forEach((id) => {
+        const idx = activeNow.findIndex((c) => c.id === id)
+        if (idx >= 0 && !cdItemPinned.includes(id)) {
+          invoke('show_cd_item_widget', { timerId: id, index: idx }).then(() => {
+            addCdItemPinned(id)
+          }).catch(() => {})
+        }
+      })
+    }).catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countdowns, cdAutoSpawn])
+
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-4 h-full relative">
+      {/* ── Auto-spawn toggle (top-right) ── */}
+      <div className="absolute top-0 right-0 z-10" onMouseEnter={handleFloatHover}>
+        <button
+          onClick={toggleAutoSpawn}
+          className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-medium transition-colors cursor-pointer ${
+            cdAutoSpawn
+              ? 'bg-primary/15 text-primary'
+              : 'text-text-muted hover:text-primary hover:bg-primary/5'
+          }`}
+          title={cdAutoSpawn ? t('timerWidget.autoSpawnOn') : t('timerWidget.autoSpawnOff')}
+        >
+          {cdAutoSpawn ? <PinOff size={11} /> : <Pin size={11} />}
+          {cdAutoSpawn ? t('timerWidget.autoSpawnOn') : t('timerWidget.autoSpawnOff')}
+        </button>
+        {/* First-time enhanced tooltip */}
+        {showFloatTip && (
+          <div className="absolute top-full right-0 mt-1 w-48 p-2 rounded-lg bg-bg-elevated border border-border-base shadow-lg text-[10px] text-text-secondary animate-in fade-in slide-in-from-top-1">
+            {t('timerWidget.autoSpawnHint')}
+          </div>
+        )}
+      </div>
+
       {/* ── Smart Input ── */}
-      <div className="shrink-0">
+      <div className="shrink-0 pr-[120px]">
         <div className="flex items-center gap-2 rounded-xl border border-border-base bg-bg-overlay px-3 py-2.5 focus-within:border-border-focus transition-colors">
           <Timer size={14} className="text-text-muted shrink-0" />
           <input
@@ -206,6 +294,12 @@ export default function CountdownTab({ now }: Props) {
             <Clock size={36} className="mb-4 text-text-disabled" />
             <p className="text-sm mb-2">{t('modules.timer.ui.empty')}</p>
             <p className="text-[10px] text-text-disabled">{t('modules.timer.ui.emptyHint')}</p>
+            {isTauri() && (
+              <div className="mt-4 flex items-center gap-1.5 text-[10px] text-text-muted">
+                <Lightbulb size={11} className="text-warning" />
+                <span>{t('timerWidget.emptyTip')}</span>
+              </div>
+            )}
           </div>
         ) : (
           <>

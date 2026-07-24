@@ -4,10 +4,11 @@
  */
 import { useMemo, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Play, Pause, RotateCcw, Flag, Copy, Check, Timer } from 'lucide-react'
+import { Play, Pause, RotateCcw, Flag, Copy, Check, Timer, Pin, PinOff } from 'lucide-react'
 import { useTimerStore } from './timerStore'
 import { useToast } from '../../components/Toast'
 import { formatStopwatch, formatLapTime } from './utils'
+import { isTauri } from '../../shared/utils'
 import type { StopwatchLap } from './types'
 
 interface Props {
@@ -33,6 +34,35 @@ export default function StopwatchTab({ now }: Props) {
   const swPause = useTimerStore((s) => s.swPause)
   const swReset = useTimerStore((s) => s.swReset)
   const swLap = useTimerStore((s) => s.swLap)
+
+  const swWidgetPinned = useTimerStore((s) => s.swWidgetPinned)
+  const setSwWidgetPinned = useTimerStore((s) => s.setSwWidgetPinned)
+
+  // ── First-time tooltip for auto-float button ──
+  const [showFloatTip, setShowFloatTip] = useState(() => {
+    return !localStorage.getItem('a7box-sw-float-tip-seen')
+  })
+  const handleFloatHover = useCallback(() => {
+    if (showFloatTip) {
+      localStorage.setItem('a7box-sw-float-tip-seen', '1')
+      setTimeout(() => setShowFloatTip(false), 3000)
+    }
+  }, [showFloatTip])
+
+  // Toggle stopwatch widget open/close
+  const toggleWidget = useCallback(async () => {
+    if (!isTauri()) return
+    try {
+      const { invoke } = await import('@tauri-apps/api/core')
+      if (swWidgetPinned) {
+        await invoke('close_utility_window', { label: 'sw-widget' })
+        setSwWidgetPinned(false)
+      } else {
+        await invoke('show_stopwatch_widget')
+        setSwWidgetPinned(true)
+      }
+    } catch { /* ignore */ }
+  }, [swWidgetPinned, setSwWidgetPinned])
 
   const [copied, setCopied] = useState(false)
 
@@ -88,10 +118,32 @@ export default function StopwatchTab({ now }: Props) {
   }, [showToast, t])
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
+      {/* ── Auto-float toggle (top-right) ── */}
+      <div className="absolute top-0 right-0 z-10" onMouseEnter={handleFloatHover}>
+        <button
+          onClick={toggleWidget}
+          className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-medium transition-colors cursor-pointer ${
+            swWidgetPinned
+              ? 'bg-primary/15 text-primary'
+              : 'text-text-muted hover:text-primary hover:bg-primary/5'
+          }`}
+          title={swWidgetPinned ? t('timerWidget.autoSpawnOn') : t('timerWidget.autoSpawnOff')}
+        >
+          {swWidgetPinned ? <PinOff size={11} /> : <Pin size={11} />}
+          {swWidgetPinned ? t('timerWidget.autoSpawnOn') : t('timerWidget.autoSpawnOff')}
+        </button>
+        {/* First-time enhanced tooltip */}
+        {showFloatTip && (
+          <div className="absolute top-full right-0 mt-1 w-48 p-2 rounded-lg bg-bg-elevated border border-border-base shadow-lg text-[10px] text-text-secondary animate-in fade-in slide-in-from-top-1">
+            {t('timerWidget.swAutoSpawnHint')}
+          </div>
+        )}
+      </div>
+
       {/* ── Time display ── */}
       <div className="shrink-0 flex flex-col items-center justify-center py-8">
-        <div className="font-mono text-5xl font-bold tabular-nums text-text-primary tracking-tight">
+        <div className="font-mono text-6xl font-bold tabular-nums text-text-primary tracking-tight">
           {formatStopwatch(elapsed)}
         </div>
 

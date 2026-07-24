@@ -1051,6 +1051,7 @@
         "delete": "删除",
         "restart": "再来一次",
         "completed": "已完成",
+        "dismiss": "清除",
         "paused": "已暂停",
         "clickToEdit": "点击编辑标题",
         "addTime": "加 {{n}} 分钟",
@@ -1081,6 +1082,22 @@
           "sShort": "s"
         }
       }
+    }
+  },
+  "timerWidget": {
+    "autoSpawnOn": "自动浮窗已开启",
+    "autoSpawnOff": "自动浮窗已关闭",
+    "autoSpawnHint": "开启后，倒计时会在桌面显示独立浮窗，方便随时查看",
+    "swAutoSpawnHint": "开启后，秒表会在桌面显示浮窗，方便随时查看",
+    "openCard": "打开浮窗",
+    "closeCard": "关闭浮窗",
+    "noActive": "暂无活动计时",
+    "emptyTip": "开启「自动浮窗」可在桌面显示倒计时卡片，方便多任务工作",
+    "feedback": {
+      "started": "已开始",
+      "paused": "已暂停",
+      "reset": "已重置",
+      "lap": "计次 +1"
     }
   },
   "jsonQuick": {

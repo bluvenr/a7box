@@ -1051,6 +1051,7 @@
         "delete": "Delete",
         "restart": "Restart",
         "completed": "Completed",
+        "dismiss": "Dismiss",
         "paused": "Paused",
         "clickToEdit": "Click to edit title",
         "addTime": "Add {{n}} min",
@@ -1081,6 +1082,22 @@
           "sShort": "s"
         }
       }
+    }
+  },
+  "timerWidget": {
+    "autoSpawnOn": "Auto-float on",
+    "autoSpawnOff": "Auto-float off",
+    "autoSpawnHint": "Enable to show countdown timers as floating widgets on your desktop",
+    "swAutoSpawnHint": "Enable to show stopwatch as a floating widget on your desktop",
+    "openCard": "Open float window",
+    "closeCard": "Close float window",
+    "noActive": "No active timers",
+    "emptyTip": "Enable \"Auto-float\" to show countdown cards on your desktop for multitasking",
+    "feedback": {
+      "started": "Started",
+      "paused": "Paused",
+      "reset": "Reset",
+      "lap": "Lap"
     }
   },
   "jsonQuick": {

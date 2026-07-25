@@ -155,18 +155,33 @@ pub fn start_screen_pick(app: AppHandle, page_mode: Option<bool>) -> Result<(), 
                             let sy = screen.display_info.y;
                             let sw = screen.display_info.width as i32;
                             let sh = screen.display_info.height as i32;
-                            let cx = (x - sx - half).max(0).min(sw - 1);
-                            let cy = (y - sy - half).max(0).min(sh - 1);
-                            let cw = MAG_SIZE.min(sw - cx);
-                            let ch = MAG_SIZE.min(sh - cy);
+                            // On macOS: capture_area takes logical-point coords but returns
+                            // physical-pixel images. Convert cursor offset to physical pixels
+                            // so the magnifier centers correctly on Retina displays.
+                            let scale = (screen.display_info.scale_factor as f64).max(1.0);
+                            let cursor_phys_x = ((x - sx) as f64 * scale).round() as i32;
+                            let cursor_phys_y = ((y - sy) as f64 * scale).round() as i32;
+                            let phys_w = (sw as f64 * scale).round() as i32;
+                            let phys_h = (sh as f64 * scale).round() as i32;
+                            let cx = (cursor_phys_x - half).max(0).min(phys_w - 1);
+                            let cy = (cursor_phys_y - half).max(0).min(phys_h - 1);
+                            let cw = MAG_SIZE.min(phys_w - cx);
+                            let ch = MAG_SIZE.min(phys_h - cy);
+                            // Convert back to logical points for capture_area
+                            let log_cx = (cx as f64 / scale).round() as i32;
+                            let log_cy = (cy as f64 / scale).round() as i32;
+                            let log_cw = (cw as f64 / scale).ceil() as u32;
+                            let log_ch = (ch as f64 / scale).ceil() as u32;
                             if cw > 0 && ch > 0 {
-                                if let Ok(img) = screen.capture_area(cx, cy, cw as u32, ch as u32) {
+                                if let Ok(img) = screen.capture_area(log_cx, log_cy, log_cw, log_ch) {
                                     let pixels: Vec<u8> = img.into_raw();
+                                    // offX/offY in physical pixels for the magnifier overlay
+                                    let off_x = cursor_phys_x - cx;
+                                    let off_y = cursor_phys_y - cy;
                                     let _ = app_clone.emit("cursor-region", serde_json::json!({
                                         "data": pixels,
                                         "w": cw, "h": ch,
-                                        "offX": (x - sx) - cx,
-                                        "offY": (y - sy) - cy,
+                                        "offX": off_x, "offY": off_y,
                                     }));
                                 }
                             }

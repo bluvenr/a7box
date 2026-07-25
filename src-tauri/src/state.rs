@@ -46,6 +46,9 @@ pub struct PickerSession {
 pub struct CaptureSession {
     /// Whether the current capture flow was initiated from the page
     pub from_page: AtomicBool,
+    /// Pending capture result (base64 + metadata) for macOS close-and-recreate flow.
+    /// Stored as JSON so the new RegionPicker window can pick it up on mount.
+    pub pending_capture_result: Mutex<Option<serde_json::Value>>,
 }
 
 /// Get the current language for the given app handle.

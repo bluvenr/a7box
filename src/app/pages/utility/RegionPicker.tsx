@@ -111,6 +111,29 @@ export default function RegionPicker() {
     import('@tauri-apps/api/core').then(m => { invokeRef.current = m.invoke })
   }, [])
 
+  // On mount, check for pending capture result (macOS close-and-recreate flow).
+  // The new window may miss the `capture-result` event, so we poll state as fallback.
+  useEffect(() => {
+    let cancelled = false
+    const checkPending = async () => {
+      // Wait for invoke to be ready (up to 2s)
+      for (let i = 0; i < 20 && !cancelled; i++) {
+        if (invokeRef.current) break
+        await new Promise<void>(r => setTimeout(r, 100))
+      }
+      if (cancelled || !invokeRef.current) return
+      try {
+        const data = await invokeRef.current<CaptureData | null>('get_pending_capture_result')
+        if (data && !cancelled) {
+          setCapture(data)
+          setMode('edit')
+        }
+      } catch { /* ignore */ }
+    }
+    checkPending()
+    return () => { cancelled = true }
+  }, [])
+
   // Listen for capture-result from Rust → enter edit mode
   useEffect(() => {
     let unlisten: (() => void) | undefined

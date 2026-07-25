@@ -1,6 +1,6 @@
 [package]
 name = "a7box"
-version = "0.1.3"
+version = "0.1.4"
 description = "A7Box - Your Tactical Efficiency Weapon on Desktop"
 authors = ["bluvenr"]
 edition = "2021"

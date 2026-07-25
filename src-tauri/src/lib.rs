@@ -102,6 +102,7 @@ pub fn run() {
             commands::screenshot::save_edited_image,
             commands::screenshot::scan_screenshot_history,
             commands::screenshot::set_capture_from_page,
+                        commands::screenshot::get_pending_capture_result,
             commands::screenshot::detect_window_at_cursor,
             commands::screenshot::get_session_captures,
             commands::screenshot::clear_session_captures,

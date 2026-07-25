@@ -68,6 +68,13 @@ pub fn set_capture_from_page(cs: tauri::State<'_, crate::state::CaptureSession>,
     cs.from_page.store(value, Ordering::SeqCst);
 }
 
+/// Pop the pending capture result (macOS close-and-recreate flow).
+/// Returns and clears the stored JSON so the new RegionPicker window can enter edit mode.
+#[tauri::command]
+pub fn get_pending_capture_result(cs: tauri::State<'_, crate::state::CaptureSession>) -> Option<serde_json::Value> {
+    cs.pending_capture_result.lock().ok().and_then(|mut g| g.take())
+}
+
 #[tauri::command]
 pub fn detect_window_at_cursor() -> Result<Option<screenshot::WindowBounds>, String> {
     screenshot::detect_window_at_cursor()

@@ -74,7 +74,39 @@ pub fn capture_full_screen() -> Result<CaptureResult, String> {
     save_image(&img, "fullscreen")
 }
 
-/// Capture a region of the screen
+/// Capture a region of the screen.
+/// On macOS, uses full-screen capture + crop to avoid CGWindowListCreateImage
+/// region-capture issues where other app windows may render as desktop background.
+#[cfg(target_os = "macos")]
+pub fn capture_region(x: i32, y: i32, width: u32, height: u32) -> Result<CaptureResult, String> {
+    let screens = Screen::all().map_err(|e| format!("Failed to get screens: {}", e))?;
+    if screens.is_empty() {
+        return Err("No screens found".to_string());
+    }
+
+    let screen = &screens[0];
+    let full_img = screen
+        .capture()
+        .map_err(|e| format!("Screenshot failed: {}", e))?;
+
+    // Convert logical coords to physical pixel coords.
+    // Use actual image-to-display ratio instead of scale_factor cast to avoid
+    // truncation errors with fractional scaling (e.g. 1.5x → 1 as u32).
+    let (img_w, img_h) = (full_img.width() as f64, full_img.height() as f64);
+    let (disp_w, disp_h) = (screen.display_info.width as f64, screen.display_info.height as f64);
+    let scale_x = if disp_w > 0.0 { img_w / disp_w } else { 1.0 };
+    let scale_y = if disp_h > 0.0 { img_h / disp_h } else { 1.0 };
+    let crop_x = (((x - screen.display_info.x).max(0) as f64) * scale_x).round() as u32;
+    let crop_y = (((y - screen.display_info.y).max(0) as f64) * scale_y).round() as u32;
+    let crop_w = (width as f64 * scale_x).round() as u32;
+    let crop_h = (height as f64 * scale_y).round() as u32;
+
+    let img = crop_image(&full_img, crop_x, crop_y, crop_w, crop_h)?;
+    save_image(&img, "region")
+}
+
+/// Capture a region of the screen (non-macOS fallback).
+#[cfg(not(target_os = "macos"))]
 pub fn capture_region(x: i32, y: i32, width: u32, height: u32) -> Result<CaptureResult, String> {
     let screens = Screen::all().map_err(|e| format!("Failed to get screens: {}", e))?;
     if screens.is_empty() {
@@ -132,9 +164,67 @@ pub fn file_to_base64(path: String) -> Result<String, String> {
     Ok(format!("data:image/png;base64,{}", b64))
 }
 
+/// Crop an RgbaImage to the specified region (pixel coordinates).
+#[cfg(target_os = "macos")]
+fn crop_image(img: &RgbaImage, x: u32, y: u32, width: u32, height: u32) -> Result<RgbaImage, String> {
+    let (iw, ih) = (img.width(), img.height());
+    // Clamp to image bounds
+    let x = x.min(iw.saturating_sub(1));
+    let y = y.min(ih.saturating_sub(1));
+    let w = width.min(iw.saturating_sub(x));
+    let h = height.min(ih.saturating_sub(y));
+    if w == 0 || h == 0 {
+        return Err("Crop region is empty".to_string());
+    }
+    let dynamic = screenshots::image::DynamicImage::ImageRgba8(img.clone());
+    Ok(dynamic.crop_imm(x, y, w, h).into_rgba8())
+}
+
 /// Capture a region as base64 PNG (in-memory only, no file save).
-/// Coordinates (x, y) are in virtual desktop logical pixels (from RegionPicker clientX/clientY).
-/// Finds the correct screen and converts to screen-relative coordinates for capture_area.
+/// On macOS, uses full-screen capture + crop to avoid CGWindowListCreateImage
+/// region-capture issues where other app windows may render as desktop background.
+#[cfg(target_os = "macos")]
+pub fn capture_region_to_base64(x: i32, y: i32, width: u32, height: u32) -> Result<(String, u32, u32), String> {
+    let screens = Screen::all().map_err(|e| format!("Failed to get screens: {}", e))?;
+    if screens.is_empty() {
+        return Err("No screens found".to_string());
+    }
+
+    let screen = Screen::from_point(x, y)
+        .unwrap_or(screens[0]);
+
+    let full_img = screen
+        .capture()
+        .map_err(|e| format!("Screenshot failed: {}", e))?;
+
+    // Convert logical coords to physical pixel coords.
+    // Use actual image-to-display ratio instead of scale_factor cast to avoid
+    // truncation errors with fractional scaling (e.g. 1.5x → 1 as u32).
+    let (img_w, img_h) = (full_img.width() as f64, full_img.height() as f64);
+    let (disp_w, disp_h) = (screen.display_info.width as f64, screen.display_info.height as f64);
+    let scale_x = if disp_w > 0.0 { img_w / disp_w } else { 1.0 };
+    let scale_y = if disp_h > 0.0 { img_h / disp_h } else { 1.0 };
+    let crop_x = (((x - screen.display_info.x).max(0) as f64) * scale_x).round() as u32;
+    let crop_y = (((y - screen.display_info.y).max(0) as f64) * scale_y).round() as u32;
+    let crop_w = (width as f64 * scale_x).round() as u32;
+    let crop_h = (height as f64 * scale_y).round() as u32;
+
+    let img = crop_image(&full_img, crop_x, crop_y, crop_w, crop_h)?;
+
+    let mut buf = Cursor::new(Vec::new());
+    img.write_to(&mut buf, ImageFormat::Png)
+        .map_err(|e| format!("Failed to encode PNG: {}", e))?;
+
+    let b64 = format!(
+        "data:image/png;base64,{}",
+        base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &buf.into_inner())
+    );
+
+    Ok((b64, img.width(), img.height()))
+}
+
+/// Capture a region as base64 PNG (non-macOS fallback).
+#[cfg(not(target_os = "macos"))]
 pub fn capture_region_to_base64(x: i32, y: i32, width: u32, height: u32) -> Result<(String, u32, u32), String> {
     let screens = Screen::all().map_err(|e| format!("Failed to get screens: {}", e))?;
     if screens.is_empty() {

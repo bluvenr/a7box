@@ -336,8 +336,19 @@ fn register_screenshot_events(app: &tauri::App) {
                 return;
             }
 
-            if let Some(rp) = app_handle.get_webview_window("utility-region-picker") {
-                let _ = rp.hide();
+            // On macOS: close the overlay window completely so CGWindowListCreateImage
+            // won't composite it into the screenshot. On other platforms: just hide.
+            #[cfg(target_os = "macos")]
+            {
+                if let Some(rp) = app_handle.get_webview_window("utility-region-picker") {
+                    let _ = rp.close();
+                }
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                if let Some(rp) = app_handle.get_webview_window("utility-region-picker") {
+                    let _ = rp.hide();
+                }
             }
 
             let capture_ah = app_handle.clone();
@@ -360,7 +371,7 @@ fn register_screenshot_events(app: &tauri::App) {
                         }
                         let temp_path_str = temp_path.to_string_lossy().to_string();
 
-                        let _ = capture_ah.emit("capture-result", serde_json::json!({
+                        let result_json = serde_json::json!({
                             "base64": base64,
                             "tempPath": temp_path_str,
                             "x": x,
@@ -369,11 +380,68 @@ fn register_screenshot_events(app: &tauri::App) {
                             "height": h,
                             "imgWidth": img_w,
                             "imgHeight": img_h,
-                        }));
+                        });
 
-                        if let Some(rp) = capture_ah.get_webview_window("utility-region-picker") {
-                            let _ = rp.show();
-                            let _ = rp.set_focus();
+                        #[cfg(target_os = "macos")]
+                        {
+                            // Store result in state, then recreate the editor window
+                            if let Ok(mut pending) = capture_ah.state::<CaptureSession>().pending_capture_result.lock() {
+                                *pending = Some(result_json.clone());
+                            }
+
+                            use tauri::{WebviewUrl, WebviewWindowBuilder};
+                            let screens = screenshots::Screen::all().unwrap_or_default();
+                            let (vx, vy, vw, vh) = if screens.is_empty() {
+                                (0, 0, 1920u32, 1080u32)
+                            } else {
+                                let mut min_x = i32::MAX;
+                                let mut min_y = i32::MAX;
+                                let mut max_x = i32::MIN;
+                                let mut max_y = i32::MIN;
+                                for s in &screens {
+                                    let di = &s.display_info;
+                                    min_x = min_x.min(di.x);
+                                    min_y = min_y.min(di.y);
+                                    max_x = max_x.max(di.x + di.width as i32);
+                                    max_y = max_y.max(di.y + di.height as i32);
+                                }
+                                (min_x, min_y, (max_x - min_x) as u32, (max_y - min_y) as u32)
+                            };
+
+                            let _ = WebviewWindowBuilder::new(
+                                &capture_ah, "utility-region-picker",
+                                WebviewUrl::App("/utility/region-picker".into()),
+                            )
+                                .title("")
+                                .inner_size(vw as f64, vh as f64)
+                                .position(vx as f64, vy as f64)
+                                .resizable(false)
+                                .decorations(false)
+                                .shadow(false)
+                                .always_on_top(true)
+                                .visible(false)
+                                .skip_taskbar(true)
+                                .background_color(tauri::window::Color(0, 0, 0, 0))
+                                .transparent(true)
+                                .initialization_script(crate::state::utility_init_script(&capture_ah))
+                                .build();
+
+                            // Emit after window creation so the new listener can pick it up
+                            let _ = capture_ah.emit("capture-result", &result_json);
+                            if let Some(rp) = capture_ah.get_webview_window("utility-region-picker") {
+                                let _ = rp.show();
+                                let _ = rp.set_focus();
+                            }
+                        }
+
+                        #[cfg(not(target_os = "macos"))]
+                        {
+                            let _ = capture_ah.emit("capture-result", &result_json);
+
+                            if let Some(rp) = capture_ah.get_webview_window("utility-region-picker") {
+                                let _ = rp.show();
+                                let _ = rp.set_focus();
+                            }
                         }
                     }
                     Err(e) => {

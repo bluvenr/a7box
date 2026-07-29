@@ -220,8 +220,20 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|_app, event| {
-            if let tauri::RunEvent::Exit = event {
-                crate::commands::screenshot::cleanup_temp_screenshots();
+            match event {
+                #[cfg(target_os = "macos")]
+                tauri::RunEvent::Reopen { has_visible_windows, .. } => {
+                    // macOS: Dock icon click when no visible windows
+                    if !has_visible_windows {
+                        if let Some(window) = _app.get_webview_window("main") {
+                            crate::state::bring_window_to_front(&window);
+                        }
+                    }
+                }
+                tauri::RunEvent::Exit => {
+                    crate::commands::screenshot::cleanup_temp_screenshots();
+                }
+                _ => {}
             }
         });
 }

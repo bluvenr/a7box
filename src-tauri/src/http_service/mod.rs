@@ -21,6 +21,8 @@ struct ServerInstance {
     dir: PathBuf,
     port: u16,
     stop_flag: Arc<AtomicBool>,
+    /// Thread handle so stop_instance can wait for the socket to be fully released.
+    thread_handle: Option<thread::JoinHandle<()>>,
 }
 
 /// Public info returned to the frontend
@@ -68,7 +70,7 @@ pub fn start_instance(
     // Spawn request-handling thread
     let dir_clone = dir.clone();
     let flag_clone = stop_flag.clone();
-    thread::Builder::new()
+    let thread_handle = thread::Builder::new()
         .name(format!("http-svc-{}", &id[..8]))
         .spawn(move || {
             while !flag_clone.load(Ordering::Relaxed) {
@@ -83,6 +85,7 @@ pub fn start_instance(
                     }
                 }
             }
+            // `server` is dropped here, releasing the listening socket.
         })
         .map_err(|e| format!("Failed to spawn thread: {}", e))?;
 
@@ -92,6 +95,7 @@ pub fn start_instance(
         dir: dir.clone(),
         port: bound_port,
         stop_flag,
+        thread_handle: Some(thread_handle),
     };
     state.instances.lock().unwrap().push(instance);
 
@@ -108,12 +112,21 @@ pub fn start_instance(
     })
 }
 
-/// Stop an instance by ID
+/// Stop an instance by ID.
+/// Waits for the server thread to exit so the listening socket is fully released
+/// before returning, ensuring the port is available for immediate restart.
 pub fn stop_instance(state: &HttpServiceState, id: &str) -> Result<(), String> {
     let mut instances = state.instances.lock().unwrap();
     if let Some(pos) = instances.iter().position(|i| i.id == id) {
-        let inst = instances.remove(pos);
+        let mut inst = instances.remove(pos);
         inst.stop_flag.store(true, Ordering::Relaxed);
+        // Drop the lock before joining (thread exit doesn't need it)
+        drop(instances);
+        // Wait for the thread to finish and the socket to be released.
+        // Max wait ≈ 500ms (the recv_timeout interval in the server loop).
+        if let Some(handle) = inst.thread_handle.take() {
+            let _ = handle.join();
+        }
         Ok(())
     } else {
         Err(format!("Instance not found: {}", id))

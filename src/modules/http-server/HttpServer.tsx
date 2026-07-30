@@ -222,7 +222,6 @@ export default function HttpServer() {
 
     setStoppingId(inst.id)
     await httpStopServer(inst.id)
-    await new Promise((r) => setTimeout(r, 420))
 
     removeInstance(inst.id)
     setStoppingId(null)

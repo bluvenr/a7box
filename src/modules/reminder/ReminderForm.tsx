@@ -88,6 +88,9 @@ export default function ReminderForm({ initial, onDataChange }: Props) {
         repeat.interval = Math.max(1, Math.min(999, interval))
         repeat.intervalUnit = intervalUnit
       }
+      // Preserve endDate — the form UI doesn't manage it, but silently
+      // dropping it on edit would turn the reminder into a never-ending one.
+      if (initial?.repeat?.endDate) repeat.endDate = initial.repeat.endDate
     }
     const triggerAt = combineDateTime(dateStr, timeStr)
     return {
@@ -117,7 +120,9 @@ export default function ReminderForm({ initial, onDataChange }: Props) {
     if (!dateStr || !timeStr || isNaN(ts)) {
       setInvalidDateError(true)
       valid = false
-    } else if (checkPastTime(dateStr, timeStr)) {
+    } else if (!hasRepeat && checkPastTime(dateStr, timeStr)) {
+      // Past time is only an error for one-shot reminders.
+      // Repeat reminders normalize to the next matching occurrence on save.
       setPastTimeError(true)
       valid = false
     }
@@ -156,7 +161,7 @@ export default function ReminderForm({ initial, onDataChange }: Props) {
     const ts = combineDateTime(val, timeStr)
     if (!val || isNaN(ts)) {
       setInvalidDateError(true)
-    } else if (checkPastTime(val, timeStr)) {
+    } else if (!hasRepeat && checkPastTime(val, timeStr)) {
       setPastTimeError(true)
     }
   }
@@ -168,7 +173,7 @@ export default function ReminderForm({ initial, onDataChange }: Props) {
     const ts = combineDateTime(dateStr, val)
     if (!val || isNaN(ts)) {
       setInvalidDateError(true)
-    } else if (checkPastTime(dateStr, val)) {
+    } else if (!hasRepeat && checkPastTime(dateStr, val)) {
       setPastTimeError(true)
     }
   }

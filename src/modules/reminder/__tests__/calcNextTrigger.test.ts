@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { calcNextTrigger } from '../reminderStore'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { calcNextTrigger, normalizeRepeatTrigger } from '../reminderStore'
 import type { RepeatConfig } from '../types'
 
 // Helper: create a date at a specific time
@@ -132,6 +132,116 @@ describe('calcNextTrigger', () => {
       const repeat: RepeatConfig = { type: 'custom' }
       const after = at(2026, 7, 8, 9, 0)
       expect(calcNextTrigger(repeat, after)).toBeNull()
+    })
+  })
+})
+
+// ─── normalizeRepeatTrigger ────────────────────────────────────────────────────
+
+describe('normalizeRepeatTrigger', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  describe('weekly', () => {
+    it('snaps a distant matching day to the nearest matching weekday (user scenario)', () => {
+      // Today: Thursday 2026-07-30 10:33. Rule: Mon/Wed/Fri.
+      // User picked next Monday 08/03 10:25 — but Friday 07/31 is tomorrow!
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 6, 30, 10, 33)) // Thu Jul 30
+      const repeat: RepeatConfig = { type: 'weekly', weekdays: [1, 3, 5] }
+      const picked = at(2026, 8, 3, 10, 25) // Monday Aug 3
+      const result = normalizeRepeatTrigger(repeat, picked)
+      // Should snap to Friday Jul 31 10:25 (nearest matching day from today)
+      expect(result).toBe(at(2026, 7, 31, 10, 25))
+    })
+
+    it('keeps triggerAt when it is a matching day and still in the future', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 6, 30, 9, 0)) // Thu Jul 30 09:00
+      const repeat: RepeatConfig = { type: 'weekly', weekdays: [1, 3, 5] }
+      const picked = at(2026, 7, 31, 10, 25) // Fri Jul 31 (matches, future)
+      expect(normalizeRepeatTrigger(repeat, picked)).toBe(picked)
+    })
+
+    it('keeps today when today matches and time has not passed', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 6, 31, 9, 0)) // Fri Jul 31 09:00
+      const repeat: RepeatConfig = { type: 'weekly', weekdays: [1, 3, 5] }
+      const picked = at(2026, 7, 31, 10, 25) // today Fri, future time
+      expect(normalizeRepeatTrigger(repeat, picked)).toBe(picked)
+    })
+
+    it('advances to next matching day when today matches but time passed', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 6, 31, 11, 0)) // Fri Jul 31 11:00
+      const repeat: RepeatConfig = { type: 'weekly', weekdays: [1, 3, 5] }
+      const picked = at(2026, 7, 31, 10, 25) // today Fri, but 10:25 passed
+      // Next matching day after Fri is Monday Aug 3
+      expect(normalizeRepeatTrigger(repeat, picked)).toBe(at(2026, 8, 3, 10, 25))
+    })
+
+    it('returns triggerAt unchanged when weekdays is empty', () => {
+      const repeat: RepeatConfig = { type: 'weekly', weekdays: [] }
+      const picked = at(2026, 8, 3, 10, 25)
+      expect(normalizeRepeatTrigger(repeat, picked)).toBe(picked)
+    })
+  })
+
+  describe('monthly', () => {
+    it('snaps to nearest selected day-of-month', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 6, 30, 10, 33)) // Jul 30
+      const repeat: RepeatConfig = { type: 'monthly', monthDays: [5, 15] }
+      const picked = at(2026, 9, 15, 9, 0) // Sep 15 (far away)
+      // Nearest matching day from Jul 30: Aug 5
+      expect(normalizeRepeatTrigger(repeat, picked)).toBe(at(2026, 8, 5, 9, 0))
+    })
+
+    it('keeps triggerAt when day matches and time is future', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 6, 30, 8, 0)) // Jul 30 08:00
+      const repeat: RepeatConfig = { type: 'monthly', monthDays: [30] }
+      const picked = at(2026, 7, 30, 9, 0) // today the 30th, future time
+      expect(normalizeRepeatTrigger(repeat, picked)).toBe(picked)
+    })
+  })
+
+  describe('daily', () => {
+    it('keeps future triggerAt unchanged', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 6, 30, 8, 0))
+      const repeat: RepeatConfig = { type: 'daily' }
+      const picked = at(2026, 7, 30, 9, 0)
+      expect(normalizeRepeatTrigger(repeat, picked)).toBe(picked)
+    })
+
+    it('rolls past time to today or tomorrow same time', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 6, 30, 11, 0)) // 11:00 now
+      const repeat: RepeatConfig = { type: 'daily' }
+      const picked = at(2026, 7, 28, 9, 0) // past date, 09:00 (also passed today)
+      // 09:00 today already passed → tomorrow 09:00
+      expect(normalizeRepeatTrigger(repeat, picked)).toBe(at(2026, 7, 31, 9, 0))
+    })
+  })
+
+  describe('custom', () => {
+    it('keeps future triggerAt unchanged', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 6, 30, 8, 0))
+      const repeat: RepeatConfig = { type: 'custom', interval: 2, intervalUnit: 'hour' }
+      const picked = at(2026, 7, 30, 10, 0)
+      expect(normalizeRepeatTrigger(repeat, picked)).toBe(picked)
+    })
+
+    it('advances past triggerAt to now + interval', () => {
+      vi.useFakeTimers()
+      const nowMs = new Date(2026, 6, 30, 11, 0).getTime()
+      vi.setSystemTime(new Date(nowMs))
+      const repeat: RepeatConfig = { type: 'custom', interval: 2, intervalUnit: 'hour' }
+      const picked = at(2026, 7, 29, 10, 0) // yesterday, long past
+      expect(normalizeRepeatTrigger(repeat, picked)).toBe(nowMs + 2 * 3_600_000)
     })
   })
 })

@@ -103,6 +103,86 @@ export function calcNextTrigger(repeat: RepeatConfig, afterTime: number): number
   return null
 }
 
+/**
+ * Normalize triggerAt for a repeat reminder so the first trigger lands on
+ * the nearest future occurrence that matches the repeat rule.
+ *
+ * Without this, a user who picks e.g. "next Monday 10:25" with a Mon/Wed/Fri
+ * rule would wait a full week even though Friday (a matching day) is tomorrow.
+ *
+ * Rules:
+ * - weekly: snap to the nearest matching weekday (today if it matches and the
+ *   time hasn't passed, otherwise the next matching day), preserving time-of-day.
+ * - monthly: snap to the nearest selected day-of-month (same logic).
+ * - daily / custom: if the time already passed, roll to the next day.
+ */
+export function normalizeRepeatTrigger(repeat: RepeatConfig, triggerAt: number): number {
+  const now = Date.now()
+  const date = new Date(triggerAt)
+
+  switch (repeat.type) {
+    case 'weekly': {
+      if (!repeat.weekdays?.length) return triggerAt
+      // Only keep as-is when it's TODAY (the nearest possible day), the day
+      // matches the rule, and the time hasn't passed yet
+      const isToday = date.toDateString() === new Date().toDateString()
+      if (isToday && repeat.weekdays.includes(date.getDay()) && triggerAt > now) {
+        return triggerAt
+      }
+      // Snap to the nearest matching weekday from today, preserving time-of-day
+      const base = new Date()
+      base.setHours(date.getHours(), date.getMinutes(), 0, 0)
+      if (base.getTime() <= now) base.setDate(base.getDate() + 1)
+      for (let i = 0; i < 7; i++) {
+        if (repeat.weekdays.includes(base.getDay())) return base.getTime()
+        base.setDate(base.getDate() + 1)
+      }
+      return triggerAt
+    }
+    case 'monthly': {
+      const days = repeat.monthDays ?? (repeat.monthDay ? [repeat.monthDay] : [date.getDate()])
+      if (!days.length) return triggerAt
+      // Only keep as-is when it's TODAY, the day-of-month matches, and time hasn't passed
+      const isToday = date.toDateString() === new Date().toDateString()
+      if (isToday && days.includes(date.getDate()) && triggerAt > now) {
+        return triggerAt
+      }
+      // Snap to the nearest selected day-of-month from today, preserving time-of-day
+      const base = new Date()
+      base.setHours(date.getHours(), date.getMinutes(), 0, 0)
+      if (base.getTime() <= now) base.setDate(base.getDate() + 1)
+      for (let i = 0; i < 62; i++) {
+        if (days.includes(base.getDate())) return base.getTime()
+        base.setDate(base.getDate() + 1)
+      }
+      return triggerAt
+    }
+    case 'daily': {
+      if (triggerAt <= now) {
+        // Time already passed — fire tomorrow at the same time
+        const base = new Date()
+        base.setHours(date.getHours(), date.getMinutes(), 0, 0)
+        if (base.getTime() <= now) base.setDate(base.getDate() + 1)
+        return base.getTime()
+      }
+      return triggerAt
+    }
+    case 'custom': {
+      if (triggerAt <= now && repeat.interval && repeat.intervalUnit) {
+        // Advance by interval from now (not from the stale past timestamp)
+        const ms = repeat.interval * (
+          repeat.intervalUnit === 'minute' ? 60_000 :
+          repeat.intervalUnit === 'hour' ? 3_600_000 :
+          86_400_000
+        )
+        return now + ms
+      }
+      return triggerAt
+    }
+  }
+  return triggerAt
+}
+
 export const useReminderStore = create<ReminderState>()(
   persist(
     (set, get) => ({
@@ -110,11 +190,16 @@ export const useReminderStore = create<ReminderState>()(
 
       addReminder: (data) => {
         const now = Date.now()
+        // For repeat reminders, snap triggerAt to the nearest future occurrence
+        // matching the rule (e.g. weekly Mon/Wed/Fri → nearest matching weekday)
+        const triggerAt = data.repeat
+          ? normalizeRepeatTrigger(data.repeat, data.triggerAt)
+          : data.triggerAt
         const reminder: Reminder = {
           id: crypto.randomUUID(),
           title: data.title.slice(0, 100),
           note: data.note ? data.note.slice(0, 500) : undefined,
-          triggerAt: data.triggerAt,
+          triggerAt,
           repeat: data.repeat,
           status: 'pending',
           createdAt: now,
@@ -134,6 +219,15 @@ export const useReminderStore = create<ReminderState>()(
               title: data.title !== undefined ? data.title.slice(0, 100) : r.title,
               note: data.note !== undefined ? data.note?.slice(0, 500) : r.note,
               updatedAt: Date.now(),
+            }
+            // Re-normalize triggerAt only for user-facing edits.
+            // Form edits always include `repeat` in the payload (null for one-shot);
+            // system-internal advances (notificationBridge) pass only { triggerAt }
+            // and must NOT be re-normalized — their value is already the correct
+            // next occurrence (normalizing could move it backwards, e.g. re-landing
+            // on today after the user marked today's occurrence as done).
+            if (updated.repeat && data.repeat !== undefined) {
+              updated.triggerAt = normalizeRepeatTrigger(updated.repeat, updated.triggerAt)
             }
             // If editing a snoozed reminder, cancel the snooze — user is rescheduling
             if (r.status === 'snoozed') {

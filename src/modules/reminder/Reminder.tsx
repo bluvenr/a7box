@@ -121,7 +121,9 @@ export default function ReminderPage() {
     if (!data) return
     // Double-check critical constraints
     if (!data.title.trim()) return
-    if (isNaN(data.triggerAt) || data.triggerAt < Date.now() - 60000) return
+    // Past time is only invalid for one-shot reminders; repeat reminders
+    // are normalized to the next matching occurrence inside the store.
+    if (isNaN(data.triggerAt) || (!data.repeat && data.triggerAt < Date.now() - 60000)) return
 
     if (drawerMode === 'edit' && selectedReminder) {
       updateReminder(selectedReminder.id, data)

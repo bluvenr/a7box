@@ -68,6 +68,10 @@ let onReminderDue: OnReminderDueCallback | null = null
 /** Track which reminders we've already fired this session to avoid duplicates */
 const firedSet = new Set<string>()
 
+/** Debounce "mark done" per reminder — prevents rapid double-clicks from
+ *  advancing a repeat reminder twice (which would silently skip an occurrence) */
+const lastDoneAt = new Map<string, number>()
+
 let checkTimer: ReturnType<typeof setInterval> | null = null
 
 /** Bring the main window to front.
@@ -240,8 +244,14 @@ async function checkDueReminders() {
     }
   }
 
+  // Re-fetch state after the auto-advance mutations above. Without this the
+  // fire loop would see stale triggerAt values (already advanced to future)
+  // combined with cleared fired entries — re-firing the reminder immediately
+  // and causing a double-advance that silently skips one occurrence.
+  const freshReminders = useReminderStore.getState().reminders
+
   // Check pending reminders
-  for (const reminder of store.reminders) {
+  for (const reminder of freshReminders) {
     if (reminder.status !== 'pending') continue
     if (reminder.triggerAt > now) continue
     if (firedSet.has(reminder.id)) continue
@@ -251,7 +261,7 @@ async function checkDueReminders() {
   }
 
   // Check snoozed reminders
-  for (const reminder of store.reminders) {
+  for (const reminder of freshReminders) {
     if (reminder.status !== 'snoozed') continue
     if (!reminder.snoozeUntil) continue
     if (reminder.snoozeUntil > now) continue
@@ -268,7 +278,7 @@ async function checkDueReminders() {
     // Collect ALL overdue reminders (not just newly-fired ones).
     // This ensures previously-fired but unhandled reminders are re-shown
     // alongside new ones. The toast window deduplicates by ID.
-    const allOverdue = store.reminders.filter((r) =>
+    const allOverdue = freshReminders.filter((r) =>
       (r.status === 'pending' && r.triggerAt <= now) ||
       (r.status === 'snoozed' && r.snoozeUntil && r.snoozeUntil <= now)
     )
@@ -316,6 +326,16 @@ export function handleMarkDone(reminderId: string) {
   const store = useReminderStore.getState()
   const reminder = store.getById(reminderId)
   if (!reminder) return
+  // Guard: already completed (e.g. rapid double-click on the done button).
+  // Without this, a second call would advance a repeat reminder again,
+  // silently skipping the next occurrence.
+  if (reminder.status === 'completed') return
+  // Debounce: block a second "done" within 1s — repeat reminders return to
+  // 'pending' after the first done, so the completed-guard alone cannot
+  // protect them from double-clicks.
+  const now = Date.now()
+  if (now - (lastDoneAt.get(reminderId) ?? 0) < 1000) return
+  lastDoneAt.set(reminderId, now)
 
   if (reminder.repeat) {
     // Repeat reminder: calculate next trigger time

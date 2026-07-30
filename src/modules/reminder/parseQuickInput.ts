@@ -325,18 +325,33 @@ export function parseQuickInput(input: string, lang: string): ParsedResult | nul
       }
     } else {
       baseDate.setHours(parsedTime.hour, parsedTime.minute, 0, 0)
-      // Smart PM inference for bare times (1-11h without explicit 上午/下午 prefix):
-      // e.g. "3点半" at 2PM → try 15:30 today before rolling to tomorrow
-      if (baseDate.getTime() <= now.getTime() && !parsedDate && parsedTime.hour <= 12) {
-        const pmDate = new Date(baseDate)
-        pmDate.setHours(parsedTime.hour + 12, parsedTime.minute, 0, 0)
-        if (pmDate.getTime() > now.getTime()) {
-          baseDate = pmDate
+      if (baseDate.getTime() <= now.getTime() && !parsedDate) {
+        if (parsedRepeat) {
+          // Repeat reminder: the stated time defines the schedule, so do NOT
+          // apply PM inference ("每周一三五 10:25" at 10:33 means 10:25 AM on
+          // the next matching day, not 22:25 tonight). Roll to tomorrow.
+          baseDate.setDate(baseDate.getDate() + 1)
+        } else if (parsedTime.hour <= 12) {
+          // Smart PM inference for bare times (1-11h without explicit 上午/下午 prefix):
+          // e.g. "3点半" at 2PM → try 15:30 today before rolling to tomorrow
+          const pmDate = new Date(baseDate)
+          pmDate.setHours(parsedTime.hour + 12, parsedTime.minute, 0, 0)
+          if (pmDate.getTime() > now.getTime()) {
+            baseDate = pmDate
+          } else {
+            baseDate.setDate(baseDate.getDate() + 1)
+          }
         } else {
           baseDate.setDate(baseDate.getDate() + 1)
         }
-      } else if (baseDate.getTime() <= now.getTime() && !parsedDate) {
-        baseDate.setDate(baseDate.getDate() + 1)
+      }
+      // For weekly repeat, snap to the next matching weekday (preserving time)
+      if (parsedRepeat?.type === 'weekly' && parsedRepeat.weekdays?.length) {
+        let guard = 0
+        while (!parsedRepeat.weekdays.includes(baseDate.getDay()) && guard < 7) {
+          baseDate.setDate(baseDate.getDate() + 1)
+          guard++
+        }
       }
     }
   } else {

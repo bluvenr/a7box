@@ -7,7 +7,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { i18n } from '../../core/i18n'
 import { Zap, Edit3, X, Plus, Check, Clock, FileText } from 'lucide-react'
-import { useReminderStore } from './reminderStore'
+import { useReminderStore, normalizeRepeatTrigger } from './reminderStore'
 import { parseQuickInput, type ParsedResult } from './parseQuickInput'
 import type { RepeatConfig } from './types'
 
@@ -52,6 +52,22 @@ export default function QuickCreate() {
 
   const lang = i18n.language
   const parsed: ParsedResult | null = useMemo(() => parseQuickInput(input, lang), [input, lang])
+
+  // The effective trigger time shown in preview / success screen:
+  // for repeat reminders, normalize to the nearest future occurrence matching the rule
+  const manualRepeat: RepeatConfig | null = repeatType === 'none' ? null : {
+    type: repeatType,
+    ...(repeatType === 'weekly' ? { weekdays: weekdays.length ? weekdays : [new Date(triggerAt).getDay()] } : {}),
+    ...(repeatType === 'monthly' ? { monthDays: monthDays.length ? monthDays : [new Date(triggerAt).getDate()] } : {}),
+    ...(repeatType === 'custom' ? { interval: Math.max(1, Math.min(999, customInterval)), intervalUnit: customIntervalUnit } : {}),
+  }
+  const manualRepeatKey = JSON.stringify(manualRepeat)
+  const effectiveTriggerAt = useMemo(() => {
+    const ts = new Date(triggerAt).getTime()
+    if (isNaN(ts)) return ts
+    const repeat = JSON.parse(manualRepeatKey) as RepeatConfig | null
+    return repeat ? normalizeRepeatTrigger(repeat, ts) : ts
+  }, [triggerAt, manualRepeatKey])
 
   // Serialize repeat config for stable dependency comparison
   const parsedRepeatKey = parsed?.confident ? JSON.stringify(parsed.repeat) : ''
@@ -133,27 +149,23 @@ export default function QuickCreate() {
       setDatetimeError(true)
       return
     }
-    if (ts < Date.now() - 60000) {
+    // Past time is only invalid for one-shot reminders; repeat reminders
+    // are normalized to the next matching occurrence inside the store.
+    if (ts < Date.now() - 60000 && !manualRepeat) {
       setPastTimeError(true)
       return
-    }
-    const repeat: RepeatConfig | null = repeatType === 'none' ? null : {
-      type: repeatType,
-      ...(repeatType === 'weekly' ? { weekdays: weekdays.length ? weekdays : [new Date(triggerAt).getDay()] } : {}),
-      ...(repeatType === 'monthly' ? { monthDays: monthDays.length ? monthDays : [new Date(triggerAt).getDate()] } : {}),
-      ...(repeatType === 'custom' ? { interval: Math.max(1, Math.min(999, customInterval)), intervalUnit: customIntervalUnit } : {}),
     }
     addReminder({
       title: reminderTitle,
       note: note.trim(),
       triggerAt: ts,
-      repeat,
+      repeat: manualRepeat,
     })
     try {
       const { emit } = await import('@tauri-apps/api/event')
       await emit('reminder-created')
     } catch { /* ignore */ }
-    setCreatedInfo({ title: reminderTitle, triggerAt: ts, note: note.trim() || undefined, repeat })
+    setCreatedInfo({ title: reminderTitle, triggerAt: effectiveTriggerAt, note: note.trim() || undefined, repeat: manualRepeat })
     setCreated(true)
     setTimeout(() => closeWindow(), 1000)
   }
@@ -265,7 +277,7 @@ export default function QuickCreate() {
           <div className="flex items-center gap-2 rounded-md bg-success/5 border border-success/20 px-3 py-1.5">
             <Check size={11} className="text-success shrink-0" />
             <span className="text-xs text-text-primary font-medium truncate">{parsed.title}</span>
-            <span className="text-[10px] text-info shrink-0">{formatDateWithWeekday(new Date(parsed.triggerAt))}</span>
+            <span className="text-[10px] text-info shrink-0">{formatDateWithWeekday(new Date(effectiveTriggerAt))}</span>
             {parsed.repeat && (
               <span className="inline-flex items-center gap-0.5 rounded bg-info/10 px-1 py-0.5 text-[9px] text-info shrink-0">
                 {parsed.repeat.type === 'daily' ? t('modules.reminder.ui.repeatDaily')

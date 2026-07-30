@@ -10,7 +10,7 @@ const I18N = {
   en: {
     // Meta
     'page.title': 'A7Box — Your Tactical Efficiency Weapon on Desktop',
-    'page.description': 'A 100% local, cross-platform developer toolbox — 20 built-in tools. ~10MB, no cloud. Built with Tauri 2 + React 19.',
+    'page.description': 'A 100% local, cross-platform developer toolbox — 21 built-in tools. ~10MB, no cloud. Built with Tauri 2 + React 19.',
 
     // Nav
     'nav.features': 'Features',
@@ -24,7 +24,7 @@ const I18N = {
     'hero.title1': 'Your Tactical',
     'hero.title2': 'Efficiency Weapon',
     'hero.title3': 'on Desktop',
-    'hero.subtitle': 'An all-in-one developer toolbox that runs <strong>100% locally</strong> — 20 built-in tools in a ~10MB app. No cloud. No tracking. No account required.',
+    'hero.subtitle': 'An all-in-one developer toolbox that runs <strong>100% locally</strong> — 21 built-in tools in a ~10MB app. No cloud. No tracking. No account required.',
     'hero.download': 'Download Now',
     'hero.github': 'View on GitHub',
     'hero.available': 'Available for:',
@@ -65,7 +65,7 @@ const I18N = {
 
     // Tools
     'tools.tag': 'Toolbox',
-    'tools.title': '20 Tools, One Box',
+    'tools.title': '21 Tools, One Box',
     'tools.desc': 'Accessible via sidebar, command palette (Ctrl+K), or global shortcuts.',
 
     // Comparison
@@ -99,7 +99,7 @@ const I18N = {
 
     // Download
     'download.title': 'Ready to Deploy?',
-    'download.desc': 'Download A7Box — 20 tools, ~10MB, no cloud, no account. Just install and use.',
+    'download.desc': 'Download A7Box — 21 tools, ~10MB, no cloud, no account. Just install and use.',
     'download.win': 'Download for Windows',
     'download.mac': 'Download for macOS',
     'download.linux': 'Download for Linux',
@@ -121,7 +121,7 @@ const I18N = {
   zh: {
     // Meta
     'page.title': 'A7Box — 桌面端战术效率武器',
-    'page.description': '100% 本地运行的跨平台开发者工具箱，内置 20 款工具，~10MB 安装包，无云端依赖。基于 Tauri 2 + React 19 构建。',
+    'page.description': '100% 本地运行的跨平台开发者工具箱，内置 21 款工具，~10MB 安装包，无云端依赖。基于 Tauri 2 + React 19 构建。',
 
     // Nav
     'nav.features': '特性',
@@ -135,7 +135,7 @@ const I18N = {
     'hero.title1': '你的桌面端战术',
     'hero.title2': '效率武器',
     'hero.title3': '即刻就绪',
-    'hero.subtitle': '一款 <strong>100% 本地运行</strong> 的全功能开发者工具箱 —— 20 款内置工具，~10MB 安装包。不联网、不追踪、不需要账号。',
+    'hero.subtitle': '一款 <strong>100% 本地运行</strong> 的全功能开发者工具箱 —— 21 款内置工具，~10MB 安装包。不联网、不追踪、不需要账号。',
     'hero.download': '立即下载',
     'hero.github': '在 GitHub 查看',
     'hero.available': '支持平台：',
@@ -176,7 +176,7 @@ const I18N = {
 
     // Tools
     'tools.tag': '工具箱',
-    'tools.title': '20 款工具，一个盒子',
+    'tools.title': '21 款工具，一个盒子',
     'tools.desc': '支持侧边栏、命令面板（Ctrl+K）和自定义全局快捷键三种方式调用。',
 
     // Comparison
@@ -210,7 +210,7 @@ const I18N = {
 
     // Download
     'download.title': '准备好了吗？',
-    'download.desc': '下载 A7Box —— 20 款工具，~10MB，无云端，无账号。安装即用。',
+    'download.desc': '下载 A7Box —— 21 款工具，~10MB，无云端，无账号。安装即用。',
     'download.win': '下载 Windows 版',
     'download.mac': '下载 macOS 版',
     'download.linux': '下载 Linux 版',
@@ -275,6 +275,8 @@ const TOOL_ICONS = {
   webservice: `<svg viewBox="0 0 24 24" ${S}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
 
   lantransfer: `<svg viewBox="0 0 24 24" ${S}><rect x="2" y="3" width="7" height="6" rx="1"/><rect x="15" y="15" width="7" height="6" rx="1"/><path d="M9 6h4a2 2 0 0 1 2 2v4"/><path d="m13 10 2 2-2 2"/><path d="M15 18h-4a2 2 0 0 1-2-2v-4"/><path d="m11 14-2-2 2-2"/></svg>`,
+
+  sysinfo: `<svg viewBox="0 0 24 24" ${S}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><polyline points="6 10 9 10 11 7 13 13 15 10 18 10"/></svg>`,
 };
 
 // ════════════════════════════════════════
@@ -314,6 +316,7 @@ const TOOLS_I18N = {
     { category: 'Network', tools: [
       { icon: 'webservice', name: 'Web Service', desc: 'Serve any directory over LAN' },
       { icon: 'lantransfer', name: 'LAN Transfer', desc: 'P2P file transfer between devices' },
+      { icon: 'sysinfo', name: 'System Info', desc: 'CPU, memory, network, storage, display & battery' },
     ]},
   ],
   zh: [
@@ -348,6 +351,7 @@ const TOOLS_I18N = {
     { category: '网络', tools: [
       { icon: 'webservice', name: 'Web 服务', desc: '将本地目录变为局域网网站' },
       { icon: 'lantransfer', name: '局域网传输', desc: '设备间 P2P 文件传输' },
+      { icon: 'sysinfo', name: '系统信息', desc: 'CPU、内存、网络、存储、显示器与电池' },
     ]},
   ],
 };

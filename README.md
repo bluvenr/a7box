@@ -34,7 +34,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 ## 🎯 Who It's For
 
 - **Developers** — JSON formatting, code minification, regex testing, JWT decoding, hash generation, timestamp conversion — the daily toolkit you reach for dozens of times a day
-- **Designers** — Pixel-level screen color picker with magnifier overlay, image compression, format conversion, QR code generation
+- **Designers** — Pixel-level screen color picker with magnifier overlay, image compression, format conversion, image watermarking, QR code generation
 - **Tech Enthusiasts** — LAN file sharing, local web server, screenshot with annotation, Base64 encoding
 - **Anyone** who values speed, privacy, and a clutter-free desktop experience
 
@@ -43,7 +43,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 | Problem | A7Box Solution |
 |---------|---------------|
 | Searching the web for "JSON formatter online" and pasting sensitive data into someone else's server | Built-in JSON formatter — runs locally, your data never leaves |
-| Installing 10 separate apps for 10 different tasks | 19 tools in one ~10MB app |
+| Installing 10 separate apps for 10 different tasks | 20 tools in one ~10MB app |
 | Taking a screenshot, opening Paint, annotating, saving, then sharing | Region capture → 5 annotation tools → pin to screen → session history, all in one flow |
 | Using Electron-based toolboxes that eat 200MB+ RAM | Tauri + Rust backend — ~10MB installer, minimal memory footprint |
 | Copying JSON/code, then opening a separate tool to format it | Clipboard quick actions — copy, press shortcut, floating window pops up ready |
@@ -65,7 +65,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 
 ## 🧰 Tools
 
-19 built-in tools, accessible via sidebar, command palette (`Ctrl+K`), or customizable global shortcuts.
+20 built-in tools, accessible via sidebar, command palette (`Ctrl+K`), or customizable global shortcuts.
 
 **Developer Essentials**
 
@@ -94,6 +94,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 | **Color Tool** | Screen color picker, format converter, and palette generator |
 | **Image Compress** | Browser-side image compression with quality/size control |
 | **Image Convert** | Convert between PNG, JPG, and WebP formats |
+| **Image Watermark** | Add text, logo or timestamp watermarks with tiling, rotation & batch export |
 | **QR Code** | Generate QR codes from text/URL and decode from images |
 
 **Content & Documents**
@@ -236,7 +237,7 @@ src/
 ├── components/           # Shared UI (Dialog, Toast, TitleBar, etc.)
 ├── core/                 # Core systems (command palette, i18n, shortcuts, theme, updater)
 ├── locales/              # i18n translations (en-US, zh-CN)
-├── modules/              # 19 tool modules (each self-contained)
+├── modules/              # 20 tool modules (each self-contained)
 ├── shared/               # Shared hooks, utils, components
 └── styles/               # Global CSS
 

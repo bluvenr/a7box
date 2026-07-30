@@ -10,7 +10,7 @@ const I18N = {
   en: {
     // Meta
     'page.title': 'A7Box — Your Tactical Efficiency Weapon on Desktop',
-    'page.description': 'A 100% local, cross-platform developer toolbox — 19 built-in tools. ~10MB, no cloud. Built with Tauri 2 + React 19.',
+    'page.description': 'A 100% local, cross-platform developer toolbox — 20 built-in tools. ~10MB, no cloud. Built with Tauri 2 + React 19.',
 
     // Nav
     'nav.features': 'Features',
@@ -24,7 +24,7 @@ const I18N = {
     'hero.title1': 'Your Tactical',
     'hero.title2': 'Efficiency Weapon',
     'hero.title3': 'on Desktop',
-    'hero.subtitle': 'An all-in-one developer toolbox that runs <strong>100% locally</strong> — 19 built-in tools in a ~10MB app. No cloud. No tracking. No account required.',
+    'hero.subtitle': 'An all-in-one developer toolbox that runs <strong>100% locally</strong> — 20 built-in tools in a ~10MB app. No cloud. No tracking. No account required.',
     'hero.download': 'Download Now',
     'hero.github': 'View on GitHub',
     'hero.available': 'Available for:',
@@ -65,7 +65,7 @@ const I18N = {
 
     // Tools
     'tools.tag': 'Toolbox',
-    'tools.title': '19 Tools, One Box',
+    'tools.title': '20 Tools, One Box',
     'tools.desc': 'Accessible via sidebar, command palette (Ctrl+K), or global shortcuts.',
 
     // Comparison
@@ -99,7 +99,7 @@ const I18N = {
 
     // Download
     'download.title': 'Ready to Deploy?',
-    'download.desc': 'Download A7Box — 19 tools, ~10MB, no cloud, no account. Just install and use.',
+    'download.desc': 'Download A7Box — 20 tools, ~10MB, no cloud, no account. Just install and use.',
     'download.win': 'Download for Windows',
     'download.mac': 'Download for macOS',
     'download.linux': 'Download for Linux',
@@ -121,7 +121,7 @@ const I18N = {
   zh: {
     // Meta
     'page.title': 'A7Box — 桌面端战术效率武器',
-    'page.description': '100% 本地运行的跨平台开发者工具箱，内置 19 款工具，~10MB 安装包，无云端依赖。基于 Tauri 2 + React 19 构建。',
+    'page.description': '100% 本地运行的跨平台开发者工具箱，内置 20 款工具，~10MB 安装包，无云端依赖。基于 Tauri 2 + React 19 构建。',
 
     // Nav
     'nav.features': '特性',
@@ -135,7 +135,7 @@ const I18N = {
     'hero.title1': '你的桌面端战术',
     'hero.title2': '效率武器',
     'hero.title3': '即刻就绪',
-    'hero.subtitle': '一款 <strong>100% 本地运行</strong> 的全功能开发者工具箱 —— 19 款内置工具，~10MB 安装包。不联网、不追踪、不需要账号。',
+    'hero.subtitle': '一款 <strong>100% 本地运行</strong> 的全功能开发者工具箱 —— 20 款内置工具，~10MB 安装包。不联网、不追踪、不需要账号。',
     'hero.download': '立即下载',
     'hero.github': '在 GitHub 查看',
     'hero.available': '支持平台：',
@@ -176,7 +176,7 @@ const I18N = {
 
     // Tools
     'tools.tag': '工具箱',
-    'tools.title': '19 款工具，一个盒子',
+    'tools.title': '20 款工具，一个盒子',
     'tools.desc': '支持侧边栏、命令面板（Ctrl+K）和自定义全局快捷键三种方式调用。',
 
     // Comparison
@@ -210,7 +210,7 @@ const I18N = {
 
     // Download
     'download.title': '准备好了吗？',
-    'download.desc': '下载 A7Box —— 19 款工具，~10MB，无云端，无账号。安装即用。',
+    'download.desc': '下载 A7Box —— 20 款工具，~10MB，无云端，无账号。安装即用。',
     'download.win': '下载 Windows 版',
     'download.mac': '下载 macOS 版',
     'download.linux': '下载 Linux 版',
@@ -262,6 +262,8 @@ const TOOL_ICONS = {
 
   imgconvert: `<svg viewBox="0 0 24 24" ${S}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12h4"/><path d="m12 10 2 2-2 2"/></svg>`,
 
+  watermark: `<svg viewBox="0 0 24 24" ${S}><path d="M5 22h14"/><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"/><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/></svg>`,
+
   qrcode: `<svg viewBox="0 0 24 24" ${S}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M20 14v3"/><path d="M14 20h3"/><path d="M20 20h1"/></svg>`,
 
   markdown: `<svg viewBox="0 0 24 24" ${S}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8v8l3-3 3 3V8"/><path d="m17 12-2 2 2 2"/></svg>`,
@@ -299,6 +301,7 @@ const TOOLS_I18N = {
       { icon: 'color', name: 'Color Tool', desc: 'Picker, converter, palette generator' },
       { icon: 'imgcompress', name: 'Image Compress', desc: 'Browser-side with quality control' },
       { icon: 'imgconvert', name: 'Image Convert', desc: 'PNG ↔ JPG ↔ WebP ↔ ICO' },
+      { icon: 'watermark', name: 'Image Watermark', desc: 'Text / logo / timestamp, tiling & batch' },
       { icon: 'qrcode', name: 'QR Code', desc: 'Generate from text/URL, decode' },
     ]},
     { category: 'Content & Documents', tools: [
@@ -332,6 +335,7 @@ const TOOLS_I18N = {
       { icon: 'color', name: '颜色工具', desc: '屏幕取色、格式转换、调色板' },
       { icon: 'imgcompress', name: '图片压缩', desc: '浏览器端压缩，质量/尺寸控制' },
       { icon: 'imgconvert', name: '图片转换', desc: 'PNG ↔ JPG ↔ WebP ↔ ICO' },
+      { icon: 'watermark', name: '图片水印', desc: '文字/Logo/时间戳，平铺与批量导出' },
       { icon: 'qrcode', name: '二维码', desc: '文本/URL 生成，图片解码' },
     ]},
     { category: '内容与文档', tools: [

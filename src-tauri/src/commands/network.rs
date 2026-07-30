@@ -70,8 +70,17 @@ fn collect_interfaces() -> Vec<NetInterface> {
 
 #[cfg(target_os = "windows")]
 fn collect_wifi() -> Option<WifiInfo> {
+    use std::os::windows::process::CommandExt;
+    // CREATE_NO_WINDOW: `netsh` is a console-subsystem app. Launched from our GUI
+    // (windows-subsystem) binary, it would otherwise flash a console window on every
+    // query. This flag runs it silently in the background.
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
     // `netsh` labels are localized, but field ORDER within each interface block is stable.
-    let out = std::process::Command::new("netsh").args(["wlan", "show", "interfaces"]).output().ok()?;
+    let out = std::process::Command::new("netsh")
+        .args(["wlan", "show", "interfaces"])
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()
+        .ok()?;
     let text = String::from_utf8_lossy(&out.stdout);
     // Group indented "key : value" lines into per-interface blocks. A non-indented
     // line (header / blank separator) closes the current block. This keeps parsing

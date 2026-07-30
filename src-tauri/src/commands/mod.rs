@@ -12,6 +12,8 @@ pub mod cache;
 pub mod shortcut;
 pub mod window;
 pub mod color_picker;
+pub mod system;
+pub mod network;
 
 use tauri::AppHandle;
 

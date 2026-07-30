@@ -62,6 +62,7 @@ pub fn run() {
         ))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_device_info::init())
         // Deep link: registers a7box:// protocol handler in Windows registry
         .plugin(tauri_plugin_deep_link::init())
         // Single instance: ensures only one app instance; forwards deep link URLs
@@ -168,6 +169,10 @@ pub fn run() {
             commands::color_picker::start_screen_pick,
             commands::color_picker::get_last_picked_color,
             commands::color_picker::get_pick_source,
+            // System Stats
+            commands::system::get_system_stats,
+            // Network Details
+            commands::network::get_network_details,
         ])
         // Setup: tray + global shortcuts + events
         .setup(|app| {

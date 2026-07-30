@@ -46,6 +46,9 @@ tauri-plugin-dialog = "2.7.1"
 tauri-plugin-deep-link = "2"
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 tauri-plugin-fs = "2.5.1"
+tauri-plugin-device-info = "1"
+sysinfo = "0.34"
+default-net = "0.22"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"

@@ -41,6 +41,7 @@
     "fs:allow-write-text-file",
     "deep-link:default",
     "updater:default",
-    "process:default"
+    "process:default",
+    "device-info:default"
   ]
 }

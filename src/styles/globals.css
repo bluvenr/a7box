@@ -105,6 +105,12 @@ html, body, #root {
   background: var(--color-text-muted);
 }
 
+/* Corner where horizontal & vertical scrollbars meet — keep transparent so it
+   inherits the underlying background instead of the default white. */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Selection styles */
 ::selection {
   background-color: rgba(255, 77, 79, 0.3);

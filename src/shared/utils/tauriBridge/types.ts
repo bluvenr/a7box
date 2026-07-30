@@ -94,3 +94,68 @@ export interface CacheSizes {
   screenshotFileCount: number
   transferCount: number
 }
+
+// ============ System Stats ============
+
+export interface SystemStats {
+  cpu: {
+    brand: string
+    cores: number
+    /** Overall CPU usage percentage (0–100) */
+    usage: number
+  }
+  memory: {
+    total: number
+    used: number
+  }
+  /** Highest CPU temperature in °C, null if sensors unavailable */
+  temperature: number | null
+  disks: Array<{
+    name: string
+    mount_point: string
+    total: number
+    available: number
+    kind: string
+  }>
+  os: {
+    name: string
+    version: string
+    kernel: string
+    arch: string
+    hostname: string
+    /** Seconds since system boot */
+    uptime: number
+  }
+  /** Number of running processes */
+  processes: number
+}
+
+// ============ Network Details ============
+
+export interface NetInterface {
+  name: string
+  friendly_name: string | null
+  /** "wifi" | "ethernet" | "loopback" | "tunnel" | "ppp" | "other" */
+  if_type: string
+  mac: string | null
+  /** e.g. ["192.168.1.5/24"] */
+  ipv4: string[]
+  gateway: string | null
+  /** Link speed in Mbps */
+  speed_mbps: number | null
+  is_default: boolean
+}
+
+export interface WifiInfo {
+  ssid: string | null
+  /** Signal strength percentage (0–100) */
+  signal_percent: number | null
+  channel: string | null
+  /** e.g. "802.11ax" */
+  radio_type: string | null
+}
+
+export interface NetworkDetails {
+  interfaces: NetInterface[]
+  wifi: WifiInfo | null
+}

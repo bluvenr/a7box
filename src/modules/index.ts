@@ -22,6 +22,7 @@ import { p2pTransferModule } from './p2p-transfer'
 import { reminderModule } from './reminder'
 import { timerModule } from './timer'
 import { imageWatermarkModule } from './image-watermark'
+import { systemInfoModule } from './system-info'
 import type { A7Module } from '../core/types'
 
 /** All available modules */
@@ -46,6 +47,7 @@ export const allModules: A7Module[] = [
   reminderModule,
   timerModule,
   imageWatermarkModule,
+  systemInfoModule,
 ]
 
 /** Export modules for registry */
@@ -70,4 +72,5 @@ export {
   reminderModule,
   timerModule,
   imageWatermarkModule,
+  systemInfoModule,
 }

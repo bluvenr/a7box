@@ -23,6 +23,7 @@ import { reminderModule } from './reminder'
 import { timerModule } from './timer'
 import { imageWatermarkModule } from './image-watermark'
 import { systemInfoModule } from './system-info'
+import { clipboardManagerModule } from './clipboard-manager'
 import type { A7Module } from '../core/types'
 
 /** All available modules */
@@ -48,6 +49,7 @@ export const allModules: A7Module[] = [
   timerModule,
   imageWatermarkModule,
   systemInfoModule,
+  clipboardManagerModule,
 ]
 
 /** Export modules for registry */
@@ -73,4 +75,5 @@ export {
   timerModule,
   imageWatermarkModule,
   systemInfoModule,
+  clipboardManagerModule,
 }

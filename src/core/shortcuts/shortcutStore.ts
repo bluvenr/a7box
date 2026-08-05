@@ -101,6 +101,23 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
     enabled: true,
     moduleId: 'reminder',
   },
+  // ── Clipboard manager ──
+  {
+    action: 'open-clipboard-popup',
+    labelI18n: 'settings.shortcutClipboardPopup',
+    descriptionI18n: 'settings.shortcutClipboardPopupDesc',
+    keys: 'Alt+V',
+    enabled: true,
+    moduleId: 'clipboard-manager',
+  },
+  {
+    action: 'clipboard-paste-stack',
+    labelI18n: 'settings.shortcutPasteStack',
+    descriptionI18n: 'settings.shortcutPasteStackDesc',
+    keys: 'Alt+Shift+V',
+    enabled: true,
+    moduleId: 'clipboard-manager',
+  },
 ]
 
 export const useShortcutStore = create<ShortcutState>()(

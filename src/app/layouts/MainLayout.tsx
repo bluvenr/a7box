@@ -106,6 +106,8 @@ export function MainLayout() {
     let unlistenClicked: (() => void) | null = null
     // When timer widget double-clicked → navigate to timer page + switch tab
     let unlistenTimerNav: (() => void) | null = null
+    // When clipboard popup requests "Open in Manager" → navigate to module page
+    let unlistenClipNav: (() => void) | null = null
     if (isTauri()) {
       import('@tauri-apps/api/event').then(({ listen }) => {
         listen<{ reminderId: string }>('notification-reminder-clicked', (evt) => {
@@ -121,6 +123,15 @@ export function MainLayout() {
             win.setFocus().catch(() => {})
           }).catch(() => {})
         }).then((fn) => { unlistenTimerNav = fn })
+
+        listen<{ clipId?: string }>('clipboard-open-in-manager', (evt) => {
+          navigate('/clipboard-manager', { state: { highlightClipId: evt.payload.clipId } })
+          import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+            const win = getCurrentWindow()
+            win.show().catch(() => {})
+            win.setFocus().catch(() => {})
+          }).catch(() => {})
+        }).then((fn) => { unlistenClipNav = fn })
       })
     }
 
@@ -140,6 +151,7 @@ export function MainLayout() {
       cleanupToast?.()
       unlistenClicked?.()
       unlistenTimerNav?.()
+      unlistenClipNav?.()
       unlistenCreated?.()
     }
   }, [navigate])

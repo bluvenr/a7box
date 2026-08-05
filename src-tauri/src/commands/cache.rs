@@ -2,6 +2,9 @@
 
 use crate::p2p::P2PStateArc;
 use std::path::PathBuf;
+use std::sync::Arc;
+
+type CmStateArc = Arc<crate::clipboard::ClipboardManagerState>;
 
 /// Temp directory for session screenshots (same as screenshot module)
 fn temp_screenshot_dir() -> PathBuf {
@@ -10,7 +13,10 @@ fn temp_screenshot_dir() -> PathBuf {
 
 /// Returns cache sizes in bytes for each cache category
 #[tauri::command]
-pub fn get_cache_sizes(state: tauri::State<'_, P2PStateArc>) -> serde_json::Value {
+pub fn get_cache_sizes(
+    state: tauri::State<'_, P2PStateArc>,
+    cm: tauri::State<'_, CmStateArc>,
+) -> serde_json::Value {
     // P2P downloads
     let dl_dir = state.inner().get_download_dir();
     let (p2p_downloads, p2p_file_count) = dir_size_and_count(&dl_dir);
@@ -22,6 +28,11 @@ pub fn get_cache_sizes(state: tauri::State<'_, P2PStateArc>) -> serde_json::Valu
     // P2P transfers history count
     let transfer_count = state.inner().transfers.lock().unwrap().len();
 
+    // Clipboard manager: db file + captured images
+    let cm_db_path = cm.db_path.clone();
+    let clipboard_db = cm_db_path.metadata().map(|m| m.len()).unwrap_or(0);
+    let (clipboard_images, cm_image_count) = dir_size_and_count(&cm.images_dir);
+
     serde_json::json!({
         "p2pDownloads": p2p_downloads,
         "p2pDownloadsPath": dl_dir.to_string_lossy(),
@@ -30,6 +41,10 @@ pub fn get_cache_sizes(state: tauri::State<'_, P2PStateArc>) -> serde_json::Valu
         "screenshotsPath": ss_dir.to_string_lossy(),
         "screenshotFileCount": ss_file_count,
         "transferCount": transfer_count,
+        "clipboardDb": clipboard_db,
+        "clipboardDbPath": cm_db_path.to_string_lossy(),
+        "clipboardImages": clipboard_images,
+        "clipboardImageCount": cm_image_count,
     })
 }
 
@@ -37,9 +52,12 @@ pub fn get_cache_sizes(state: tauri::State<'_, P2PStateArc>) -> serde_json::Valu
 /// - "p2pDownloads": delete files in the download directory
 /// - "screenshots": delete files in the temp screenshots directory
 /// - "transferHistory": clear in-memory transfer records
+/// - "clipboardImages": delete captured clipboard image files
+/// - "clipboardHistory": clear clipboard history records (keeps snippets/rules)
 #[tauri::command]
 pub fn clear_cache(
     state: tauri::State<'_, P2PStateArc>,
+    cm: tauri::State<'_, CmStateArc>,
     category: String,
 ) -> Result<bool, String> {
     match category.as_str() {
@@ -57,16 +75,35 @@ pub fn clear_cache(
             state.inner().transfers.lock().unwrap().clear();
             Ok(true)
         }
+        "clipboardImages" => {
+            clear_dir_contents(&cm.images_dir)?;
+            Ok(true)
+        }
+        "clipboardHistory" => {
+            let removed = {
+                let conn = cm.db.lock().unwrap();
+                crate::clipboard::db::clear_history(&conn, false)?
+            };
+            for clip in &removed {
+                crate::clipboard::remove_clip_files(&cm.images_dir, clip);
+            }
+            Ok(true)
+        }
         _ => Err(format!("Unknown cache category: {}", category)),
     }
 }
 
 /// Open a cache directory in system file explorer
 #[tauri::command]
-pub fn open_cache_dir(category: String, state: tauri::State<'_, P2PStateArc>) -> Result<bool, String> {
+pub fn open_cache_dir(
+    category: String,
+    state: tauri::State<'_, P2PStateArc>,
+    cm: tauri::State<'_, CmStateArc>,
+) -> Result<bool, String> {
     let dir = match category.as_str() {
         "p2pDownloads" => state.inner().get_download_dir(),
         "screenshots" => temp_screenshot_dir(),
+        "clipboardImages" => cm.images_dir.clone(),
         _ => return Err(format!("Unknown cache category: {}", category)),
     };
     if dir.exists() {

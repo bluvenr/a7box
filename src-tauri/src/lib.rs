@@ -16,6 +16,7 @@ mod state;
 mod tray;
 
 use clipboard::ClipboardState;
+use clipboard::ClipboardManagerState;
 use http_server::HttpServerState;
 use http_service::HttpServiceState;
 use p2p::{P2PState, P2PStateArc};
@@ -47,6 +48,15 @@ pub fn run() {
         .join("A7Box")
         .join("p2p");
     let p2p_state: P2PStateArc = Arc::new(P2PState::new(data_dir));
+
+    // Clipboard Manager state: SQLite db + settings + watcher flags
+    let cm_data_dir = dirs::data_local_dir()
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join("A7Box");
+    let clipboard_manager_state = Arc::new(
+        ClipboardManagerState::init(&cm_data_dir)
+            .expect("failed to initialize clipboard manager state"),
+    );
 
     tauri::Builder::default()
         // Plugins
@@ -86,6 +96,7 @@ pub fn run() {
         .manage(app_language)
         .manage(picker_session)
         .manage(capture_session)
+        .manage(clipboard_manager_state)
         // Commands
         .invoke_handler(tauri::generate_handler![
             // Clipboard
@@ -94,6 +105,38 @@ pub fn run() {
             commands::clipboard::get_clipboard_text,
             commands::clipboard::set_clipboard_text,
             commands::clipboard::get_clipboard_image,
+            // Clipboard Manager
+            commands::clipboard_manager::start_clipboard_manager,
+            commands::clipboard_manager::stop_clipboard_manager,
+            commands::clipboard_manager::cm_set_module_enabled,
+            commands::clipboard_manager::cm_open_path,
+            commands::clipboard_manager::cm_get_history,
+            commands::clipboard_manager::cm_get_clip,
+            commands::clipboard_manager::cm_delete_clip,
+            commands::clipboard_manager::cm_delete_clips,
+            commands::clipboard_manager::cm_toggle_pin,
+            commands::clipboard_manager::cm_clear_history,
+            commands::clipboard_manager::cm_get_stats,
+            commands::clipboard_manager::cm_copy_clip,
+            commands::clipboard_manager::cm_paste_clip,
+            commands::clipboard_manager::cm_paste_stack,
+            commands::clipboard_manager::cm_paste_capability,
+            commands::clipboard_manager::cm_snapshot_target,
+            commands::clipboard_manager::cm_open_popup,
+            commands::clipboard_manager::cm_snippet_list,
+            commands::clipboard_manager::cm_snippet_save,
+            commands::clipboard_manager::cm_snippet_delete,
+            commands::clipboard_manager::cm_rule_list,
+            commands::clipboard_manager::cm_rule_save,
+            commands::clipboard_manager::cm_rule_delete,
+            commands::clipboard_manager::cm_rule_toggle,
+            commands::clipboard_manager::cm_get_settings,
+            commands::clipboard_manager::cm_save_settings,
+            commands::clipboard_manager::cm_export,
+            commands::clipboard_manager::cm_import,
+            commands::clipboard_manager::cm_asset_path,
+            commands::clipboard_manager::cm_image_data_url,
+            commands::clipboard_manager::cm_copy_text,
             // Screenshot
             commands::screenshot::capture_full_screen,
             commands::screenshot::capture_region,
@@ -198,6 +241,8 @@ pub fn run() {
                 ("clipboard-to-code-minify", "CommandOrControl+Shift+K"),
                 ("open-color-picker", "CommandOrControl+Shift+C"),
                 ("quick-create-reminder", "CommandOrControl+Shift+R"),
+                ("open-clipboard-popup", "Alt+V"),
+                ("clipboard-paste-stack", "Alt+Shift+V"),
             ];
             let registry = &app.state::<ShortcutRegistry>().0;
             {

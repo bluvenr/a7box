@@ -38,22 +38,31 @@ export const useModuleRegistry = create<ModuleRegistryState>((set, get) => ({
 
   register: (module) => {
     const settings = useSettingsStore.getState()
+    const alreadyRegistered = get().modules.has(module.meta.id)
+    const enabled = settings.isModuleEnabled(module.meta.id)
     set((state) => {
       const newModules = new Map(state.modules)
       newModules.set(module.meta.id, module)
       const newEnabled = new Set(state.enabledModuleIds)
       // Use settingsStore as source of truth (defaults to true for new modules)
-      if (settings.isModuleEnabled(module.meta.id)) {
+      if (enabled) {
         newEnabled.add(module.meta.id)
       }
       return { modules: newModules, enabledModuleIds: newEnabled }
     })
+    // Activate services of modules that are enabled on first registration.
+    // The manual enable() path already calls onActivate; without this, modules
+    // enabled by default would never start their background services at boot.
+    if (!alreadyRegistered && enabled) {
+      void module.onActivate?.()
+    }
   },
 
   registerAll: (modules) => {
     const settings = useSettingsStore.getState()
     // Sync module order: add new modules, remove deleted ones
     settings.syncModuleOrder(modules.map((m) => m.meta.id))
+    const previous = get().modules
     set((state) => {
       const newModules = new Map(state.modules)
       const newEnabled = new Set<string>()
@@ -66,6 +75,12 @@ export const useModuleRegistry = create<ModuleRegistryState>((set, get) => ({
       })
       return { modules: newModules, enabledModuleIds: newEnabled }
     })
+    // Activate services of newly registered modules that are enabled by default
+    for (const module of modules) {
+      if (!previous.has(module.meta.id) && settings.isModuleEnabled(module.meta.id)) {
+        void module.onActivate?.()
+      }
+    }
   },
 
   enable: async (moduleId) => {

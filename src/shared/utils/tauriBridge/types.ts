@@ -93,6 +93,10 @@ export interface CacheSizes {
   screenshotsPath: string
   screenshotFileCount: number
   transferCount: number
+  clipboardDb: number
+  clipboardDbPath: string
+  clipboardImages: number
+  clipboardImageCount: number
 }
 
 // ============ System Stats ============

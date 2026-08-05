@@ -19,6 +19,8 @@ pub fn execute_action(app: &AppHandle, action: &str) {
         "clipboard-to-code-minify" => open_utility_window(app, "code-quick", "/utility/code-quick", 560.0, 640.0, true, false),
         "open-color-picker" => handle_open_color_picker(app),
         "quick-create-reminder" => open_utility_window(app, "reminder-quick", "/utility/reminder-quick", 480.0, 380.0, false, false),
+        "open-clipboard-popup" => crate::commands::clipboard_manager::toggle_clipboard_popup(app, None),
+        "clipboard-paste-stack" => crate::commands::clipboard_manager::toggle_clipboard_popup(app, Some("paste-stack")),
         _ => {}
     }
     // Also emit event to frontend for any additional handling

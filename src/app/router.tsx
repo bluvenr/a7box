@@ -28,6 +28,7 @@ const Palette = lazy(() => import('./pages/utility/Palette'))
 const RegionPicker = lazy(() => import('./pages/utility/RegionPicker'))
 const CapturePreview = lazy(() => import('./pages/utility/CapturePreview'))
 const ReminderQuick = lazy(() => import('../modules/reminder/QuickCreate'))
+const ClipboardPopup = lazy(() => import('../modules/clipboard-manager/ClipboardPopup'))
 const NotificationToast = lazy(() => import('./pages/utility/NotificationToast'))
 const StopwatchWidget = lazy(() => import('./pages/utility/StopwatchWidget'))
 const CountdownWidget = lazy(() => import('./pages/utility/CountdownWidget'))
@@ -174,6 +175,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <ReminderQuick />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/utility/clipboard-popup',
+    element: (
+      <Suspense fallback={null}>
+        <ClipboardPopup />
       </Suspense>
     ),
   },

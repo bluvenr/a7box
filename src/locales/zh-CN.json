@@ -165,7 +165,15 @@
     "shortcutClipboardCodeMinifyDesc": "读取剪贴板代码并打开压缩/美化浮窗",
     "shortcutColorPicker": "屏幕取色",
     "shortcutColorPickerDesc": "取鼠标位置像素颜色并打开颜色浮窗",
-    "shortcutModuleDisabled": "模块已关闭"
+    "shortcutModuleDisabled": "模块已关闭",
+    "shortcutClipboardPopup": "剪贴板历史弹窗",
+    "shortcutClipboardPopupDesc": "打开剪贴板历史快捷弹窗",
+    "shortcutPasteStack": "批量粘贴队列",
+    "shortcutPasteStackDesc": "将多条剪贴板记录加入队列并按顺序粘贴",
+    "cacheClipboardHistory": "剪贴板历史",
+    "cacheClipboardImages": "剪贴板图片",
+    "cacheConfirmClipboardHistory": "将删除全部剪贴板历史记录（片段与规则保留）。此操作无法撤销。",
+    "cacheConfirmClipboardImages": "将删除所有捕获的剪贴板图片，历史记录保留但预览不可用。此操作无法撤销。"
   },
   "updater": {
     "newVersion": "发现新版本 {{version}}",
@@ -214,8 +222,17 @@
     "jsonFormatter": {
       "name": "JSON 格式化",
       "description": "自动格式化或压缩 JSON 数据",
-      "commands": { "format": "格式化 JSON", "compress": "压缩 JSON", "formatDesc": "格式化 JSON 数据，提升可读性", "compressDesc": "将 JSON 压缩为单行" },
-      "settings": { "autoFormat": "自动格式化", "autoFormatDesc": "检测到剪贴板 JSON 时自动格式化", "indentSize": "缩进大小" },
+      "commands": {
+        "format": "格式化 JSON",
+        "compress": "压缩 JSON",
+        "formatDesc": "格式化 JSON 数据，提升可读性",
+        "compressDesc": "将 JSON 压缩为单行"
+      },
+      "settings": {
+        "autoFormat": "自动格式化",
+        "autoFormatDesc": "检测到剪贴板 JSON 时自动格式化",
+        "indentSize": "缩进大小"
+      },
       "ui": {
         "loadingEditor": "编辑器加载中...",
         "toastFormatted": "格式化成功",
@@ -266,7 +283,12 @@
     "qrCode": {
       "name": "二维码",
       "description": "生成和解析二维码",
-      "commands": { "generate": "生成二维码", "decode": "解析二维码", "generateDesc": "从文本或 URL 生成二维码", "decodeDesc": "从图片中解析二维码" },
+      "commands": {
+        "generate": "生成二维码",
+        "decode": "解析二维码",
+        "generateDesc": "从文本或 URL 生成二维码",
+        "decodeDesc": "从图片中解析二维码"
+      },
       "ui": {
         "tabGenerate": "生成",
         "tabDecode": "解析",
@@ -303,7 +325,10 @@
     "markdownPreview": {
       "name": "Markdown 编辑器",
       "description": "Markdown 实时预览、语法高亮、文件导入与 HTML 互转",
-      "commands": { "open": "Markdown 编辑器", "openDesc": "打开 Markdown 编辑器，支持实时预览和 HTML 转换" },
+      "commands": {
+        "open": "Markdown 编辑器",
+        "openDesc": "打开 Markdown 编辑器，支持实时预览和 HTML 转换"
+      },
       "ui": {
         "previewToggle": "预览",
         "modeToggle": "切换正向/反向转换模式",
@@ -337,7 +362,10 @@
     "codeMinify": {
       "name": "代码压缩/美化",
       "description": "压缩或美化 JS、TS、CSS、HTML 和 JSON",
-      "commands": { "open": "代码压缩/美化", "openDesc": "压缩或美化代码" },
+      "commands": {
+        "open": "代码压缩/美化",
+        "openDesc": "压缩或美化代码"
+      },
       "ui": {
         "loadingEditor": "编辑器加载中...",
         "minifyBtn": "压缩",
@@ -388,7 +416,10 @@
     "imageCompress": {
       "name": "图片压缩",
       "description": "图片压缩与格式转换，支持画质调节",
-      "commands": { "open": "图片压缩", "openDesc": "压缩和转换图片" },
+      "commands": {
+        "open": "图片压缩",
+        "openDesc": "压缩和转换图片"
+      },
       "ui": {
         "qualityLabel": "质量",
         "maxWidthLabel": "最大宽度",
@@ -402,7 +433,7 @@
         "downloadAllBtn": "全部下载",
         "dropText": "拖放图片到此处或点击上传",
         "dropHint": "支持批量处理 — 可拖入或选择多张图片。支持 PNG、JPG、WebP、BMP（GIF 将丢失动画）",
-                "defaultSettingsPrefix": "默认设置：",
+        "defaultSettingsPrefix": "默认设置：",
         "statusCompressing": "压缩中...",
         "compressFailed": "压缩失败",
         "toastCompressed": "已压缩 {{success}}/{{total}} 张图片",
@@ -431,7 +462,10 @@
     "hashGenerator": {
       "name": "哈希生成器",
       "description": "生成 MD5、SHA-1、SHA-256、SHA-512 哈希值",
-      "commands": { "open": "哈希生成器", "openDesc": "生成加密哈希值" },
+      "commands": {
+        "open": "哈希生成器",
+        "openDesc": "生成加密哈希值"
+      },
       "ui": {
         "textPlaceholder": "输入要计算哈希的文本...",
         "generateBtn": "生成哈希",
@@ -447,7 +481,10 @@
     "imageConvert": {
       "name": "图片转格式",
       "description": "图片格式互转（PNG、JPG、WebP、ICO）",
-      "commands": { "open": "图片转格式", "openDesc": "转换图片格式" },
+      "commands": {
+        "open": "图片转格式",
+        "openDesc": "转换图片格式"
+      },
       "ui": {
         "outputLabel": "输出格式",
         "qualityLabel": "质量",
@@ -455,7 +492,6 @@
         "downloadAllBtn": "全部下载",
         "dropText": "拖放图片到此处或点击上传",
         "dropHint": "支持批量处理 — 可拖入或选择多张图片。支持 PNG、JPG、WebP",
-                
         "statusConverting": "转换中...",
         "convertFailed": "转换失败",
         "toastConverted": "已转换 {{success}}/{{total}} 张图片为 {{format}}",
@@ -486,7 +522,10 @@
     "colorTool": {
       "name": "颜色工具",
       "description": "取色器、格式转换与调色板生成",
-      "commands": { "open": "颜色工具", "openDesc": "取色器和颜色转换器" },
+      "commands": {
+        "open": "颜色工具",
+        "openDesc": "取色器和颜色转换器"
+      },
       "ui": {
         "contrastTitle": "对比度检查 (WCAG)",
         "contrastOnWhite": "白底",
@@ -516,7 +555,10 @@
     "base64Tool": {
       "name": "Base64 工具",
       "description": "Base64 编解码，支持文本和文件",
-      "commands": { "open": "Base64 工具", "openDesc": "Base64 编码/解码" },
+      "commands": {
+        "open": "Base64 工具",
+        "openDesc": "Base64 编码/解码"
+      },
       "ui": {
         "swapTooltip": "交换",
         "copyTooltip": "复制输出",
@@ -542,7 +584,10 @@
     "timestampConverter": {
       "name": "时间戳转换器",
       "description": "Unix 时间戳与可读日期互转",
-      "commands": { "open": "时间戳转换器", "openDesc": "转换时间戳与日期" },
+      "commands": {
+        "open": "时间戳转换器",
+        "openDesc": "转换时间戳与日期"
+      },
       "now": "当前时间",
       "timestamp": "Unix 时间戳",
       "dateString": "日期字符串",
@@ -572,7 +617,10 @@
     "uuidGenerator": {
       "name": "UUID 生成器",
       "description": "生成 UUID v4、NanoID 等唯一标识",
-      "commands": { "open": "UUID 生成器", "openDesc": "生成唯一标识符" },
+      "commands": {
+        "open": "UUID 生成器",
+        "openDesc": "生成唯一标识符"
+      },
       "type": "类型",
       "count": "数量",
       "length": "长度",
@@ -595,7 +643,10 @@
     "jwtDecoder": {
       "name": "JWT 解码器",
       "description": "解码并检查 JWT 令牌",
-      "commands": { "open": "JWT 解码器", "openDesc": "解码 JWT 令牌" },
+      "commands": {
+        "open": "JWT 解码器",
+        "openDesc": "解码 JWT 令牌"
+      },
       "paste": "粘贴",
       "clear": "清空",
       "placeholder": "在此粘贴 JWT Token，如 eyJhbGci...",
@@ -614,7 +665,10 @@
     "regexTester": {
       "name": "正则测试器",
       "description": "实时匹配测试和调试正则表达式",
-      "commands": { "open": "正则测试器", "openDesc": "测试正则表达式" },
+      "commands": {
+        "open": "正则测试器",
+        "openDesc": "测试正则表达式"
+      },
       "patternPlaceholder": "输入正则表达式...",
       "testText": "测试文本",
       "textPlaceholder": "输入要测试的文本...",
@@ -679,7 +733,10 @@
     "textDiff": {
       "name": "文本对比",
       "description": "比较两段文本并高亮差异",
-      "commands": { "open": "文本对比", "openDesc": "对比两段文本差异" },
+      "commands": {
+        "open": "文本对比",
+        "openDesc": "对比两段文本差异"
+      },
       "swap": "交换",
       "clear": "清空全部",
       "original": "原始文本",
@@ -704,14 +761,17 @@
     "screenshot": {
       "name": "截图工具",
       "description": "快速截取屏幕，支持标注、编辑与置顶预览",
-      "commands": { "open": "截图工具", "openDesc": "截取屏幕截图" },
+      "commands": {
+        "open": "截图工具",
+        "openDesc": "截取屏幕截图"
+      },
       "ui": {
         "fullscreen": "全屏",
         "copyPath": "复制路径",
         "copied": "已复制",
         "openFolder": "打开文件夹",
         "dragToSelect": "拖拽选择区域",
-                "clickWindow": "点击窗口或拖拽选区",
+        "clickWindow": "点击窗口或拖拽选区",
         "dragHint": "拖拽框选截取区域",
         "enterHint": "Enter 全屏截取",
         "shortcutHint": "随时截图",
@@ -754,7 +814,10 @@
     "httpServer": {
       "name": "网页服务",
       "description": "为本地目录快速创建局域网网页，供浏览器访问",
-      "commands": { "open": "网页服务", "openDesc": "启动 HTTP 文件服务器" },
+      "commands": {
+        "open": "网页服务",
+        "openDesc": "启动 HTTP 文件服务器"
+      },
       "ui": {
         "directory": "目录",
         "port": "端口",
@@ -764,7 +827,7 @@
         "stopConfirm": "确定要停止此网页服务吗？",
         "browse": "浏览文件夹",
         "dirPlaceholder": "选择文件夹...",
-                "selectDir": "选择文件夹...",
+        "selectDir": "选择文件夹...",
         "portAuto": "自动",
         "selectDirFirst": "请先选择目录",
         "portInvalid": "端口范围 1024-65535",
@@ -801,7 +864,10 @@
     "p2p": {
       "name": "局域网传输",
       "description": "在局域网内与其他 A7Box 设备互传文件",
-      "commands": { "open": "局域网传输", "openDesc": "打开 P2P 局域网传输" },
+      "commands": {
+        "open": "局域网传输",
+        "openDesc": "打开 P2P 局域网传输"
+      },
       "ui": {
         "desktopOnly": "局域网传输需要桌面应用",
         "startFailed": "启动服务失败",
@@ -914,7 +980,10 @@
     "reminder": {
       "name": "事项提醒",
       "description": "设置提醒通知和重复计划",
-      "commands": { "open": "事项提醒", "openDesc": "管理提醒和通知" },
+      "commands": {
+        "open": "事项提醒",
+        "openDesc": "管理提醒和通知"
+      },
       "ui": {
         "title": "事项提醒",
         "newReminder": "新建提醒",
@@ -965,7 +1034,15 @@
         "upcoming": "即将到来",
         "emptyCreate": "创建第一条提醒",
         "emptyCompleted": "暂无已完成的提醒",
-        "weekdays": ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],
+        "weekdays": [
+          "周日",
+          "周一",
+          "周二",
+          "周三",
+          "周四",
+          "周五",
+          "周六"
+        ],
         "weekdaySep": "、",
         "shortcutHint": "{{keys}} 快速创建",
         "detail": {
@@ -1035,9 +1112,15 @@
     "timer": {
       "name": "计时器",
       "description": "倒计时与秒表，时间管理好帮手",
-      "commands": { "open": "计时器", "openDesc": "打开倒计时和秒表" },
+      "commands": {
+        "open": "计时器",
+        "openDesc": "打开倒计时和秒表"
+      },
       "ui": {
-        "tab": { "countdown": "倒计时", "stopwatch": "秒表" },
+        "tab": {
+          "countdown": "倒计时",
+          "stopwatch": "秒表"
+        },
         "running": "运行中",
         "inputPlaceholder": "例如：5m、1:30:00、10分钟 泡面",
         "parseHint": "支持：5m、1h30m、90s、1:30:00 或直接输入数字（秒）",
@@ -1060,7 +1143,9 @@
         "defaultTitle": "{{duration}} 计时",
         "empty": "暂无计时器",
         "emptyHint": "使用上方输入框或快捷预设开始",
-        "section": { "completed": "已完成" },
+        "section": {
+          "completed": "已完成"
+        },
         "copied": "已复制到剪贴板",
         "copyFailed": "复制失败",
         "currentLap": "当前圈",
@@ -1086,7 +1171,10 @@
     "imageWatermark": {
       "name": "图片水印",
       "description": "为图片添加文字、Logo 或时间戳水印",
-      "commands": { "open": "图片水印", "openDesc": "为图片添加水印" },
+      "commands": {
+        "open": "图片水印",
+        "openDesc": "为图片添加水印"
+      },
       "ui": {
         "dropText": "拖拽图片到此处，或点击上传",
         "dropHint": "支持批量处理 — PNG、JPG、WebP、BMP、GIF",
@@ -1147,7 +1235,10 @@
     "systemInfo": {
       "name": "系统信息",
       "description": "性能、网络、存储、显示器、电池与设备信息检测",
-      "commands": { "open": "系统信息", "openDesc": "查看网络与设备信息" },
+      "commands": {
+        "open": "系统信息",
+        "openDesc": "查看网络与设备信息"
+      },
       "ui": {
         "cardPerformance": "性能",
         "cardNetwork": "网络",
@@ -1204,6 +1295,234 @@
         "unavailable": "暂无",
         "lastUpdated": "更新于",
         "tauriOnly": "设备信息仅在桌面应用中可用。"
+      }
+    },
+    "clipboardManager": {
+      "name": "剪贴板管理器",
+      "description": "剪贴板历史、快捷粘贴、文本片段与自动化规则",
+      "subtitle": "记录你复制的一切：历史、片段与自动化规则",
+      "popupTitle": "剪贴板历史",
+      "searchPlaceholder": "搜索剪贴板历史…",
+      "empty": "暂无剪贴板记录。复制点内容试试吧。",
+      "loading": "加载中…",
+      "loadMore": "加载更多",
+      "pin": "置顶",
+      "unpin": "取消置顶",
+      "toggleSecret": "显示 / 隐藏",
+      "pinned": "已置顶",
+      "secret": "敏感",
+      "encrypted": "已加密",
+      "reveal": "显示",
+      "openInBrowser": "在浏览器中打开",
+      "openQuick": "打开",
+      "openFile": "打开文件",
+      "openFolder": "打开所在目录",
+      "openFailed": "无法打开该项目",
+      "openNotFound": "文件不存在，可能已被移动或删除",
+      "openUrlFailed": "无法打开该链接",
+      "viewFullSize": "点击查看大图",
+      "detail": {
+        "title": "条目详情",
+        "content": "内容",
+        "meta": "信息",
+        "type": {
+          "label": "类型",
+          "text": "文本",
+          "image": "图片",
+          "file": "文件列表"
+        },
+        "size": "大小",
+        "captured": "捕获时间",
+        "lastUsed": "最近使用",
+        "copyCount": "复制次数",
+        "sourceApp": "来源应用",
+        "sourceTitle": "来源窗口",
+        "neverUsed": "从未",
+        "unknown": "未知"
+      },
+      "guide": {
+        "viewGuide": "查看使用指南"
+      },
+      "snippetGuide": {
+        "title": "什么是「片段」？",
+        "intro": "片段是可复用的文本模板。一次创建，按需填充，随处粘贴。",
+        "step1": "点击「新建片段」编写模板内容，用双花括号标记可变部分，如 {{ph}}",
+        "step2": "悬停片段并点击复制按钮；含占位符时会弹出填写框，完成后已填充的内容直接进入剪贴板",
+        "step3": "像平常一样粘贴到任意应用，也可配合 Alt+V 快捷弹窗使用"
+      },
+      "ruleGuide": {
+        "title": "什么是「规则」？",
+        "intro": "规则会在每次捕获新内容时自动响应——分类、转换、格式化复制或通知。",
+        "step1": "点击「新建规则」，选择触发方式（正则 / 包含 / 分类）并填写匹配模式",
+        "step2": "选择动作：重新分类、转换文本、存储格式化副本，或仅弹出通知",
+        "step3": "启用后的规则在每次捕获时后台自动运行，可随时开关"
+      },
+      "openInManager": "在管理页打开",
+      "addToStack": "加入批量粘贴队列",
+      "pasteStack": "批量粘贴",
+      "startStack": "开始粘贴",
+      "clearStack": "清空队列",
+      "stackEmpty": "从列表添加条目，然后按顺序粘贴。",
+      "stackRunning": "粘贴中…",
+      "stackQueued": "批量粘贴队列已有 {{count}} 条（{{keys}} 打开）",
+      "copiedMsg": "已复制到剪贴板",
+      "pasteDegraded": "无法自动粘贴（{{reason}}）— 已改为复制",
+      "popupHint": "↑↓ 选择 · Enter 粘贴 · {{key}} 复制 · Esc 关闭",
+      "copyAs": "复制为",
+      "copyAsJson": "格式化 JSON",
+      "selectAll": "全选",
+      "deleteSelected": "删除所选",
+      "deleteSelectedMsg": "删除所选的 {{count}} 条记录？",
+      "exportImport": "导出 / 导入",
+      "clearHistory": "清空历史",
+      "clearHistoryMsg": "删除所有未置顶条目？此操作无法撤销。",
+      "ruleTriggered": "规则命中：{{name}}",
+      "statsTotal": "{{count}} 条记录",
+      "statsPinned": "{{count}} 置顶",
+      "statsSecrets": "{{count}} 敏感",
+      "statsImages": "{{count}} 张图片",
+      "exportTitle": "导出历史",
+      "exportHint": "敏感条目在导出文件中将被解密。",
+      "exportBtn": "导出",
+      "exportDone": "导出完成",
+      "exportCount": "已导出 {{count}} 条记录",
+      "importTitle": "从 JSON 导入",
+      "importBtn": "选择文件…",
+      "ioFailed": "操作失败，请重试",
+      "importDone": "导入完成",
+      "importCount": "已导入 {{count}} 条记录",
+      "snippetsDesc": "可复用的文本模板，支持 {{ph}} 占位符——邮件回复、签名、代码样板等。",
+      "newSnippet": "新建片段",
+      "noSnippets": "暂无片段",
+      "snippetsExample": "例如：「你好 {{ph}}，感谢来信…」——一键填充并复制",
+      "editSnippet": "编辑片段",
+      "deleteSnippet": "删除片段",
+      "deleteSnippetMsg": "删除\"{{name}}\"？",
+      "snippetName": "名称",
+      "snippetNamePh": "例如：邮件签名",
+      "snippetContent": "内容",
+      "snippetContentPh": "使用 {{ph}} 作为待填字段",
+      "snippetCopied": "片段已复制到剪贴板",
+      "rulesDesc": "捕获到新剪贴板内容时自动执行规则。",
+      "newRule": "新建规则",
+      "noRules": "暂无规则",
+      "rulesExample": "例如：自动把包含网址的内容归类为「链接」",
+      "editRule": "编辑规则",
+      "deleteRule": "删除规则",
+      "deleteRuleMsg": "删除\"{{name}}\"？",
+      "ruleName": "规则名称",
+      "ruleNamePh": "例如：将 GitHub 链接标记为链接",
+      "ruleEnabled": "启用",
+      "priority": "优先级",
+      "triggerType": "当内容",
+      "triggerContains": "包含",
+      "triggerRegex": "匹配正则",
+      "triggerCategory": "分类为",
+      "triggerPattern": "匹配模式",
+      "regexInvalid": "无效的正则表达式",
+      "actionType": "则执行",
+      "actionClassify": "设置分类",
+      "actionTransform": "内容转换",
+      "actionCopyAs": "存储格式化副本",
+      "actionNotify": "弹出通知",
+      "notifyHint": "规则命中时弹出提示",
+      "actionCopy": "复制",
+      "actionPaste": "粘贴",
+      "actionDelete": "删除",
+      "actionDetail": "详情",
+      "setCapture": "捕获剪贴板",
+      "setCaptureHint": "将复制的文本、图片和文件记录到历史",
+      "setImages": "捕获图片",
+      "setImagesHint": "保存复制的图片并生成缩略图",
+      "setFiles": "捕获文件列表",
+      "setFilesHint": "在文件管理器复制文件时记录路径",
+      "setEncrypt": "加密敏感内容",
+      "setEncryptHint": "对检测到的密钥/令牌加密存储（密钥绑定本机）",
+      "setMaxHistory": "最大历史条数",
+      "setRetention": "保留天数",
+      "setStackInterval": "批量粘贴间隔（毫秒）",
+      "setStackIntervalHint": "连续粘贴之间的延迟",
+      "setImageCacheLimit": "图片缓存上限（MB）",
+      "setRangeError": "请输入 {{min}} 到 {{max}} 之间的数值",
+      "setIgnoredApps": "忽略的应用",
+      "setIgnoredAppsHint": "这些应用的复制不会被记录（每行一个进程名）",
+      "tab": {
+        "all": "全部",
+        "text": "文本",
+        "image": "图片",
+        "file": "文件",
+        "url": "链接",
+        "code": "代码",
+        "json": "JSON",
+        "secret": "敏感"
+      },
+      "tabs": {
+        "history": "历史",
+        "snippets": "片段",
+        "rules": "规则",
+        "settings": "设置"
+      },
+      "group": {
+        "pinned": "置顶",
+        "today": "今天",
+        "yesterday": "昨天",
+        "earlier": "更早"
+      },
+      "category": {
+        "general": "通用",
+        "url": "链接",
+        "code": "代码",
+        "json": "JSON",
+        "email": "邮箱",
+        "file-path": "文件路径",
+        "color": "颜色",
+        "secret": "敏感"
+      },
+      "transform": {
+        "base64": "Base64",
+        "url-encode": "URL 编码",
+        "json-string": "JSON 字符串",
+        "upper": "大写",
+        "lower": "小写",
+        "title": "首字母大写",
+        "snake": "snake_case",
+        "kebab": "kebab-case",
+        "camel": "camelCase",
+        "md-code": "Markdown 代码块",
+        "md-link": "Markdown 链接"
+      },
+      "transformMode": {
+        "strip-tracking": "去除跟踪参数",
+        "trim": "去除首尾空白",
+        "lowercase": "转为小写",
+        "uppercase": "转为大写"
+      },
+      "action": {
+        "classify": "设置分类",
+        "transform": "转换",
+        "copyas": "存储格式化副本",
+        "notify": "通知"
+      },
+      "capability": {
+        "none": "无法自动粘贴 — 条目仅会被复制",
+        "wayland": "Wayland 环境不支持自动粘贴 — 条目仅会被复制",
+        "accessibility": "自动粘贴需要 macOS 辅助功能权限 — 条目仅会被复制"
+      },
+      "toast": {
+        "imageTooLarge": "图片超过大小上限，已跳过",
+        "pasteFailed": "粘贴失败 — 条目仅已复制"
+      },
+      "time": {
+        "justNow": "刚刚",
+        "minutesAgo": "{{m}} 分钟前",
+        "hoursAgo": "{{h}} 小时前",
+        "daysAgo": "{{d}} 天前"
+      },
+      "commands": {
+        "openPopup": "打开剪贴板弹窗",
+        "openPopupDesc": "打开剪贴板历史快捷弹窗",
+        "pasteStack": "批量粘贴",
+        "pasteStackDesc": "将多条记录加入队列并按顺序粘贴"
       }
     }
   },

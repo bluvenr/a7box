@@ -106,8 +106,8 @@
     "fontSizeDesc": "Adjust interface font size",
     "noModules": "No available modules",
     "modulesDragHint": "Drag to reorder — changes apply to sidebar and homepage",
-        "moveUp": "Move up",
-        "moveDown": "Move down",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
     "githubRepo": "GitHub Repository",
     "officialWebsite": "Official Website",
     "aboutAuthor": "About Author",
@@ -165,7 +165,15 @@
     "shortcutClipboardCodeMinifyDesc": "Read clipboard code and open minify/beautify window",
     "shortcutColorPicker": "Color Picker",
     "shortcutColorPickerDesc": "Pick pixel color at cursor position and open color float window",
-    "shortcutModuleDisabled": "Module disabled"
+    "shortcutModuleDisabled": "Module disabled",
+    "shortcutClipboardPopup": "Clipboard History Popup",
+    "shortcutClipboardPopupDesc": "Open the clipboard history quick popup",
+    "shortcutPasteStack": "Paste Stack",
+    "shortcutPasteStackDesc": "Queue multiple clipboard entries and paste them sequentially",
+    "cacheClipboardHistory": "Clipboard history",
+    "cacheClipboardImages": "Clipboard images",
+    "cacheConfirmClipboardHistory": "This will delete all clipboard history records (snippets and rules are kept). This cannot be undone.",
+    "cacheConfirmClipboardImages": "This will delete all captured clipboard images. History records will keep but previews become unavailable. This cannot be undone."
   },
   "updater": {
     "newVersion": "New version {{version}} available",
@@ -214,8 +222,17 @@
     "jsonFormatter": {
       "name": "JSON Formatter",
       "description": "Auto-format or compress JSON data",
-      "commands": { "format": "Format JSON", "compress": "Compress JSON", "formatDesc": "Format JSON data for readability", "compressDesc": "Compress JSON data to single line" },
-      "settings": { "autoFormat": "Auto Format", "autoFormatDesc": "Auto-format when JSON detected in clipboard", "indentSize": "Indent Size" },
+      "commands": {
+        "format": "Format JSON",
+        "compress": "Compress JSON",
+        "formatDesc": "Format JSON data for readability",
+        "compressDesc": "Compress JSON data to single line"
+      },
+      "settings": {
+        "autoFormat": "Auto Format",
+        "autoFormatDesc": "Auto-format when JSON detected in clipboard",
+        "indentSize": "Indent Size"
+      },
       "ui": {
         "loadingEditor": "Loading editor...",
         "toastFormatted": "Formatted successfully",
@@ -266,7 +283,12 @@
     "qrCode": {
       "name": "QR Code",
       "description": "Generate and decode QR codes",
-      "commands": { "generate": "Generate QR Code", "decode": "Decode QR Code", "generateDesc": "Generate a QR code from text or URL", "decodeDesc": "Decode a QR code from an image" },
+      "commands": {
+        "generate": "Generate QR Code",
+        "decode": "Decode QR Code",
+        "generateDesc": "Generate a QR code from text or URL",
+        "decodeDesc": "Decode a QR code from an image"
+      },
       "ui": {
         "tabGenerate": "Generate",
         "tabDecode": "Decode",
@@ -303,7 +325,10 @@
     "markdownPreview": {
       "name": "Markdown Editor",
       "description": "Live markdown preview, syntax highlighting, file import and HTML conversion",
-      "commands": { "open": "Markdown Editor", "openDesc": "Open markdown editor with live preview and HTML conversion" },
+      "commands": {
+        "open": "Markdown Editor",
+        "openDesc": "Open markdown editor with live preview and HTML conversion"
+      },
       "ui": {
         "previewToggle": "Preview",
         "modeToggle": "Toggle forward/reverse conversion mode",
@@ -337,7 +362,10 @@
     "codeMinify": {
       "name": "Code Minify/Beautify",
       "description": "Minify or beautify JS, TS, CSS, HTML and JSON",
-      "commands": { "open": "Code Minify/Beautify", "openDesc": "Minify or beautify code" },
+      "commands": {
+        "open": "Code Minify/Beautify",
+        "openDesc": "Minify or beautify code"
+      },
       "ui": {
         "loadingEditor": "Loading editor...",
         "minifyBtn": "Minify",
@@ -388,7 +416,10 @@
     "imageCompress": {
       "name": "Image Compress",
       "description": "Compress and convert images with quality control",
-      "commands": { "open": "Image Compress", "openDesc": "Compress and convert images" },
+      "commands": {
+        "open": "Image Compress",
+        "openDesc": "Compress and convert images"
+      },
       "ui": {
         "qualityLabel": "Quality",
         "maxWidthLabel": "Max Width",
@@ -402,7 +433,7 @@
         "downloadAllBtn": "Download All",
         "dropText": "Drop images here or click to upload",
         "dropHint": "Supports batch processing — drop or select multiple images. PNG, JPG, WebP, BMP supported (GIF loses animation)",
-                "defaultSettingsPrefix": "Default: ",
+        "defaultSettingsPrefix": "Default: ",
         "statusCompressing": "Compressing...",
         "compressFailed": "Compression failed",
         "toastCompressed": "Compressed {{success}}/{{total}} images",
@@ -431,7 +462,10 @@
     "hashGenerator": {
       "name": "Hash Generator",
       "description": "Generate MD5, SHA-1, SHA-256, SHA-512 hashes",
-      "commands": { "open": "Hash Generator", "openDesc": "Generate cryptographic hashes" },
+      "commands": {
+        "open": "Hash Generator",
+        "openDesc": "Generate cryptographic hashes"
+      },
       "ui": {
         "textPlaceholder": "Enter text to hash...",
         "generateBtn": "Generate Hashes",
@@ -447,7 +481,10 @@
     "imageConvert": {
       "name": "Image Convert",
       "description": "Convert images between PNG, JPG, WebP and ICO formats",
-      "commands": { "open": "Image Convert", "openDesc": "Convert image formats" },
+      "commands": {
+        "open": "Image Convert",
+        "openDesc": "Convert image formats"
+      },
       "ui": {
         "outputLabel": "Output",
         "qualityLabel": "Quality",
@@ -455,7 +492,6 @@
         "downloadAllBtn": "Download All",
         "dropText": "Drop images here or click to upload",
         "dropHint": "Supports batch processing — drop or select multiple images. PNG, JPG, WebP supported",
-                
         "statusConverting": "Converting...",
         "convertFailed": "Conversion failed",
         "toastConverted": "Converted {{success}}/{{total}} images to {{format}}",
@@ -486,7 +522,10 @@
     "colorTool": {
       "name": "Color Tool",
       "description": "Color picker, format converter and palette generator",
-      "commands": { "open": "Color Tool", "openDesc": "Color picker and converter" },
+      "commands": {
+        "open": "Color Tool",
+        "openDesc": "Color picker and converter"
+      },
       "ui": {
         "contrastTitle": "Contrast Check (WCAG)",
         "contrastOnWhite": "On White",
@@ -516,7 +555,10 @@
     "base64Tool": {
       "name": "Base64 Tool",
       "description": "Encode and decode Base64 text and files",
-      "commands": { "open": "Base64 Tool", "openDesc": "Base64 encode/decode" },
+      "commands": {
+        "open": "Base64 Tool",
+        "openDesc": "Base64 encode/decode"
+      },
       "ui": {
         "swapTooltip": "Swap",
         "copyTooltip": "Copy output",
@@ -542,7 +584,10 @@
     "timestampConverter": {
       "name": "Timestamp Converter",
       "description": "Convert between unix timestamps and human-readable dates",
-      "commands": { "open": "Timestamp Converter", "openDesc": "Convert timestamps and dates" },
+      "commands": {
+        "open": "Timestamp Converter",
+        "openDesc": "Convert timestamps and dates"
+      },
       "now": "Now",
       "timestamp": "Unix Timestamp",
       "dateString": "Date String",
@@ -572,7 +617,10 @@
     "uuidGenerator": {
       "name": "UUID Generator",
       "description": "Generate UUID v4, NanoID, and unique identifiers",
-      "commands": { "open": "UUID Generator", "openDesc": "Generate unique identifiers" },
+      "commands": {
+        "open": "UUID Generator",
+        "openDesc": "Generate unique identifiers"
+      },
       "type": "Type",
       "count": "Count",
       "length": "Length",
@@ -595,7 +643,10 @@
     "jwtDecoder": {
       "name": "JWT Decoder",
       "description": "Decode and inspect JWT tokens",
-      "commands": { "open": "JWT Decoder", "openDesc": "Decode JWT tokens" },
+      "commands": {
+        "open": "JWT Decoder",
+        "openDesc": "Decode JWT tokens"
+      },
       "paste": "Paste",
       "clear": "Clear",
       "placeholder": "Paste JWT Token here, e.g. eyJhbGci...",
@@ -614,7 +665,10 @@
     "regexTester": {
       "name": "Regex Tester",
       "description": "Test and debug regular expressions with live matching",
-      "commands": { "open": "Regex Tester", "openDesc": "Test regular expressions" },
+      "commands": {
+        "open": "Regex Tester",
+        "openDesc": "Test regular expressions"
+      },
       "patternPlaceholder": "Enter regex pattern...",
       "testText": "Test Text",
       "textPlaceholder": "Enter text to test against...",
@@ -679,7 +733,10 @@
     "textDiff": {
       "name": "Text Diff",
       "description": "Compare two texts and highlight differences",
-      "commands": { "open": "Text Diff", "openDesc": "Compare two texts" },
+      "commands": {
+        "open": "Text Diff",
+        "openDesc": "Compare two texts"
+      },
       "swap": "Swap",
       "clear": "Clear All",
       "original": "Original",
@@ -704,14 +761,17 @@
     "screenshot": {
       "name": "Screenshot",
       "description": "Quick screen capture with annotation, editing and pin preview",
-      "commands": { "open": "Screenshot", "openDesc": "Capture screenshots" },
+      "commands": {
+        "open": "Screenshot",
+        "openDesc": "Capture screenshots"
+      },
       "ui": {
         "fullscreen": "Full Screen",
         "copyPath": "Copy Path",
         "copied": "Copied",
         "openFolder": "Open Folder",
         "dragToSelect": "Drag to select region",
-                "clickWindow": "Click window or drag region",
+        "clickWindow": "Click window or drag region",
         "dragHint": "Drag to select capture region",
         "enterHint": "Enter for fullscreen",
         "shortcutHint": "to capture anytime",
@@ -754,7 +814,10 @@
     "httpServer": {
       "name": "Web Service",
       "description": "Quickly create a LAN website for any local directory",
-      "commands": { "open": "Web Service", "openDesc": "Start HTTP file server" },
+      "commands": {
+        "open": "Web Service",
+        "openDesc": "Start HTTP file server"
+      },
       "ui": {
         "directory": "Directory",
         "port": "Port",
@@ -764,7 +827,7 @@
         "stopConfirm": "Are you sure you want to stop this web service?",
         "browse": "Browse Folder",
         "dirPlaceholder": "Select a folder...",
-                "selectDir": "Select folder...",
+        "selectDir": "Select folder...",
         "portAuto": "Auto",
         "selectDirFirst": "Please select a directory first",
         "portInvalid": "Port range: 1024-65535",
@@ -801,7 +864,10 @@
     "p2p": {
       "name": "LAN Transfer",
       "description": "Transfer files with other A7Box devices on LAN",
-      "commands": { "open": "LAN Transfer", "openDesc": "Open P2P LAN transfer" },
+      "commands": {
+        "open": "LAN Transfer",
+        "openDesc": "Open P2P LAN transfer"
+      },
       "ui": {
         "desktopOnly": "LAN Transfer requires the desktop app",
         "startFailed": "Failed to start service",
@@ -816,9 +882,9 @@
         "dirInvalid": "Directory does not exist or is invalid",
         "rescan": "Rescan",
         "myAddress": "My Address",
-                "clickToCopy": "Click to copy address",
-                "deviceCode": "Code",
-                "deviceName": "Name",
+        "clickToCopy": "Click to copy address",
+        "deviceCode": "Code",
+        "deviceName": "Name",
         "noPeersHideSend": "No peers found yet. Connect first to send files",
         "stoppedHint": "Service not running. You are invisible to other devices on LAN",
         "autoStart": "Auto Start",
@@ -868,11 +934,11 @@
         "manualConnect": "Manual Connect",
         "manualConnectPlaceholder": "Enter IP:Port (e.g. 192.168.1.5:9876)",
         "connect": "Connect",
-                "connectSuccess": "Connected successfully",
-                "connectFailed": "Connection failed. Check address and network",
-                "cannotConnectSelf": "Cannot connect to your own device",
-                "invalidAddr": "Invalid format. Use IP:Port (e.g. 192.168.1.5:9876)",
-                "invalidPort": "Port must be 1-65535",
+        "connectSuccess": "Connected successfully",
+        "connectFailed": "Connection failed. Check address and network",
+        "cannotConnectSelf": "Cannot connect to your own device",
+        "invalidAddr": "Invalid format. Use IP:Port (e.g. 192.168.1.5:9876)",
+        "invalidPort": "Port must be 1-65535",
         "speed": "Speed",
         "eta": "ETA",
         "retry": "Retry",
@@ -914,7 +980,10 @@
     "reminder": {
       "name": "Reminder",
       "description": "Set reminders with notifications and repeat schedules",
-      "commands": { "open": "Reminder", "openDesc": "Manage reminders and notifications" },
+      "commands": {
+        "open": "Reminder",
+        "openDesc": "Manage reminders and notifications"
+      },
       "ui": {
         "title": "Reminders",
         "newReminder": "New Reminder",
@@ -965,7 +1034,15 @@
         "upcoming": "upcoming",
         "emptyCreate": "Create your first reminder",
         "emptyCompleted": "No completed reminders yet",
-        "weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+        "weekdays": [
+          "Sun",
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri",
+          "Sat"
+        ],
         "weekdaySep": ", ",
         "shortcutHint": "{{keys}} Quick create",
         "detail": {
@@ -1035,9 +1112,15 @@
     "timer": {
       "name": "Timer",
       "description": "Countdown timers and stopwatch for time management",
-      "commands": { "open": "Timer", "openDesc": "Open countdown timers and stopwatch" },
+      "commands": {
+        "open": "Timer",
+        "openDesc": "Open countdown timers and stopwatch"
+      },
       "ui": {
-        "tab": { "countdown": "Countdown", "stopwatch": "Stopwatch" },
+        "tab": {
+          "countdown": "Countdown",
+          "stopwatch": "Stopwatch"
+        },
         "running": "running",
         "inputPlaceholder": "e.g. 5m, 1:30:00, 10min coffee break",
         "parseHint": "Try: 5m, 1h30m, 90s, 1:30:00, or a number (seconds)",
@@ -1060,7 +1143,9 @@
         "defaultTitle": "{{duration}} timer",
         "empty": "No timers running",
         "emptyHint": "Use the input above or quick presets to start",
-        "section": { "completed": "Completed" },
+        "section": {
+          "completed": "Completed"
+        },
         "copied": "Copied to clipboard",
         "copyFailed": "Copy failed",
         "currentLap": "Current lap",
@@ -1086,7 +1171,10 @@
     "imageWatermark": {
       "name": "Image Watermark",
       "description": "Add text, logo or timestamp watermarks to images",
-      "commands": { "open": "Image Watermark", "openDesc": "Add watermarks to images" },
+      "commands": {
+        "open": "Image Watermark",
+        "openDesc": "Add watermarks to images"
+      },
       "ui": {
         "dropText": "Drop images here or click to upload",
         "dropHint": "Supports batch — PNG, JPG, WebP, BMP, GIF",
@@ -1147,7 +1235,10 @@
     "systemInfo": {
       "name": "System Info",
       "description": "Performance, network, storage, display, battery and device diagnostics",
-      "commands": { "open": "System Info", "openDesc": "View network and device information" },
+      "commands": {
+        "open": "System Info",
+        "openDesc": "View network and device information"
+      },
       "ui": {
         "cardPerformance": "Performance",
         "cardNetwork": "Network",
@@ -1204,6 +1295,234 @@
         "unavailable": "N/A",
         "lastUpdated": "Updated",
         "tauriOnly": "Device information is only available in the desktop app."
+      }
+    },
+    "clipboardManager": {
+      "name": "Clipboard Manager",
+      "description": "Clipboard history, quick paste, snippets and automation rules",
+      "subtitle": "History, snippets and automation for everything you copy",
+      "popupTitle": "Clipboard History",
+      "searchPlaceholder": "Search clipboard history…",
+      "empty": "No clipboard entries yet. Copy something to get started.",
+      "loading": "Loading…",
+      "loadMore": "Load more",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "toggleSecret": "Show / hide",
+      "pinned": "Pinned",
+      "secret": "Secret",
+      "encrypted": "Encrypted",
+      "reveal": "Reveal",
+      "openInBrowser": "Open in browser",
+      "openQuick": "Open",
+      "openFile": "Open file",
+      "openFolder": "Open containing folder",
+      "openFailed": "Could not open this item",
+      "openNotFound": "File not found — it may have been moved or deleted",
+      "openUrlFailed": "Could not open the link",
+      "viewFullSize": "Click to view full size",
+      "detail": {
+        "title": "Entry details",
+        "content": "Content",
+        "meta": "Information",
+        "type": {
+          "label": "Type",
+          "text": "Text",
+          "image": "Image",
+          "file": "File list"
+        },
+        "size": "Size",
+        "captured": "Captured",
+        "lastUsed": "Last used",
+        "copyCount": "Copy count",
+        "sourceApp": "Source app",
+        "sourceTitle": "Source window",
+        "neverUsed": "Never",
+        "unknown": "Unknown"
+      },
+      "guide": {
+        "viewGuide": "View guide"
+      },
+      "snippetGuide": {
+        "title": "What are Snippets?",
+        "intro": "Snippets are reusable text templates. Create once, fill the blanks, paste anywhere.",
+        "step1": "Click \"New snippet\" and write the template — wrap variable parts in double braces, e.g. {{ph}}",
+        "step2": "Hover a snippet and click Copy — if it has placeholders you'll be asked to fill them, then the filled text is copied",
+        "step3": "Paste into any app as usual, or combine with the Alt+V quick popup"
+      },
+      "ruleGuide": {
+        "title": "What are Rules?",
+        "intro": "Rules react to every capture automatically — classify, transform, copy formatted, or notify.",
+        "step1": "Click \"New rule\", pick a trigger (regex / contains / category) and a matching pattern",
+        "step2": "Choose an action: reclassify, transform the text, store a formatted copy, or just notify",
+        "step3": "Enabled rules run in the background on every capture — toggle them on or off anytime"
+      },
+      "openInManager": "Open in Manager",
+      "addToStack": "Add to Paste Stack",
+      "pasteStack": "Paste Stack",
+      "startStack": "Start pasting",
+      "clearStack": "Clear queue",
+      "stackEmpty": "Add entries from the list, then paste them sequentially.",
+      "stackRunning": "Pasting…",
+      "stackQueued": "{{count}} entries queued in Paste Stack (open via {{keys}})",
+      "copiedMsg": "Copied to clipboard",
+      "pasteDegraded": "Auto-paste unavailable ({{reason}}) — copied instead",
+      "popupHint": "↑↓ select · Enter paste · {{key}} copy · Esc close",
+      "copyAs": "Copy as",
+      "copyAsJson": "Formatted JSON",
+      "selectAll": "Select all",
+      "deleteSelected": "Delete selected",
+      "deleteSelectedMsg": "Delete {{count}} selected entries?",
+      "exportImport": "Export / Import",
+      "clearHistory": "Clear history",
+      "clearHistoryMsg": "Delete all non-pinned entries? This cannot be undone.",
+      "ruleTriggered": "Rule matched: {{name}}",
+      "statsTotal": "{{count}} entries",
+      "statsPinned": "{{count}} pinned",
+      "statsSecrets": "{{count}} secrets",
+      "statsImages": "{{count}} images",
+      "exportTitle": "Export history",
+      "exportHint": "Secret entries are decrypted in the export file.",
+      "exportBtn": "Export",
+      "exportDone": "Export complete",
+      "exportCount": "{{count}} entries exported",
+      "importTitle": "Import from JSON",
+      "importBtn": "Choose file…",
+      "ioFailed": "Operation failed, please try again",
+      "importDone": "Import complete",
+      "importCount": "{{count}} entries imported",
+      "snippetsDesc": "Reusable text templates with {{ph}} placeholders — emails, signatures, code boilerplate.",
+      "newSnippet": "New snippet",
+      "noSnippets": "No snippets yet",
+      "snippetsExample": "e.g. “Hi {{ph}}, thanks for reaching out…” — one click fills the blanks and copies",
+      "editSnippet": "Edit snippet",
+      "deleteSnippet": "Delete snippet",
+      "deleteSnippetMsg": "Delete \"{{name}}\"?",
+      "snippetName": "Name",
+      "snippetNamePh": "e.g. Email signature",
+      "snippetContent": "Content",
+      "snippetContentPh": "Use {{ph}} for fill-in fields",
+      "snippetCopied": "Snippet copied to clipboard",
+      "rulesDesc": "Rules run automatically when new clipboard content is captured.",
+      "newRule": "New rule",
+      "noRules": "No rules yet",
+      "rulesExample": "e.g. automatically classify entries containing a URL into the “Links” category",
+      "editRule": "Edit rule",
+      "deleteRule": "Delete rule",
+      "deleteRuleMsg": "Delete \"{{name}}\"?",
+      "ruleName": "Rule name",
+      "ruleNamePh": "e.g. Tag GitHub URLs as links",
+      "ruleEnabled": "Enabled",
+      "priority": "Priority",
+      "triggerType": "When content",
+      "triggerContains": "contains",
+      "triggerRegex": "matches regex",
+      "triggerCategory": "category is",
+      "triggerPattern": "Pattern",
+      "regexInvalid": "Invalid regular expression",
+      "actionType": "Then",
+      "actionClassify": "set category",
+      "actionTransform": "transform",
+      "actionCopyAs": "store copy as",
+      "actionNotify": "notify",
+      "notifyHint": "Shows a toast when the rule matches",
+      "actionCopy": "Copy",
+      "actionPaste": "Paste",
+      "actionDelete": "Delete",
+      "actionDetail": "Detail",
+      "setCapture": "Capture clipboard",
+      "setCaptureHint": "Record copied text, images and files in history",
+      "setImages": "Capture images",
+      "setImagesHint": "Store copied images with thumbnails",
+      "setFiles": "Capture file lists",
+      "setFilesHint": "Record paths when files are copied in the file manager",
+      "setEncrypt": "Encrypt secrets",
+      "setEncryptHint": "Encrypt detected keys/tokens at rest (machine-bound key)",
+      "setMaxHistory": "Max history entries",
+      "setRetention": "Retention (days)",
+      "setStackInterval": "Paste Stack interval (ms)",
+      "setStackIntervalHint": "Delay between sequential pastes",
+      "setImageCacheLimit": "Image cache limit (MB)",
+      "setRangeError": "Enter a value between {{min}} and {{max}}",
+      "setIgnoredApps": "Ignored apps",
+      "setIgnoredAppsHint": "Copies from these apps are never recorded (one per line, process name)",
+      "tab": {
+        "all": "All",
+        "text": "Text",
+        "image": "Images",
+        "file": "Files",
+        "url": "Links",
+        "code": "Code",
+        "json": "JSON",
+        "secret": "Secret"
+      },
+      "tabs": {
+        "history": "History",
+        "snippets": "Snippets",
+        "rules": "Rules",
+        "settings": "Settings"
+      },
+      "group": {
+        "pinned": "Pinned",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "earlier": "Earlier"
+      },
+      "category": {
+        "general": "General",
+        "url": "Link",
+        "code": "Code",
+        "json": "JSON",
+        "email": "Email",
+        "file-path": "File path",
+        "color": "Color",
+        "secret": "Secret"
+      },
+      "transform": {
+        "base64": "Base64",
+        "url-encode": "URL Encoded",
+        "json-string": "JSON String",
+        "upper": "UPPER CASE",
+        "lower": "lower case",
+        "title": "Title Case",
+        "snake": "snake_case",
+        "kebab": "kebab-case",
+        "camel": "camelCase",
+        "md-code": "Markdown Code Block",
+        "md-link": "Markdown Link"
+      },
+      "transformMode": {
+        "strip-tracking": "Remove tracking params",
+        "trim": "Trim whitespace",
+        "lowercase": "To lowercase",
+        "uppercase": "To uppercase"
+      },
+      "action": {
+        "classify": "Set category",
+        "transform": "Transform",
+        "copyas": "Store formatted copy",
+        "notify": "Notify"
+      },
+      "capability": {
+        "none": "Auto-paste unavailable — entries will be copied only",
+        "wayland": "Auto-paste is not supported on Wayland — entries will be copied only",
+        "accessibility": "macOS accessibility permission is required for auto-paste — entries will be copied only"
+      },
+      "toast": {
+        "imageTooLarge": "Image larger than limit, skipped",
+        "pasteFailed": "Paste failed — entry was copied only"
+      },
+      "time": {
+        "justNow": "Just now",
+        "minutesAgo": "{{m}} min ago",
+        "hoursAgo": "{{h}} h ago",
+        "daysAgo": "{{d}} d ago"
+      },
+      "commands": {
+        "openPopup": "Open Clipboard Popup",
+        "openPopupDesc": "Open the quick clipboard history popup",
+        "pasteStack": "Paste Stack",
+        "pasteStackDesc": "Queue multiple entries and paste them sequentially"
       }
     }
   },

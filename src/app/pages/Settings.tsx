@@ -13,7 +13,7 @@ import { useToast } from '../../components/Toast'
 import {
   Globe, Palette, Box, Info, RefreshCw, Download,
   CheckCircle, AlertCircle, Loader2, GripVertical,
-  Database, Trash2, FolderOpen, Image, Keyboard, RotateCcw
+  Database, Trash2, FolderOpen, Image, Keyboard, RotateCcw, ClipboardList
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useShortcutStore } from '../../core/shortcuts'
@@ -733,7 +733,7 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
     return `${val.toFixed(i > 0 ? 1 : 0)} ${units[i]}`
   }
 
-  const handleClear = async (category: 'p2pDownloads' | 'screenshots' | 'transferHistory') => {
+  const handleClear = async (category: 'p2pDownloads' | 'screenshots' | 'transferHistory' | 'clipboardImages' | 'clipboardHistory') => {
     setClearing(category)
     const ok = await clearCache(category)
     await loadSizes()
@@ -745,23 +745,26 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
     }
   }
 
-  const totalSize = cacheSizes ? cacheSizes.p2pDownloads + cacheSizes.screenshots : 0
+  const totalSize = cacheSizes
+    ? cacheSizes.p2pDownloads + cacheSizes.screenshots + cacheSizes.clipboardDb + cacheSizes.clipboardImages
+    : 0
 
   const handleClearAll = async () => {
     setClearing('all')
     const r1 = await clearCache('p2pDownloads')
     const r2 = await clearCache('screenshots')
     const r3 = await clearCache('transferHistory')
+    const r4 = await clearCache('clipboardImages')
     await loadSizes()
     setClearing(null)
-    if (r1 && r2 && r3) {
+    if (r1 && r2 && r3 && r4) {
       toast(t('settings.cacheCleared', { defaultValue: 'Cleared successfully' }), 'success')
     } else {
       toast(t('settings.cacheClearFailed', { defaultValue: 'Some items failed to clear' }), 'error')
     }
   }
 
-  const handleOpenDir = async (category: 'p2pDownloads' | 'screenshots') => {
+  const handleOpenDir = async (category: 'p2pDownloads' | 'screenshots' | 'clipboardImages') => {
     const opened = await openCacheDir(category)
     if (!opened) {
       toast(t('settings.cacheDirNotFound', { defaultValue: 'Directory does not exist yet' }), 'info')
@@ -786,7 +789,7 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
               const ok = await confirm({
                 title: t('settings.cacheClearAll', { defaultValue: 'Clear all' }),
                 message: t('settings.cacheConfirmAll', { defaultValue: 'This will clear all cached data and transfer history. This cannot be undone.' }),
-                detail: `${(cacheSizes?.p2pFileCount ?? 0) + (cacheSizes?.screenshotFileCount ?? 0)} ${t('settings.cacheFileUnit', { defaultValue: 'files' })}, ${formatSize(totalSize)}`,
+                detail: `${(cacheSizes?.p2pFileCount ?? 0) + (cacheSizes?.screenshotFileCount ?? 0) + (cacheSizes?.clipboardImageCount ?? 0)} ${t('settings.cacheFileUnit', { defaultValue: 'files' })}, ${formatSize(totalSize)}`,
                 confirmText: t('settings.cacheConfirmBtn', { defaultValue: 'Confirm clear' }),
                 cancelText: t('common.cancel', { defaultValue: 'Cancel' }),
                 danger: true,
@@ -922,6 +925,85 @@ function StorageCacheSection({ t }: { t: (key: string, opts?: Record<string, unk
                 title={t('settings.cacheClear', { defaultValue: 'Clear' })}
               >
                 {clearing === 'transferHistory' ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Clipboard History (database) */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <ClipboardList size={14} className="text-primary shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm text-text-primary">{t('settings.cacheClipboardHistory', { defaultValue: 'Clipboard history' })}</p>
+                <p className="text-[11px] text-text-muted truncate" title={cacheSizes?.clipboardDbPath}>
+                  {cacheSizes?.clipboardDbPath || '...'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 ml-3">
+              <span className="text-xs text-text-secondary tabular-nums">
+                {loading ? '...' : formatSize(cacheSizes?.clipboardDb ?? 0)}
+              </span>
+              <button
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: t('settings.cacheClipboardHistory', { defaultValue: 'Clipboard history' }),
+                    message: t('settings.cacheConfirmClipboardHistory', { defaultValue: 'This will delete all clipboard history records (snippets and rules are kept). This cannot be undone.' }),
+                    confirmText: t('settings.cacheConfirmBtn', { defaultValue: 'Confirm clear' }),
+                    cancelText: t('common.cancel', { defaultValue: 'Cancel' }),
+                    danger: true,
+                  })
+                  if (ok) handleClear('clipboardHistory')
+                }}
+                disabled={loading || clearing !== null || (cacheSizes?.clipboardDb ?? 0) === 0}
+                className="text-text-muted hover:text-red-400 cursor-pointer disabled:opacity-30 transition"
+                title={t('settings.cacheClear', { defaultValue: 'Clear' })}
+              >
+                {clearing === 'clipboardHistory' ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Clipboard Images */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <Image size={14} className="text-primary shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm text-text-primary">{t('settings.cacheClipboardImages', { defaultValue: 'Clipboard images' })}</p>
+                <p className="text-[11px] text-text-muted">
+                  {cacheSizes?.clipboardImageCount ?? 0} {t('settings.cacheFileUnit', { defaultValue: 'files' })}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 ml-3">
+              <span className="text-xs text-text-secondary tabular-nums">
+                {loading ? '...' : formatSize(cacheSizes?.clipboardImages ?? 0)}
+              </span>
+              <button
+                onClick={() => handleOpenDir('clipboardImages')}
+                disabled={loading || clearing !== null}
+                className="text-text-muted hover:text-primary cursor-pointer disabled:opacity-30 transition"
+                title={t('settings.cacheOpenFolder', { defaultValue: 'Open folder' })}
+              >
+                <FolderOpen size={13} />
+              </button>
+              <button
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: t('settings.cacheClipboardImages', { defaultValue: 'Clipboard images' }),
+                    message: t('settings.cacheConfirmClipboardImages', { defaultValue: 'This will delete all captured clipboard images. History records will keep but previews become unavailable. This cannot be undone.' }),
+                    detail: `${cacheSizes?.clipboardImageCount ?? 0} ${t('settings.cacheFileUnit', { defaultValue: 'files' })}, ${formatSize(cacheSizes?.clipboardImages ?? 0)}`,
+                    confirmText: t('settings.cacheConfirmBtn', { defaultValue: 'Confirm clear' }),
+                    cancelText: t('common.cancel', { defaultValue: 'Cancel' }),
+                    danger: true,
+                  })
+                  if (ok) handleClear('clipboardImages')
+                }}
+                disabled={loading || clearing !== null || (cacheSizes?.clipboardImages ?? 0) === 0}
+                className="text-text-muted hover:text-red-400 cursor-pointer disabled:opacity-30 transition"
+                title={t('settings.cacheClear', { defaultValue: 'Clear' })}
+              >
+                {clearing === 'clipboardImages' ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
               </button>
             </div>
           </div>

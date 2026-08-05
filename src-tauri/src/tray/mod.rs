@@ -17,6 +17,7 @@ pub const TRAY_ID: &str = "main-tray";
 struct TrayLabels {
     show: &'static str,
     palette: &'static str,
+    clipboard_history: &'static str,
     settings: &'static str,
     website: &'static str,
     about_author: &'static str,
@@ -28,8 +29,9 @@ struct TrayLabels {
 fn get_labels(lang: &str) -> TrayLabels {
     if lang.starts_with("zh") {
         TrayLabels {
-            show: "\u{663e}\u{793a} A7\u{5323}",                    // 显示 A7匣
+            show: "\u{663e}\u{793a} A7\u{5323}",                    // 显示 A7匳
             palette: "\u{547d}\u{4ee4}\u{9762}\u{677f}",            // 命令面板
+            clipboard_history: "\u{526a}\u{8d34}\u{677f}\u{5386}\u{53f2}", // 剪贴板历史
             settings: "\u{6253}\u{5f00}\u{8bbe}\u{7f6e}",            // 打开设置
             website: "\u{4ea7}\u{54c1}\u{5b98}\u{7f51}",              // 产品官网
             about_author: "\u{5173}\u{4e8e}\u{4f5c}\u{8005}",        // 关于作者
@@ -40,6 +42,7 @@ fn get_labels(lang: &str) -> TrayLabels {
         TrayLabels {
             show: "Show A7Box",
             palette: "Command Palette",
+            clipboard_history: "Clipboard History",
             settings: "Open Settings",
             website: "Website",
             about_author: "About Author",
@@ -75,6 +78,18 @@ fn build_tray(app: &tauri::AppHandle<Wry>, lang: &str) -> Result<(), Box<dyn std
     let show = MenuItem::with_id(app, "show", labels.show, true, None::<&str>)?;
     let sep1 = PredefinedMenuItem::separator(app)?;
     let palette = MenuItem::with_id(app, "palette", labels.palette, true, None::<&str>)?;
+    // Show the currently bound popup shortcut in the label (read from registry)
+    let popup_keys = app
+        .try_state::<crate::state::ShortcutRegistry>()
+        .and_then(|r| r.0.lock().ok().and_then(|m| m.get("open-clipboard-popup").cloned()))
+        .unwrap_or_else(|| "Alt+V".to_string());
+    let clipboard_history = MenuItem::with_id(
+        app,
+        "clipboard-history",
+        format!("{} ({})", labels.clipboard_history, popup_keys),
+        true,
+        None::<&str>,
+    )?;
     let sep2 = PredefinedMenuItem::separator(app)?;
     let settings = MenuItem::with_id(app, "settings", labels.settings, true, None::<&str>)?;
     let sep3 = PredefinedMenuItem::separator(app)?;
@@ -83,13 +98,31 @@ fn build_tray(app: &tauri::AppHandle<Wry>, lang: &str) -> Result<(), Box<dyn std
     let sep4 = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, "quit", labels.quit, true, None::<&str>)?;
 
-    let menu = Menu::with_items(app, &[
-        &show, &sep1,
-        &palette,
-        &sep2, &settings,
-        &sep3, &website, &about_author,
-        &sep4, &quit,
-    ])?;
+    // Hide the clipboard-history entry when the clipboard-manager module is
+    // disabled (persisted flag, so it is correct right after startup too)
+    let cm_enabled = app
+        .try_state::<std::sync::Arc<crate::clipboard::ClipboardManagerState>>()
+        .map(|s| s.is_module_enabled())
+        .unwrap_or(true);
+
+    let menu = if cm_enabled {
+        Menu::with_items(app, &[
+            &show, &sep1,
+            &palette,
+            &clipboard_history,
+            &sep2, &settings,
+            &sep3, &website, &about_author,
+            &sep4, &quit,
+        ])?
+    } else {
+        Menu::with_items(app, &[
+            &show, &sep1,
+            &palette,
+            &sep2, &settings,
+            &sep3, &website, &about_author,
+            &sep4, &quit,
+        ])?
+    };
 
     let mut builder = TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
@@ -119,6 +152,9 @@ fn build_tray(app: &tauri::AppHandle<Wry>, lang: &str) -> Result<(), Box<dyn std
             "palette" => {
                 // Command palette is a standalone floating window, no need to show main window
                 crate::shortcut_handler::execute_action(app, "toggle-command-palette");
+            }
+            "clipboard-history" => {
+                crate::commands::clipboard_manager::toggle_clipboard_popup(app, None);
             }
             "settings" => {
                 if let Some(window) = app.get_webview_window("main") {

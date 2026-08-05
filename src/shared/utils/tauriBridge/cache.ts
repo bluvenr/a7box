@@ -13,7 +13,7 @@ export async function getCacheSizes(): Promise<CacheSizes | null> {
   } catch { return null }
 }
 
-export async function clearCache(category: 'p2pDownloads' | 'screenshots' | 'transferHistory'): Promise<boolean> {
+export async function clearCache(category: 'p2pDownloads' | 'screenshots' | 'transferHistory' | 'clipboardImages' | 'clipboardHistory'): Promise<boolean> {
   const invoke = await getInvoke()
   if (!invoke) return false
   try {
@@ -21,7 +21,7 @@ export async function clearCache(category: 'p2pDownloads' | 'screenshots' | 'tra
   } catch { return false }
 }
 
-export async function openCacheDir(category: 'p2pDownloads' | 'screenshots'): Promise<boolean> {
+export async function openCacheDir(category: 'p2pDownloads' | 'screenshots' | 'clipboardImages'): Promise<boolean> {
   const invoke = await getInvoke()
   if (!invoke) return false
   try {

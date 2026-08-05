@@ -5,6 +5,7 @@
 // (e.g. commands::clipboard::get_clipboard_text).
 
 pub mod clipboard;
+pub mod clipboard_manager;
 pub mod screenshot;
 pub mod http;
 pub mod p2p;

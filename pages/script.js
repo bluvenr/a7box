@@ -10,7 +10,7 @@ const I18N = {
   en: {
     // Meta
     'page.title': 'A7Box — Your Tactical Efficiency Weapon on Desktop',
-    'page.description': 'A 100% local, cross-platform developer toolbox — 21 built-in tools. ~10MB, no cloud. Built with Tauri 2 + React 19.',
+    'page.description': 'A 100% local, cross-platform developer toolbox — 22 built-in tools. ~10MB, no cloud. Built with Tauri 2 + React 19.',
 
     // Nav
     'nav.features': 'Features',
@@ -24,7 +24,7 @@ const I18N = {
     'hero.title1': 'Your Tactical',
     'hero.title2': 'Efficiency Weapon',
     'hero.title3': 'on Desktop',
-    'hero.subtitle': 'An all-in-one developer toolbox that runs <strong>100% locally</strong> — 21 built-in tools in a ~10MB app. No cloud. No tracking. No account required.',
+    'hero.subtitle': 'An all-in-one developer toolbox that runs <strong>100% locally</strong> — 22 built-in tools in a ~10MB app. No cloud. No tracking. No account required.',
     'hero.download': 'Download Now',
     'hero.github': 'View on GitHub',
     'hero.available': 'Available for:',
@@ -65,7 +65,7 @@ const I18N = {
 
     // Tools
     'tools.tag': 'Toolbox',
-    'tools.title': '21 Tools, One Box',
+    'tools.title': '22 Tools, One Box',
     'tools.desc': 'Accessible via sidebar, command palette (Ctrl+K), or global shortcuts.',
 
     // Comparison
@@ -99,7 +99,7 @@ const I18N = {
 
     // Download
     'download.title': 'Ready to Deploy?',
-    'download.desc': 'Download A7Box — 21 tools, ~10MB, no cloud, no account. Just install and use.',
+    'download.desc': 'Download A7Box — 22 tools, ~10MB, no cloud, no account. Just install and use.',
     'download.win': 'Download for Windows',
     'download.mac': 'Download for macOS',
     'download.linux': 'Download for Linux',
@@ -121,7 +121,7 @@ const I18N = {
   zh: {
     // Meta
     'page.title': 'A7Box — 桌面端战术效率武器',
-    'page.description': '100% 本地运行的跨平台开发者工具箱，内置 21 款工具，~10MB 安装包，无云端依赖。基于 Tauri 2 + React 19 构建。',
+    'page.description': '100% 本地运行的跨平台开发者工具箱，内置 22 款工具，~10MB 安装包，无云端依赖。基于 Tauri 2 + React 19 构建。',
 
     // Nav
     'nav.features': '特性',
@@ -135,7 +135,7 @@ const I18N = {
     'hero.title1': '你的桌面端战术',
     'hero.title2': '效率武器',
     'hero.title3': '即刻就绪',
-    'hero.subtitle': '一款 <strong>100% 本地运行</strong> 的全功能开发者工具箱 —— 21 款内置工具，~10MB 安装包。不联网、不追踪、不需要账号。',
+    'hero.subtitle': '一款 <strong>100% 本地运行</strong> 的全功能开发者工具箱 —— 22 款内置工具，~10MB 安装包。不联网、不追踪、不需要账号。',
     'hero.download': '立即下载',
     'hero.github': '在 GitHub 查看',
     'hero.available': '支持平台：',
@@ -176,7 +176,7 @@ const I18N = {
 
     // Tools
     'tools.tag': '工具箱',
-    'tools.title': '21 款工具，一个盒子',
+    'tools.title': '22 款工具，一个盒子',
     'tools.desc': '支持侧边栏、命令面板（Ctrl+K）和自定义全局快捷键三种方式调用。',
 
     // Comparison
@@ -210,7 +210,7 @@ const I18N = {
 
     // Download
     'download.title': '准备好了吗？',
-    'download.desc': '下载 A7Box —— 21 款工具，~10MB，无云端，无账号。安装即用。',
+    'download.desc': '下载 A7Box —— 22 款工具，~10MB，无云端，无账号。安装即用。',
     'download.win': '下载 Windows 版',
     'download.mac': '下载 macOS 版',
     'download.linux': '下载 Linux 版',
@@ -277,6 +277,8 @@ const TOOL_ICONS = {
   lantransfer: `<svg viewBox="0 0 24 24" ${S}><rect x="2" y="3" width="7" height="6" rx="1"/><rect x="15" y="15" width="7" height="6" rx="1"/><path d="M9 6h4a2 2 0 0 1 2 2v4"/><path d="m13 10 2 2-2 2"/><path d="M15 18h-4a2 2 0 0 1-2-2v-4"/><path d="m11 14-2-2 2-2"/></svg>`,
 
   sysinfo: `<svg viewBox="0 0 24 24" ${S}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><polyline points="6 10 9 10 11 7 13 13 15 10 18 10"/></svg>`,
+
+  clipboard: `<svg viewBox="0 0 24 24" ${S}><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>`,
 };
 
 // ════════════════════════════════════════
@@ -312,6 +314,7 @@ const TOOLS_I18N = {
     { category: 'Productivity', tools: [
       { icon: 'reminder', name: 'Reminder', desc: 'Natural language, scheduled notifications' },
       { icon: 'timer', name: 'Timer', desc: 'Countdown & stopwatch with desktop widgets' },
+      { icon: 'clipboard', name: 'Clipboard Manager', desc: 'Encrypted history, quick paste, Paste Stack, snippets & rules' },
     ]},
     { category: 'Network', tools: [
       { icon: 'webservice', name: 'Web Service', desc: 'Serve any directory over LAN' },
@@ -347,6 +350,7 @@ const TOOLS_I18N = {
     { category: '效率', tools: [
       { icon: 'reminder', name: '事项提醒', desc: '自然语言输入，定时通知' },
       { icon: 'timer', name: '计时器', desc: '倒计时与秒表，支持桌面浮窗' },
+      { icon: 'clipboard', name: '剪贴板管理', desc: '加密历史、快捷粘贴、批量粘贴、片段与规则' },
     ]},
     { category: '网络', tools: [
       { icon: 'webservice', name: 'Web 服务', desc: '将本地目录变为局域网网站' },
@@ -359,7 +363,7 @@ const TOOLS_I18N = {
 // Comparison data (language-independent values, feature names from I18N)
 const COMPARE_FEATURES_EN = [
   'Cross-platform (Win/Mac/Linux)', '100% local, no cloud', 'Lightweight (<15MB)',
-  'Clipboard → floating window', 'Screenshot workflow', 'Screen color picker',
+  'Clipboard → floating window', 'Clipboard history manager', 'Screenshot workflow', 'Screen color picker',
   'Spotlight command palette', 'LAN file transfer', 'Local web server',
   'Reminder & notifications', 'Timer & desktop widgets', 'Global shortcuts', 'Works offline',
   'Desktop native app', 'Auto update', 'i18n (EN/ZH)', 'Open source (MIT)',
@@ -367,7 +371,7 @@ const COMPARE_FEATURES_EN = [
 
 const COMPARE_FEATURES_ZH = [
   '跨平台 (Win/Mac/Linux)', '100% 本地，无云端', '轻量 (<15MB)',
-  '剪贴板 → 浮窗', '截图工作流', '屏幕取色器',
+  '剪贴板 → 浮窗', '剪贴板历史管理', '截图工作流', '屏幕取色器',
   'Spotlight 命令面板', '局域网文件传输', '本地 Web 服务',
   '事项提醒', '计时器与桌面浮窗', '全局快捷键', '离线可用',
   '桌面原生应用', '自动更新', '国际化 (中/英)', '开源 (MIT)',
@@ -377,6 +381,7 @@ const COMPARE_VALUES = [
   [true, true, false, 'Win/Mac', 'Win', 'Win/Mac'],
   [true, true, false, true, true, false],
   [true, false, '—', false, false, false],
+  [true, false, false, false, false, true],
   [true, false, false, false, false, true],
   [true, false, false, false, false, false],
   [true, false, false, false, true, false],

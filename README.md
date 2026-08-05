@@ -43,7 +43,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 | Problem | A7Box Solution |
 |---------|---------------|
 | Searching the web for "JSON formatter online" and pasting sensitive data into someone else's server | Built-in JSON formatter — runs locally, your data never leaves |
-| Installing 10 separate apps for 10 different tasks | 21 tools in one ~10MB app |
+| Installing 10 separate apps for 10 different tasks | 22 tools in one ~10MB app |
 | Taking a screenshot, opening Paint, annotating, saving, then sharing | Region capture → 5 annotation tools → pin to screen → session history, all in one flow |
 | Using Electron-based toolboxes that eat 200MB+ RAM | Tauri + Rust backend — ~10MB installer, minimal memory footprint |
 | Copying JSON/code, then opening a separate tool to format it | Clipboard quick actions — copy, press shortcut, floating window pops up ready |
@@ -57,6 +57,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 - **Secure by Design** — Open-source, auditable, no telemetry, no cloud dependencies
 - **Spotlight Command Palette** — Fuzzy search, category filtering, keyboard navigation (`Ctrl+K`) for instant tool access
 - **Clipboard Quick Actions** — Copy content, press a shortcut, floating window pops up to process (JSON, code, Markdown, QR)
+- **Clipboard Manager** — Searchable, pinnable history with local encryption, quick paste popup (`Alt+V`), Paste Stack, snippets and automation rules
 - **Full Screenshot Workflow** — Capture → annotate (pen/rect/text/mosaic/blur) → pin to screen → session history
 - **Pixel-Level Color Picker** — Full-screen transparent overlay with real-time magnifier for precise color sampling
 - **LAN Collaboration** — Serve any directory as a website, or P2P transfer files with other A7Box devices
@@ -65,7 +66,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 
 ## 🧰 Tools
 
-21 built-in tools, accessible via sidebar, command palette (`Ctrl+K`), or customizable global shortcuts.
+22 built-in tools, accessible via sidebar, command palette (`Ctrl+K`), or customizable global shortcuts.
 
 **Developer Essentials**
 
@@ -109,6 +110,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 |------|-------------|
 | **Reminder** | Local reminders with natural language input, scheduled notifications, and system toasts |
 | **Timer** | Countdown & stopwatch with auto-spawn desktop widgets, drag-to-reposition |
+| **Clipboard Manager** | Encrypted clipboard history with search & pinning, quick paste popup, Paste Stack, snippets and automation rules |
 
 **Network**
 
@@ -126,6 +128,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 | 100% local, no cloud | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ |
 | Lightweight (<15MB) | ✓ | ✗ | — | ✗ | ✗ | ✗ |
 | Clipboard → floating window | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| Clipboard history manager | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ (plugin) |
 | Screenshot workflow | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Screen color picker | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ |
 | Spotlight command palette | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ |
@@ -238,7 +241,7 @@ src/
 ├── components/           # Shared UI (Dialog, Toast, TitleBar, etc.)
 ├── core/                 # Core systems (command palette, i18n, shortcuts, theme, updater)
 ├── locales/              # i18n translations (en-US, zh-CN)
-├── modules/              # 20 tool modules (each self-contained)
+├── modules/              # 22 tool modules (each self-contained)
 ├── shared/               # Shared hooks, utils, components
 └── styles/               # Global CSS
 
@@ -246,7 +249,7 @@ src-tauri/                # Rust backend
 ├── src/
 │   ├── commands/         # Tauri IPC commands
 │   ├── screenshot/       # Screenshot capture engine
-│   ├── clipboard/        # Clipboard operations
+│   ├── clipboard/        # Clipboard manager (history, paste, rules)
 │   ├── http_server/      # LAN web server
 │   ├── p2p/              # P2P file transfer
 │   ├── tray/             # System tray

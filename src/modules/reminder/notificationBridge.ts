@@ -18,13 +18,15 @@ import { isTauri } from '../../shared/utils'
 export interface BannerEntry {
   reminder: Reminder
   id: string
+  /** True = advance heads-up ("starts in N min"), false = on-time due */
+  isAdvance?: boolean
 }
 
 interface ReminderBannerState {
   queue: BannerEntry[]
   current: BannerEntry | null
   /** Push a reminder into the banner queue and auto-show if empty */
-  push: (reminder: Reminder) => void
+  push: (reminder: Reminder, isAdvance?: boolean) => void
   /** Dismiss current and show next from queue */
   dismissCurrent: () => void
   /** Remove a specific entry from the queue */
@@ -35,10 +37,18 @@ export const useReminderBannerStore = create<ReminderBannerState>((set, get) => 
   queue: [],
   current: null,
 
-  push: (reminder) => {
+  push: (reminder, isAdvance) => {
     const id = `${reminder.id}-${Date.now()}`
-    const entry: BannerEntry = { reminder, id }
-    const { queue, current } = get()
+    const entry: BannerEntry = { reminder, id, isAdvance }
+    let { queue, current } = get()
+
+    // An on-time due entry supersedes a still-showing advance entry of the
+    // same reminder (otherwise dedup below would swallow the due banner)
+    if (!isAdvance) {
+      if (current?.reminder.id === reminder.id && current.isAdvance) current = null
+      queue = queue.filter((e) => !(e.reminder.id === reminder.id && e.isAdvance))
+    }
+
     // Avoid duplicate banner for same reminder id
     if (current?.reminder.id === reminder.id) return
     if (queue.some((e) => e.reminder.id === reminder.id)) return
@@ -109,20 +119,25 @@ interface ToastReminderData {
   triggerAt: number
   status: string
   isOverdue: boolean
+  /** True = advance heads-up card (pseudo-id, no snooze) */
+  isAdvance?: boolean
 }
 
 /** Reminders queued to send to toast window before it was ready */
-const pendingToastReminders: Reminder[] = []
+const pendingToastReminders: Array<{ reminder: Reminder; isAdvance: boolean }> = []
 
 /** Serialize a reminder for the toast window (only UI-needed fields) */
-function serializeForToast(reminder: Reminder): ToastReminderData {
+function serializeForToast(reminder: Reminder, isAdvance: boolean): ToastReminderData {
   return {
-    id: reminder.id,
+    // Advance cards get a pseudo-id so they don't collide with (or suppress)
+    // the on-time due card of the same reminder in the toast window's dedup.
+    id: isAdvance ? `${reminder.id}-advance-${reminder.triggerAt}` : reminder.id,
     title: reminder.title,
     note: reminder.note,
     triggerAt: reminder.triggerAt,
     status: reminder.status,
-    isOverdue: reminder.triggerAt < Date.now(),
+    isOverdue: !isAdvance && reminder.triggerAt < Date.now(),
+    isAdvance,
   }
 }
 
@@ -131,7 +146,7 @@ function serializeForToast(reminder: Reminder): ToastReminderData {
  *  Sends ALL provided reminders — the toast window deduplicates by ID, so already-present
  *  reminders are silently ignored. This ensures previously-fired but unhandled reminders
  *  are re-shown when a new reminder fires. */
-async function showNotificationToast(reminders: Reminder[]): Promise<boolean> {
+async function showNotificationToast(reminders: Reminder[], isAdvance = false): Promise<boolean> {
   if (!isTauri() || reminders.length === 0) return false
   try {
     const { invoke } = await import('@tauri-apps/api/core')
@@ -146,11 +161,11 @@ async function showNotificationToast(reminders: Reminder[]): Promise<boolean> {
 
     if (isNewWindow) {
       // New window: queue all reminders, will be sent when toast signals ready
-      reminders.forEach((r) => pendingToastReminders.push(r))
+      reminders.forEach((r) => pendingToastReminders.push({ reminder: r, isAdvance }))
     } else {
       // Existing window: send all reminders immediately (listener is already active)
       for (const r of reminders) {
-        await emit('notification-toast-data', serializeForToast(r))
+        await emit('notification-toast-data', serializeForToast(r, isAdvance))
       }
     }
     return true
@@ -173,8 +188,8 @@ export async function setupToastListeners(): Promise<() => void> {
     // Toast window is ready to receive data (newly mounted)
     const unlistenReady = await listen('notification-toast-ready', () => {
       // Send all pending reminders
-      pendingToastReminders.forEach((r) => {
-        emit('notification-toast-data', serializeForToast(r)).catch(() => {})
+      pendingToastReminders.forEach(({ reminder, isAdvance }) => {
+        emit('notification-toast-data', serializeForToast(reminder, isAdvance)).catch(() => {})
       })
       pendingToastReminders.length = 0
     })
@@ -183,7 +198,10 @@ export async function setupToastListeners(): Promise<() => void> {
     const unlistenAction = await listen<{ action: string; reminderId: string }>(
       'notification-toast-action',
       async (event) => {
-        const { action, reminderId } = event.payload
+        // Advance cards use pseudo-ids ("<id>-advance-<triggerAt>") — resolve
+        // the real reminder id before handling the action.
+        const reminderId = event.payload.reminderId.split('-advance-')[0]
+        const { action } = event.payload
         if (action === 'done') {
           handleMarkDone(reminderId)
         } else if (action === 'snooze') {
@@ -270,6 +288,32 @@ async function checkDueReminders() {
 
     firedSet.add(fireKey)
     newDue.push(reminder)
+  }
+
+  // ── Advance heads-up notifications (N minutes before triggerAt) ────────────
+  // Fires once per occurrence (keyed by triggerAt) and only while the
+  // reminder is still pending and the on-time moment hasn't arrived yet.
+  const newAdvance: Reminder[] = []
+  for (const reminder of freshReminders) {
+    if (reminder.status !== 'pending') continue
+    if (!reminder.advanceMinutes || reminder.advanceMinutes <= 0) continue
+    if (now >= reminder.triggerAt) continue // the due loop above handles it
+    const advanceAt = reminder.triggerAt - reminder.advanceMinutes * 60_000
+    if (now < advanceAt) continue
+    const fireKey = `${reminder.id}-advance-${reminder.triggerAt}`
+    if (firedSet.has(fireKey)) continue
+
+    firedSet.add(fireKey)
+    newAdvance.push(reminder)
+  }
+
+  if (newAdvance.length > 0) {
+    if (isTauri()) {
+      const toastShown = await showNotificationToast(newAdvance, true)
+      if (!toastShown) newAdvance.forEach((r) => bannerStore.push(r, true))
+    } else {
+      newAdvance.forEach((r) => bannerStore.push(r, true))
+    }
   }
 
   if (newDue.length === 0) return

@@ -59,6 +59,22 @@ export default function ReminderForm({ initial, onDataChange }: Props) {
     initial?.repeat?.intervalUnit ?? 'hour'
   )
 
+  // Advance notice (heads-up N minutes before triggerAt)
+  const ADVANCE_PRESETS = [5, 15, 30, 60]
+  const [advanceMode, setAdvanceMode] = useState<'none' | 'preset' | 'custom'>(() => {
+    const v = initial?.advanceMinutes
+    if (!v) return 'none'
+    return ADVANCE_PRESETS.includes(v) ? 'preset' : 'custom'
+  })
+  const [advancePreset, setAdvancePreset] = useState<number>(
+    ADVANCE_PRESETS.includes(initial?.advanceMinutes ?? 0) ? (initial!.advanceMinutes as number) : 15
+  )
+  const [advanceCustom, setAdvanceCustom] = useState<number>(
+    initial?.advanceMinutes && !ADVANCE_PRESETS.includes(initial.advanceMinutes)
+      ? initial.advanceMinutes
+      : 10
+  )
+
   // Validation state
   const [titleError, setTitleError] = useState(false)
   const [pastTimeError, setPastTimeError] = useState(false)
@@ -93,13 +109,18 @@ export default function ReminderForm({ initial, onDataChange }: Props) {
       if (initial?.repeat?.endDate) repeat.endDate = initial.repeat.endDate
     }
     const triggerAt = combineDateTime(dateStr, timeStr)
+    const advanceMinutes =
+      advanceMode === 'none' ? undefined
+      : advanceMode === 'preset' ? advancePreset
+      : Math.max(1, Math.min(1440, Math.round(advanceCustom) || 1))
     return {
       title: title.trim(),
       note: note.trim(),
       triggerAt: isNaN(triggerAt) ? Date.now() + 3600000 : triggerAt, // fallback if invalid
+      advanceMinutes,
       repeat,
     }
-  }, [title, note, dateStr, timeStr, hasRepeat, repeatType, weekdays, monthDays, interval, intervalUnit])
+  }, [title, note, dateStr, timeStr, hasRepeat, repeatType, weekdays, monthDays, interval, intervalUnit, advanceMode, advancePreset, advanceCustom])
 
   // Notify parent of data changes on every input
   useEffect(() => {
@@ -276,6 +297,67 @@ export default function ReminderForm({ initial, onDataChange }: Props) {
         {pastTimeError && (
           <p className="text-[11px] text-error">{t('modules.reminder.ui.form.pastTimeError')}</p>
         )}
+
+        {/* Advance notice: heads-up N minutes before the trigger time */}
+        <div>
+          <label className="mb-1 block text-[10px] text-text-disabled">
+            {t('modules.reminder.ui.form.labelAdvance', { defaultValue: 'Advance notice' })}
+          </label>
+          <div className="flex flex-wrap items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setAdvanceMode('none')}
+              className={`rounded-md px-2.5 py-1 text-[10px] transition-colors cursor-pointer ${
+                advanceMode === 'none'
+                  ? 'bg-primary text-white'
+                  : 'bg-bg-overlay text-text-muted hover:bg-bg-hover'
+              }`}
+            >
+              {t('modules.reminder.ui.form.advanceNone', { defaultValue: 'None' })}
+            </button>
+            {ADVANCE_PRESETS.map((min) => (
+              <button
+                key={min}
+                type="button"
+                onClick={() => { setAdvanceMode('preset'); setAdvancePreset(min) }}
+                className={`rounded-md px-2.5 py-1 text-[10px] transition-colors cursor-pointer ${
+                  advanceMode === 'preset' && advancePreset === min
+                    ? 'bg-primary text-white'
+                    : 'bg-bg-overlay text-text-muted hover:bg-bg-hover'
+                }`}
+              >
+                {t('modules.reminder.ui.form.advanceMinutesN', { defaultValue: '{{n}} min before', n: min })}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setAdvanceMode('custom')}
+              className={`rounded-md px-2.5 py-1 text-[10px] transition-colors cursor-pointer ${
+                advanceMode === 'custom'
+                  ? 'bg-primary text-white'
+                  : 'bg-bg-overlay text-text-muted hover:bg-bg-hover'
+              }`}
+            >
+              {t('modules.reminder.ui.form.advanceCustom', { defaultValue: 'Custom' })}
+            </button>
+            {advanceMode === 'custom' && (
+              <span className="flex items-center gap-1">
+                <input
+                  type="number"
+                  min={1}
+                  max={1440}
+                  value={advanceCustom}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value)
+                    setAdvanceCustom(isNaN(v) ? 1 : Math.max(1, Math.min(1440, v)))
+                  }}
+                  className="w-16 rounded-lg border border-border-base bg-bg-overlay px-2 py-1 text-xs text-text-primary outline-none focus:border-border-focus"
+                />
+                <span className="text-[10px] text-text-muted">{t('modules.reminder.ui.minutes')}</span>
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* ── Divider ── */}

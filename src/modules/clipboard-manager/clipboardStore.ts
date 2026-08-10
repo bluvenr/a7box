@@ -241,6 +241,7 @@ export const useClipboardStore = create<ClipboardState>()((set, get) => ({
 let unlistenHistory: (() => void) | null = null
 let unlistenRule: (() => void) | null = null
 let unlistenToast: (() => void) | null = null
+let unlistenSettings: (() => void) | null = null
 let refreshTimer: ReturnType<typeof setTimeout> | null = null
 let eventRefCount = 0
 
@@ -317,14 +318,25 @@ export function initClipboardEvents(): () => void {
       unlistenToast = un
     })
   }
+  if (!unlistenSettings) {
+    // Settings flipped elsewhere (tray toggle / another window) — reload so
+    // the capture switch shown in the UI never goes stale.
+    void bridge.onSettingsChanged(() => {
+      void useClipboardStore.getState().loadSettings()
+    }).then((un) => {
+      if (un) unlistenSettings = un
+    })
+  }
   return () => {
     eventRefCount -= 1
     if (eventRefCount > 0) return
     unlistenHistory?.()
     unlistenRule?.()
     unlistenToast?.()
+    unlistenSettings?.()
     unlistenHistory = null
     unlistenRule = null
     unlistenToast = null
+    unlistenSettings = null
   }
 }

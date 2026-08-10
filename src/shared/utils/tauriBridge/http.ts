@@ -60,3 +60,28 @@ export async function httpListServers(): Promise<HttpInstanceInfo[]> {
     return await invoke<HttpInstanceInfo[]>('http_list_servers')
   } catch { return [] }
 }
+
+/** Change the port of a running instance (exact bind). Keeps the error
+ *  message so the UI can explain a busy target port. */
+export async function httpChangePort(
+  id: string,
+  port: number
+): Promise<{ ok: boolean; info?: HttpInstanceInfo; error?: string }> {
+  const invoke = await getInvoke()
+  if (!invoke) return { ok: false, error: 'no-tauri' }
+  try {
+    const info = await invoke<HttpInstanceInfo>('http_change_port', { id, port })
+    return { ok: true, info }
+  } catch (e) {
+    return { ok: false, error: String(e) }
+  }
+}
+
+/** Probe whether a port is currently free. null = cannot probe (non-Tauri). */
+export async function httpCheckPort(port: number): Promise<boolean | null> {
+  const invoke = await getInvoke()
+  if (!invoke) return null
+  try {
+    return await invoke<boolean>('http_check_port', { port })
+  } catch { return null }
+}

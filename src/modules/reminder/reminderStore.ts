@@ -200,6 +200,9 @@ export const useReminderStore = create<ReminderState>()(
           title: data.title.slice(0, 100),
           note: data.note ? data.note.slice(0, 500) : undefined,
           triggerAt,
+          advanceMinutes: data.advanceMinutes && data.advanceMinutes > 0
+            ? Math.min(1440, Math.round(data.advanceMinutes))
+            : undefined,
           repeat: data.repeat,
           status: 'pending',
           createdAt: now,

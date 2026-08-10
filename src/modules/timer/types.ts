@@ -40,6 +40,16 @@ export interface StopwatchState {
   laps: StopwatchLap[]
 }
 
+/** Snapshot of the previous stopwatch session (kept on reset) */
+export interface StopwatchSession {
+  /** Final total elapsed in ms */
+  elapsed: number
+  /** Lap entries recorded in that session */
+  laps: StopwatchLap[]
+  /** Timestamp when the session was reset */
+  endedAt: number
+}
+
 /** Recent countdown entry (for one-click restart) */
 export interface TimerRecent {
   /** Duration in ms */

@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
-import { ClipboardList, X, Layers } from 'lucide-react'
+import { ClipboardList, X, Layers, Pause } from 'lucide-react'
 import { useClipboardStore } from './clipboardStore'
 import { useClipboardHistory } from './hooks/useClipboardHistory'
 import { SearchBar } from './components/SearchBar'
@@ -92,6 +92,7 @@ export default function ClipboardPopup() {
   const togglePin = useClipboardStore((s) => s.togglePin)
   const deleteClip = useClipboardStore((s) => s.deleteClip)
   const addToStack = useClipboardStore((s) => s.addToStack)
+  const capturePaused = useClipboardStore((s) => !!s.settings && !s.settings.enabled)
 
   const [activeIndex, setActiveIndex] = useState(0)
   const [showStack, setShowStack] = useState(() => searchParams.get('mode') === 'paste-stack')
@@ -383,6 +384,18 @@ export default function ClipboardPopup() {
           </button>
         </div>
       </div>
+
+      {/* Paused notice — capture off, but existing history stays usable */}
+      {capturePaused && (
+        <div className="flex items-center gap-1.5 border-y border-warning/30 bg-warning/10 px-3 py-1">
+          <Pause size={10} className="shrink-0 text-warning" />
+          <span className="truncate text-[10px] text-warning">
+            {t('modules.clipboardManager.pausedShort', {
+              defaultValue: 'Monitoring paused — new copies are not recorded',
+            })}
+          </span>
+        </div>
+      )}
 
       {/* Search */}
       <div className="px-3 pb-2">

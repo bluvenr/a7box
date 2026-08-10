@@ -24,6 +24,8 @@ export interface ToastReminderData {
   triggerAt: number
   status: string
   isOverdue: boolean
+  /** True = advance heads-up card (pseudo-id "<id>-advance-<ts>", no snooze) */
+  isAdvance?: boolean
 }
 
 function closeWindow() {
@@ -114,10 +116,16 @@ function ToastCard({ reminder, onRemove, t }: ToastCardProps) {
   const now = Date.now()
   const diffMs = now - reminder.triggerAt
   const diffMin = Math.floor(diffMs / 60000)
-  const isOverdue = reminder.isOverdue || diffMs > 0
+  const isOverdue = !reminder.isAdvance && (reminder.isOverdue || diffMs > 0)
 
   let timeText: string
-  if (diffMin <= 0) {
+  if (reminder.isAdvance) {
+    // Heads-up: count down to the trigger moment
+    const minsUntil = Math.ceil((reminder.triggerAt - now) / 60000)
+    timeText = minsUntil <= 1
+      ? t('modules.reminder.ui.toast.advanceSoon', { defaultValue: 'Starting shortly' })
+      : t('modules.reminder.ui.toast.advanceIn', { defaultValue: 'Starts in {{min}} min', min: minsUntil })
+  } else if (diffMin <= 0) {
     timeText = t('modules.reminder.ui.toast.dueNow')
   } else if (diffMin < 60) {
     timeText = t('modules.reminder.ui.toast.overdue', { min: diffMin })
@@ -156,7 +164,7 @@ function ToastCard({ reminder, onRemove, t }: ToastCardProps) {
       )}
 
       {/* Left color bar */}
-      <div className={`w-1 shrink-0 ${isOverdue ? 'bg-error' : 'bg-primary'}`} />
+      <div className={`w-1 shrink-0 ${isOverdue ? 'bg-error' : reminder.isAdvance ? 'bg-warning' : 'bg-primary'}`} />
 
       {/* Content */}
       <div className="flex flex-1 flex-col min-w-0">
@@ -164,7 +172,7 @@ function ToastCard({ reminder, onRemove, t }: ToastCardProps) {
         <div className="flex items-start justify-between gap-2 px-3 pt-2.5 pb-1" data-tauri-drag-region>
           <div className="flex items-center gap-2 min-w-0 pointer-events-none">
             <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${
-              isOverdue ? 'bg-error/10 text-error' : 'bg-primary/10 text-primary'
+              isOverdue ? 'bg-error/10 text-error' : reminder.isAdvance ? 'bg-warning/10 text-warning' : 'bg-primary/10 text-primary'
             }`}>
               <Bell size={12} />
             </div>
@@ -188,6 +196,9 @@ function ToastCard({ reminder, onRemove, t }: ToastCardProps) {
             <span>{triggerTimeStr}</span>
             {isOverdue && (
               <span className="text-error font-medium">· {timeText}</span>
+            )}
+            {reminder.isAdvance && (
+              <span className="text-warning font-medium">· {timeText}</span>
             )}
           </div>
           {reminder.note && (
@@ -213,13 +224,16 @@ function ToastCard({ reminder, onRemove, t }: ToastCardProps) {
             <CheckCircle size={10} />
             {t('modules.reminder.ui.toast.done')}
           </button>
-          <button
-            onClick={() => handleAction('snooze')}
-            className="flex items-center gap-0.5 rounded-md bg-warning/10 px-2 py-1 text-[10px] font-medium text-warning hover:bg-warning/20 transition-colors cursor-pointer"
-          >
-            <Clock size={10} />
-            {t('modules.reminder.ui.toast.snooze')}
-          </button>
+          {/* Snooze makes no sense before the reminder is due */}
+          {!reminder.isAdvance && (
+            <button
+              onClick={() => handleAction('snooze')}
+              className="flex items-center gap-0.5 rounded-md bg-warning/10 px-2 py-1 text-[10px] font-medium text-warning hover:bg-warning/20 transition-colors cursor-pointer"
+            >
+              <Clock size={10} />
+              {t('modules.reminder.ui.toast.snooze')}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -269,6 +283,16 @@ export default function NotificationToast() {
           if (dismissedIds.current.has(data.id)) return
           // Skip duplicates (already showing)
           if (existingIds.current.has(data.id)) return
+
+          // An on-time due card supersedes any still-showing advance card of
+          // the same reminder (advance cards use "<id>-advance-<ts>" ids)
+          if (!data.isAdvance) {
+            const prefix = `${data.id}-advance-`
+            for (const key of Array.from(existingIds.current)) {
+              if (key.startsWith(prefix)) existingIds.current.delete(key)
+            }
+            setReminders((prev) => prev.filter((r) => !r.id.startsWith(prefix)))
+          }
 
           existingIds.current.add(data.id)
           hasReceivedRef.current = true

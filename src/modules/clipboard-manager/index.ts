@@ -2,9 +2,9 @@
  * Clipboard Manager Module Registration
  */
 
-import { ClipboardList, Layers, Search } from 'lucide-react'
+import { ClipboardList, Layers, Search, Power } from 'lucide-react'
 import type { A7Module } from '../../core/types'
-import { startClipboardManager, stopClipboardManager, setModuleEnabled, openPopup } from './bridge'
+import { startClipboardManager, stopClipboardManager, setModuleEnabled, openPopup, getCmSettings, saveCmSettings } from './bridge'
 
 export const clipboardManagerModule: A7Module = {
   meta: {
@@ -53,6 +53,22 @@ export const clipboardManagerModule: A7Module = {
       shortcut: 'Alt+Shift+V',
       run: async () => {
         await openPopup('paste-stack')
+      },
+    },
+    {
+      id: 'toggle-capture',
+      label: 'Pause/Resume Clipboard Monitoring',
+      labelI18n: 'modules.clipboardManager.commands.toggleCapture',
+      description: 'Quickly toggle clipboard capture on or off',
+      descriptionI18n: 'modules.clipboardManager.commands.toggleCaptureDesc',
+      icon: Power,
+      run: async () => {
+        // Quick privacy switch: flip the capture flag via the same path as
+        // the settings page (Rust side starts/stops the watcher accordingly)
+        const resp = await getCmSettings()
+        if (!resp) return
+        const { capability: _c, imagesDir: _d, ...settings } = resp
+        await saveCmSettings({ ...settings, enabled: !settings.enabled })
       },
     },
   ],

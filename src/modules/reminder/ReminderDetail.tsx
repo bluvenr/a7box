@@ -195,6 +195,15 @@ export default function ReminderDetail({ reminder }: Props) {
             {t('modules.reminder.ui.snoozed')} → {formatTriggerDateTime(reminder.snoozeUntil, i18n.language)}
           </p>
         )}
+        {!!reminder.advanceMinutes && (
+          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-text-muted">
+            <Bell size={10} className="text-warning" />
+            {t('modules.reminder.ui.detail.advanceNotice', {
+              defaultValue: '{{n}} min before',
+              n: reminder.advanceMinutes,
+            })}
+          </p>
+        )}
       </div>
 
       {/* Repeat */}

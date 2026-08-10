@@ -16,6 +16,7 @@ import {
   Square,
   Layers,
   Eraser,
+  Pause,
 } from 'lucide-react'
 import { useClipboardStore } from './clipboardStore'
 import { formatShortcut } from '../../shared/utils'
@@ -74,6 +75,8 @@ export default function ClipboardManager() {
   const deleteClip = useClipboardStore((s) => s.deleteClip)
   const addToStack = useClipboardStore((s) => s.addToStack)
   const pasteStackCount = useClipboardStore((s) => s.pasteStack.length)
+  const settings = useClipboardStore((s) => s.settings)
+  const saveSettings = useClipboardStore((s) => s.saveSettings)
   const confirm = useConfirm()
   const toast = useToast()
 
@@ -150,6 +153,14 @@ export default function ClipboardManager() {
     }
   }
 
+  const capturePaused = !!settings && !settings.enabled
+
+  /** One-click resume from the paused banner (mirrors the tray toggle) */
+  const handleResumeCapture = () => {
+    if (!settings) return
+    void saveSettings({ ...settings, enabled: true })
+  }
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
@@ -166,6 +177,25 @@ export default function ClipboardManager() {
         </div>
         <StatsBar />
       </div>
+
+      {/* Paused banner — capture is off; history stays viewable/usable */}
+      {capturePaused && (
+        <div className="mx-6 mb-2 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2">
+          <Pause size={13} className="shrink-0 text-warning" />
+          <p className="flex-1 text-[11px] leading-snug text-warning">
+            {t('modules.clipboardManager.pausedBanner', {
+              defaultValue:
+                'Clipboard monitoring is paused — new copies will not be recorded. Existing history stays available.',
+            })}
+          </p>
+          <button
+            onClick={handleResumeCapture}
+            className="shrink-0 rounded-md border border-warning/40 px-2.5 py-1 text-[11px] text-warning hover:bg-warning/15 cursor-pointer transition-colors"
+          >
+            {t('modules.clipboardManager.resumeCapture', { defaultValue: 'Resume' })}
+          </button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-border-subtle px-6">

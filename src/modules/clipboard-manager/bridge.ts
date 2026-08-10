@@ -252,6 +252,17 @@ export async function onHistoryChanged(
   return unlisten
 }
 
+/** Fired when capture settings changed outside this window (e.g. the tray
+ *  "pause monitoring" toggle or another window's settings page). */
+export async function onSettingsChanged(callback: () => void): Promise<(() => void) | null> {
+  const listen = await getListen()
+  if (!listen) return null
+  const unlisten = await listen('cm-settings-changed', () => {
+    callback()
+  })
+  return unlisten
+}
+
 /** Subscribe to rule notification events (toast driven). */
 export async function onRuleNotify(
   callback: (payload: { ruleName: string }) => void

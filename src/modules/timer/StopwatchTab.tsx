@@ -4,7 +4,7 @@
  */
 import { useMemo, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Play, Pause, RotateCcw, Flag, Copy, Check, Timer, Pin, PinOff } from 'lucide-react'
+import { Play, Pause, RotateCcw, Flag, Copy, Check, Timer, Pin, PinOff, History, ChevronDown, X } from 'lucide-react'
 import { useTimerStore } from './timerStore'
 import { useToast } from '../../components/Toast'
 import { formatStopwatch, formatLapTime } from './utils'
@@ -27,7 +27,7 @@ function findExtremes(laps: StopwatchLap[]): { fastest: number | null; slowest: 
 }
 
 export default function StopwatchTab({ now }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const showToast = useToast()
   const stopwatch = useTimerStore((s) => s.stopwatch)
   const swStart = useTimerStore((s) => s.swStart)
@@ -37,6 +37,11 @@ export default function StopwatchTab({ now }: Props) {
 
   const swWidgetPinned = useTimerStore((s) => s.swWidgetPinned)
   const setSwWidgetPinned = useTimerStore((s) => s.setSwWidgetPinned)
+
+  // Previous session snapshot (kept on reset)
+  const lastSession = useTimerStore((s) => s.lastSession)
+  const swClearLastSession = useTimerStore((s) => s.swClearLastSession)
+  const [lastOpen, setLastOpen] = useState(false)
 
   // ── First-time tooltip for auto-float button ──
   const [showFloatTip, setShowFloatTip] = useState(() => {
@@ -73,6 +78,10 @@ export default function StopwatchTab({ now }: Props) {
   }, [stopwatch.elapsed, stopwatch.startedAt, stopwatch.running, now])
 
   const { fastest, slowest } = useMemo(() => findExtremes(stopwatch.laps), [stopwatch.laps])
+  const lastExtremes = useMemo(
+    () => (lastSession ? findExtremes(lastSession.laps) : { fastest: null, slowest: null }),
+    [lastSession]
+  )
 
   const isRunning = stopwatch.running
   const hasStarted = elapsed > 0
@@ -248,8 +257,74 @@ export default function StopwatchTab({ now }: Props) {
         </div>
       )}
 
+      {/* ── Last session (kept from the previous reset) ── */}
+      {stopwatch.laps.length === 0 && lastSession && (
+        <div className="flex-1 min-h-0 border-t border-border-subtle flex flex-col">
+          {/* Collapsible header */}
+          <div
+            className="flex items-center justify-between px-4 py-2 cursor-pointer select-none hover:bg-bg-hover transition-colors"
+            onClick={() => setLastOpen((v) => !v)}
+          >
+            <div className="flex items-center gap-1.5 text-[10px] font-medium text-text-muted uppercase tracking-wider">
+              <History size={11} />
+              {t('modules.timer.ui.lastSession')}
+              <span className="font-mono text-text-secondary">{formatStopwatch(lastSession.elapsed)}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-text-disabled">
+                {new Date(lastSession.endedAt).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <button
+                onClick={(e) => { e.stopPropagation(); swClearLastSession() }}
+                className="rounded p-0.5 text-text-disabled hover:text-error hover:bg-error/10 transition-colors cursor-pointer"
+                title={t('common.clear')}
+              >
+                <X size={11} />
+              </button>
+              <ChevronDown size={12} className={`text-text-muted transition-transform ${lastOpen ? 'rotate-180' : ''}`} />
+            </div>
+          </div>
+
+          {/* Expanded: laps of the previous session (read-only) */}
+          {lastOpen && (
+            <div className="overflow-y-auto flex-1" style={{ scrollbarGutter: 'stable' }}>
+              {lastSession.laps.length === 0 ? (
+                <p className="px-4 py-2 text-[11px] text-text-disabled">
+                  {t('modules.timer.ui.lastSessionNoLaps')}
+                </p>
+              ) : (
+                [...lastSession.laps].reverse().map((lap) => {
+                  const isFastest = lap.index === lastExtremes.fastest
+                  const isSlowest = lap.index === lastExtremes.slowest
+                  return (
+                    <div
+                      key={lap.index}
+                      className={`
+                        flex items-center gap-4 w-full px-4 py-2 text-xs tabular-nums
+                        border-b border-border-subtle/50
+                        ${isFastest ? 'bg-success/[0.04]' : isSlowest ? 'bg-error/[0.04]' : ''}
+                      `}
+                    >
+                      <span className="w-8 text-text-muted font-medium">#{lap.index}</span>
+                      <span className={`flex-1 font-mono ${isFastest ? 'text-success' : isSlowest ? 'text-error' : 'text-text-primary'}`}>
+                        {formatLapTime(lap.lapTime)}
+                      </span>
+                      <span className="flex-1 text-right font-mono text-text-muted">
+                        +{formatLapTime(lap.totalTime)}
+                      </span>
+                      {isFastest && <span className="text-[10px]" title={t('modules.timer.ui.fastest')}>🐇</span>}
+                      {isSlowest && <span className="text-[10px]" title={t('modules.timer.ui.slowest')}>🐢</span>}
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Empty state */}
-      {stopwatch.laps.length === 0 && (
+      {stopwatch.laps.length === 0 && !lastSession && (
         <div className="flex-1 flex items-center justify-center text-text-disabled text-xs">
           <div className="flex items-center gap-1.5">
             <Timer size={12} />

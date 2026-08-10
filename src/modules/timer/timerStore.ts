@@ -5,7 +5,7 @@
  */
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { CountdownTimer, StopwatchState, StopwatchLap, TimerRecent } from './types'
+import type { CountdownTimer, StopwatchState, StopwatchLap, StopwatchSession, TimerRecent } from './types'
 
 /** Emit stopwatch state to floating widget windows via Tauri event.
  *  Uses emitTo for targeted cross-window delivery (Tauri 2 emit is window-scoped). */
@@ -89,6 +89,9 @@ interface TimerStoreState {
   swPause: () => void
   swReset: () => void
   swLap: () => void
+  /** Snapshot of the previous session (kept on reset, in-memory only) */
+  lastSession: StopwatchSession | null
+  swClearLastSession: () => void
 
   // ── Recents (persisted) ──
   recents: TimerRecent[]
@@ -129,6 +132,8 @@ export const useTimerStore = create<TimerStoreState>()(
         startedAt: null,
         laps: [],
       },
+      lastSession: null,
+      swClearLastSession: () => set({ lastSession: null }),
 
       // ── Countdown Actions ──
 
@@ -276,7 +281,20 @@ export const useTimerStore = create<TimerStoreState>()(
       },
 
       swReset: () => {
-        set({ stopwatch: { running: false, elapsed: 0, startedAt: null, laps: [] } })
+        set((s) => {
+          // Preserve the outgoing session as "last session" so the user can
+          // still review its total time and laps after resetting.
+          const finalElapsed = s.stopwatch.running && s.stopwatch.startedAt
+            ? s.stopwatch.elapsed + (Date.now() - s.stopwatch.startedAt)
+            : s.stopwatch.elapsed
+          const lastSession: StopwatchSession | null = finalElapsed > 0
+            ? { elapsed: finalElapsed, laps: s.stopwatch.laps, endedAt: Date.now() }
+            : s.lastSession
+          return {
+            stopwatch: { running: false, elapsed: 0, startedAt: null, laps: [] },
+            lastSession,
+          }
+        })
         emitSwState(get().stopwatch)
       },
 

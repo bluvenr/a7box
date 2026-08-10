@@ -10,6 +10,8 @@ import {
   httpStartServer,
   httpStopServer,
   httpListServers,
+  httpChangePort,
+  httpCheckPort,
   type HttpInstanceInfo,
 } from '../../shared/utils/tauriBridge'
 import { useHttpServiceStatus } from './httpServiceStore'
@@ -197,7 +199,16 @@ export default function HttpServer() {
         addInstance(info)
         setDirectory('')
         setPort('')
-        toast(t('modules.httpServer.ui.started', { defaultValue: 'Web service started' }))
+        // Explicit port that silently fell back to a neighbour — tell the user
+        if (portNum && info.port !== portNum) {
+          toast(t('modules.httpServer.ui.startedOnDifferentPort', {
+            defaultValue: 'Port {{requested}} is in use, using port {{port}} instead',
+            requested: portNum,
+            port: info.port,
+          }), 'info')
+        } else {
+          toast(t('modules.httpServer.ui.started', { defaultValue: 'Web service started' }))
+        }
       } else {
         toast(t('modules.httpServer.ui.startFailed', { defaultValue: 'Failed to start' }), 'error')
       }
@@ -281,6 +292,25 @@ export default function HttpServer() {
       count: newItems.length,
     }))
   }, [instances, confirm, removeInstance, toast, t])
+
+  // ── Change port of a running instance (exact bind, backend pre-checks) ──
+  const handleChangePort = useCallback(async (inst: HttpInstanceInfo, newPort: number): Promise<boolean> => {
+    const res = await httpChangePort(inst.id, newPort)
+    if (!res.ok || !res.info) {
+      const busy = res.error?.toLowerCase().includes('in use')
+      toast(busy
+        ? t('modules.httpServer.ui.portOccupied', { defaultValue: 'Port is already in use' })
+        : t('modules.httpServer.ui.changePortFailed', { defaultValue: 'Failed to change port' }), 'error')
+      return false
+    }
+    // addInstance replaces the entry with the same id (filter + prepend)
+    addInstance(res.info)
+    // URL changed — drop the cached QR for this instance
+    setQrCache((prev) => { const next = { ...prev }; delete next[inst.id]; return next })
+    setExpandedQr(null)
+    toast(t('modules.httpServer.ui.portChanged', { defaultValue: 'Service port changed to {{port}}', port: newPort }))
+    return true
+  }, [addInstance, toast, t])
 
   // ── Copy URL ──
   const handleCopyUrl = useCallback(async (url: string) => {
@@ -499,7 +529,7 @@ export default function HttpServer() {
           </div>
           {instances.map((inst) => (
             <InstanceCard
-              key={inst.id}
+              key={`${inst.id}-${inst.port}`}
               instance={inst}
               expandedQr={expandedQr}
               setExpandedQr={setExpandedQr}
@@ -507,6 +537,8 @@ export default function HttpServer() {
               getQrCode={getQrCode}
               onCopy={handleCopyUrl}
               onStop={handleStop}
+              onChangePort={handleChangePort}
+              onCheckPort={httpCheckPort}
               isStopping={stoppingId === inst.id}
               isHighlight={highlightId === inst.id}
               t={t}

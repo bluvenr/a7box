@@ -1,9 +1,11 @@
 /**
  * HTTP Server — Instance Card with QR code toggle
  */
-import { useState, useEffect, useCallback } from 'react'
-import { Wifi, Square, Copy, QrCode, ChevronDown, ChevronUp } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Wifi, Square, Copy, QrCode, ChevronDown, ChevronUp, Settings2, Check, X } from 'lucide-react'
 import type { HttpInstanceInfo } from '../../../shared/utils/tauriBridge'
+
+type PortCheckState = 'idle' | 'checking' | 'free' | 'busy' | 'invalid' | 'same'
 
 interface Props {
   instance: HttpInstanceInfo
@@ -13,6 +15,10 @@ interface Props {
   getQrCode: (url: string, id: string) => Promise<string>
   onCopy: (url: string) => void
   onStop: (inst: HttpInstanceInfo) => void
+  /** Apply a new port; returns true on success (card will remount). */
+  onChangePort?: (inst: HttpInstanceInfo, port: number) => Promise<boolean>
+  /** Probe whether a port is free. null = cannot probe. */
+  onCheckPort?: (port: number) => Promise<boolean | null>
   isStopping?: boolean
   isHighlight?: boolean
   t: (key: string, opts?: any) => string
@@ -26,6 +32,8 @@ export function InstanceCard({
   getQrCode,
   onCopy,
   onStop,
+  onChangePort,
+  onCheckPort,
   isStopping,
   isHighlight,
   t,
@@ -33,6 +41,48 @@ export function InstanceCard({
   const url = inst.urls[0] || `http://localhost:${inst.port}`
   const isQrExpanded = expandedQr === inst.id
   const [qrDataUrl, setQrDataUrl] = useState<string>('')
+
+  // ── Change-port state ──
+  const [editingPort, setEditingPort] = useState(false)
+  const [portInput, setPortInput] = useState('')
+  const [checkState, setCheckState] = useState<PortCheckState>('idle')
+  const [applying, setApplying] = useState(false)
+  const checkTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Debounced availability probe while typing
+  useEffect(() => {
+    if (!editingPort || !onCheckPort) return
+    const raw = portInput.trim()
+    if (!raw) { setCheckState('idle'); return }
+    const n = Number(raw)
+    if (!Number.isInteger(n) || n < 1024 || n > 65535) { setCheckState('invalid'); return }
+    if (n === inst.port) { setCheckState('same'); return }
+    setCheckState('checking')
+    if (checkTimer.current) clearTimeout(checkTimer.current)
+    checkTimer.current = setTimeout(async () => {
+      const free = await onCheckPort(n)
+      if (free === null) { setCheckState('free'); return } // cannot probe — let the bind decide
+      setCheckState(free ? 'free' : 'busy')
+    }, 350)
+    return () => { if (checkTimer.current) clearTimeout(checkTimer.current) }
+  }, [editingPort, portInput, inst.port, onCheckPort])
+
+  const applyDisabled = applying || checkState !== 'free'
+
+  const handleApplyPort = useCallback(async () => {
+    if (applyDisabled || !onChangePort) return
+    const n = Number(portInput.trim())
+    setApplying(true)
+    const ok = await onChangePort(inst, n)
+    // On success the card remounts (key includes port); only reset on failure
+    if (!ok) setApplying(false)
+  }, [applyDisabled, onChangePort, inst, portInput])
+
+  const closePortEditor = useCallback(() => {
+    setEditingPort(false)
+    setPortInput('')
+    setCheckState('idle')
+  }, [])
 
   const toggleQr = useCallback(async () => {
     if (isQrExpanded) {
@@ -89,6 +139,18 @@ export function InstanceCard({
           <Copy size={12} />
           {t('modules.httpServer.ui.copy', { defaultValue: 'Copy' })}
         </button>
+        {onChangePort && (
+          <button
+            onClick={() => (editingPort ? closePortEditor() : setEditingPort(true))}
+            className={`flex items-center gap-1 rounded-md px-2 py-1.5 text-xs transition cursor-pointer ${
+              editingPort ? 'text-primary' : 'text-text-secondary hover:text-primary'
+            }`}
+            title={t('modules.httpServer.ui.changePort', { defaultValue: 'Change Port' })}
+          >
+            <Settings2 size={12} />
+            {t('modules.httpServer.ui.changePort', { defaultValue: 'Change Port' })}
+          </button>
+        )}
         <button
           onClick={toggleQr}
           className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-text-secondary hover:text-primary transition cursor-pointer"
@@ -98,6 +160,62 @@ export function InstanceCard({
           {isQrExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         </button>
       </div>
+
+      {/* Change-port editor (inline) */}
+      {editingPort && (
+        <div className="mt-3 rounded-lg border border-border-subtle bg-bg-base/60 px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={1024}
+              max={65535}
+              value={portInput}
+              onChange={(e) => setPortInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleApplyPort(); if (e.key === 'Escape') closePortEditor() }}
+              placeholder={t('modules.httpServer.ui.port', { defaultValue: 'Port' })}
+              autoFocus
+              className={`w-28 rounded-md border bg-bg-overlay px-2.5 py-1.5 text-xs text-text-primary outline-none transition ${
+                checkState === 'busy' || checkState === 'invalid'
+                  ? 'border-red-400 focus:border-red-500'
+                  : 'border-border-base focus:border-primary'
+              }`}
+            />
+            <button
+              onClick={handleApplyPort}
+              disabled={applyDisabled}
+              className="flex items-center gap-1 rounded-md bg-green-600 px-2.5 py-1.5 text-[11px] font-medium text-white transition hover:bg-green-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {applying ? (
+                <span className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Check size={11} />
+              )}
+              {t('modules.httpServer.ui.apply', { defaultValue: 'Apply' })}
+            </button>
+            <button
+              onClick={closePortEditor}
+              className="rounded-md p-1.5 text-text-muted hover:text-text-primary transition cursor-pointer"
+              title={t('common.cancel', { defaultValue: 'Cancel' })}
+            >
+              <X size={12} />
+            </button>
+            {checkState !== 'idle' && (
+              <span className={`text-[10px] ${
+                checkState === 'free' ? 'text-green-400'
+                  : checkState === 'checking' ? 'text-text-muted'
+                  : checkState === 'same' ? 'text-text-muted'
+                  : 'text-red-400'
+              }`}>
+                {checkState === 'checking' && t('modules.httpServer.ui.checkingPort', { defaultValue: 'Checking port...' })}
+                {checkState === 'free' && t('modules.httpServer.ui.portAvailable', { defaultValue: 'Port is available' })}
+                {checkState === 'busy' && t('modules.httpServer.ui.portOccupied', { defaultValue: 'Port is already in use' })}
+                {checkState === 'invalid' && t('modules.httpServer.ui.portInvalid', { defaultValue: 'Port range 1024-65535' })}
+                {checkState === 'same' && t('modules.httpServer.ui.portSame', { defaultValue: 'Same as current port' })}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* QR code (expandable) */}
       {isQrExpanded && qrDataUrl && (

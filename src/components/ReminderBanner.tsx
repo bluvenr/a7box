@@ -19,7 +19,10 @@ export function ReminderBanner() {
 
   if (!current) return null
 
-  const { reminder } = current
+  const { reminder, isAdvance } = current
+
+  // Advance heads-up: countdown text instead of the due-time prefix
+  const minsUntil = isAdvance ? Math.max(0, Math.ceil((reminder.triggerAt - Date.now()) / 60000)) : 0
 
   const handleDone = () => {
     handleMarkDone(reminder.id)
@@ -40,17 +43,25 @@ export function ReminderBanner() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 top-[88px] z-[9998] flex justify-center">
-      <div className="pointer-events-auto flex w-full max-w-[480px] items-center gap-3 rounded-xl border border-primary/30 bg-bg-elevated px-4 py-3 shadow-2xl animate-[toastSlideIn_0.25s_ease-out]">
+      <div className={`pointer-events-auto flex w-full max-w-[480px] items-center gap-3 rounded-xl border bg-bg-elevated px-4 py-3 shadow-2xl animate-[toastSlideIn_0.25s_ease-out] ${
+        isAdvance ? 'border-warning/30' : 'border-primary/30'
+      }`}>
         {/* Icon */}
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+          isAdvance ? 'bg-warning/10 text-warning' : 'bg-primary/10 text-primary'
+        }`}>
           <Bell size={16} />
         </div>
 
         {/* Content (clickable to view details) */}
         <div className="flex-1 min-w-0 cursor-pointer" onClick={handleView}>
           <p className="text-sm font-medium text-text-primary truncate">{reminder.title}</p>
-          <p className="text-[11px] text-text-muted">
-            {t('modules.reminder.ui.banner.triggerPrefix')}
+          <p className={`text-[11px] ${isAdvance ? 'text-warning' : 'text-text-muted'}`}>
+            {isAdvance
+              ? (minsUntil <= 1
+                  ? t('modules.reminder.ui.toast.advanceSoon', { defaultValue: 'Starting shortly' })
+                  : t('modules.reminder.ui.toast.advanceIn', { defaultValue: 'Starts in {{min}} min', min: minsUntil }))
+              : t('modules.reminder.ui.banner.triggerPrefix')}
           </p>
         </div>
 
@@ -70,13 +81,16 @@ export function ReminderBanner() {
             <CheckCircle size={11} />
             {t('modules.reminder.ui.banner.done')}
           </button>
-          <button
-            onClick={handleSnoozeClick}
-            className="flex items-center gap-1 rounded-md bg-warning/10 px-2.5 py-1.5 text-[11px] font-medium text-warning hover:bg-warning/20 transition-colors cursor-pointer"
-          >
-            <Clock size={11} />
-            {t('modules.reminder.ui.banner.snooze')}
-          </button>
+          {/* Snooze makes no sense before the reminder is due */}
+          {!isAdvance && (
+            <button
+              onClick={handleSnoozeClick}
+              className="flex items-center gap-1 rounded-md bg-warning/10 px-2.5 py-1.5 text-[11px] font-medium text-warning hover:bg-warning/20 transition-colors cursor-pointer"
+            >
+              <Clock size={11} />
+              {t('modules.reminder.ui.banner.snooze')}
+            </button>
+          )}
           <button
             onClick={dismissCurrent}
             className="flex h-6 w-6 items-center justify-center rounded-md text-text-muted hover:bg-bg-hover hover:text-text-secondary transition-colors cursor-pointer ml-0.5"

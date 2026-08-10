@@ -38,8 +38,15 @@ export default function QuickCreate() {
   const [pastTimeError, setPastTimeError] = useState(false)
   const [customInterval, setCustomInterval] = useState(1)
   const [customIntervalUnit, setCustomIntervalUnit] = useState<'minute' | 'hour' | 'day'>('hour')
+
+  // Advance notice (heads-up N minutes before triggerAt) — same presets as ReminderForm
+  const ADVANCE_PRESETS = [5, 15, 30, 60]
+  const [advanceMode, setAdvanceMode] = useState<'none' | 'preset' | 'custom'>('none')
+  const [advancePreset, setAdvancePreset] = useState(15)
+  const [advanceCustom, setAdvanceCustom] = useState(10)
+
   const [created, setCreated] = useState(false)
-  const [createdInfo, setCreatedInfo] = useState<{ title: string; triggerAt: number; note?: string; repeat?: RepeatConfig | null } | null>(null)
+  const [createdInfo, setCreatedInfo] = useState<{ title: string; triggerAt: number; note?: string; repeat?: RepeatConfig | null; advanceMinutes?: number } | null>(null)
   const [note, setNote] = useState('')
 
   // Live clock
@@ -155,17 +162,22 @@ export default function QuickCreate() {
       setPastTimeError(true)
       return
     }
+    const advanceMinutes =
+      advanceMode === 'none' ? undefined
+      : advanceMode === 'preset' ? advancePreset
+      : Math.max(1, Math.min(1440, Math.round(advanceCustom) || 1))
     addReminder({
       title: reminderTitle,
       note: note.trim(),
       triggerAt: ts,
+      advanceMinutes,
       repeat: manualRepeat,
     })
     try {
       const { emit } = await import('@tauri-apps/api/event')
       await emit('reminder-created')
     } catch { /* ignore */ }
-    setCreatedInfo({ title: reminderTitle, triggerAt: effectiveTriggerAt, note: note.trim() || undefined, repeat: manualRepeat })
+    setCreatedInfo({ title: reminderTitle, triggerAt: effectiveTriggerAt, note: note.trim() || undefined, repeat: manualRepeat, advanceMinutes })
     setCreated(true)
     setTimeout(() => closeWindow(), 1000)
   }
@@ -212,6 +224,14 @@ export default function QuickCreate() {
             style={{ animation: 'dialogFadeIn 0.4s ease-out 0.25s both' }}
           >
             {repeatLabel}
+          </span>
+        )}
+        {!!createdInfo.advanceMinutes && (
+          <span
+            className="mt-1.5 inline-flex items-center gap-0.5 rounded bg-warning/10 px-1.5 py-0.5 text-[9px] text-warning"
+            style={{ animation: 'dialogFadeIn 0.4s ease-out 0.3s both' }}
+          >
+            {t('modules.reminder.ui.detail.advanceNotice', { n: createdInfo.advanceMinutes })}
           </span>
         )}
       </div>
@@ -434,6 +454,62 @@ export default function QuickCreate() {
         {pastTimeError && (
           <p className="text-[10px] text-error mt-1">{t('modules.reminder.ui.form.pastTimeError')}</p>
         )}
+
+        {/* Advance notice: heads-up N minutes before the trigger time */}
+        <div className="flex items-center gap-1 flex-wrap mt-2">
+          <span className="text-[10px] text-text-muted shrink-0">
+            {t('modules.reminder.ui.form.labelAdvance')}:
+          </span>
+          <button
+            onClick={() => setAdvanceMode('none')}
+            className={`rounded-md px-2 py-1 text-[10px] transition-colors cursor-pointer ${
+              advanceMode === 'none'
+                ? 'bg-primary text-white'
+                : 'bg-bg-overlay text-text-muted hover:bg-bg-hover'
+            }`}
+          >
+            {t('modules.reminder.ui.form.advanceNone')}
+          </button>
+          {ADVANCE_PRESETS.map((min) => (
+            <button
+              key={min}
+              onClick={() => { setAdvanceMode('preset'); setAdvancePreset(min) }}
+              className={`rounded-md px-2 py-1 text-[10px] transition-colors cursor-pointer ${
+                advanceMode === 'preset' && advancePreset === min
+                  ? 'bg-primary text-white'
+                  : 'bg-bg-overlay text-text-muted hover:bg-bg-hover'
+              }`}
+            >
+              {t('modules.reminder.ui.form.advanceMinutesN', { n: min })}
+            </button>
+          ))}
+          <button
+            onClick={() => setAdvanceMode('custom')}
+            className={`rounded-md px-2 py-1 text-[10px] transition-colors cursor-pointer ${
+              advanceMode === 'custom'
+                ? 'bg-primary text-white'
+                : 'bg-bg-overlay text-text-muted hover:bg-bg-hover'
+            }`}
+          >
+            {t('modules.reminder.ui.form.advanceCustom')}
+          </button>
+          {advanceMode === 'custom' && (
+            <span className="flex items-center gap-1">
+              <input
+                type="number"
+                min={1}
+                max={1440}
+                value={advanceCustom}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value)
+                  setAdvanceCustom(isNaN(v) ? 1 : Math.max(1, Math.min(1440, v)))
+                }}
+                className="w-14 rounded-md border border-border-base bg-bg-overlay px-1.5 py-1 text-[10px] text-text-primary outline-none focus:border-border-focus"
+              />
+              <span className="text-[10px] text-text-muted">{t('modules.reminder.ui.minutes')}</span>
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Note field */}

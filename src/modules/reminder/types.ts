@@ -28,6 +28,9 @@ export interface Reminder {
   title: string
   note?: string
   triggerAt: number           // trigger timestamp (ms)
+  /** Notify N minutes before triggerAt (heads-up), in addition to the
+   *  on-time notification. Undefined/0 = on-time only. */
+  advanceMinutes?: number
   repeat: RepeatConfig | null
   status: ReminderStatus
   snoozeUntil?: number        // snooze target timestamp (only when snoozed)
@@ -40,5 +43,6 @@ export interface ReminderFormData {
   title: string
   note: string
   triggerAt: number
+  advanceMinutes?: number
   repeat: RepeatConfig | null
 }

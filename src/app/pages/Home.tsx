@@ -13,7 +13,7 @@ import { getRecentModuleIds, recordUsage } from '../../shared/utils'
 import { Box, Search, Clock } from 'lucide-react'
 import { formatShortcut } from '../../components/KeyCapture'
 import { useState, useEffect } from 'react'
-import type { A7Module } from '../../core/types'
+import { CATEGORIES, type A7Module } from '../../core/types'
 import { useP2PStatus } from '../../modules/p2p-transfer/p2pStore'
 import { useHttpServiceStatus } from '../../modules/http-server/httpServiceStore'
 import { useReminderStore } from '../../modules/reminder/reminderStore'
@@ -122,11 +122,14 @@ export default function Home() {
         </div>
       )}
 
-      {/* Tool grid by category */}
-      {Object.entries(modulesByCategory).map(([category, mods]) => (
-        <div key={category} className="mb-8">
+      {/* Tool grid by category (render in the canonical CATEGORIES order) */}
+      {CATEGORIES.map((cat) => {
+        const mods = modulesByCategory[cat.id]
+        if (!mods || mods.length === 0) return null
+        return (
+        <div key={cat.id} className="mb-8">
           <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-text-muted">
-            {t(`categories.${category}`)}
+            {t(`categories.${cat.id}`)}
           </h2>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {mods.map((mod) => (
@@ -138,7 +141,8 @@ export default function Home() {
             ))}
           </div>
         </div>
-      ))}
+        )
+      })}
 
       {/* Empty state */}
       {enabledModules.length === 0 && (

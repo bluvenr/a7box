@@ -12,7 +12,7 @@ export const systemInfoModule: A7Module = {
     description: 'Performance, network, storage, display, battery and device diagnostics',
     descriptionI18n: 'modules.systemInfo.description',
     icon: MonitorSmartphone,
-    category: 'network',
+    category: 'misc',
     tags: ['system', 'network', 'device', 'battery', 'storage', 'display', 'ip', 'resolution'],
     version: '1.0.0',
     enabledByDefault: true,

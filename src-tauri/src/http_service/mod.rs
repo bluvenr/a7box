@@ -133,6 +133,108 @@ pub fn stop_instance(state: &HttpServiceState, id: &str) -> Result<(), String> {
     }
 }
 
+/// Change the port of a running instance (exact bind — no fallback).
+/// The new port is pre-bound BEFORE touching the running instance, so a busy
+/// target port fails fast while the old server keeps serving (no downtime).
+pub fn change_instance_port(
+    state: &HttpServiceState,
+    id: &str,
+    new_port: u16,
+) -> Result<HttpInstanceInfo, String> {
+    // Same-port "change" is a no-op (the instance itself holds that port)
+    {
+        let instances = state.instances.lock().unwrap();
+        if let Some(inst) = instances.iter().find(|i| i.id == id) {
+            if inst.port == new_port {
+                let urls = get_local_ips()
+                    .iter()
+                    .map(|ip| format!("http://{}:{}", ip, inst.port))
+                    .collect();
+                return Ok(HttpInstanceInfo {
+                    id: inst.id.clone(),
+                    port: inst.port,
+                    urls,
+                    directory: inst.dir.to_string_lossy().to_string(),
+                });
+            }
+        } else {
+            return Err(format!("Instance not found: {}", id));
+        }
+    }
+
+    // 1. Pre-bind the exact port (fails immediately if occupied)
+    let server = bind_exact(new_port)?;
+
+    // 2. Detach the old serving thread (instance entry stays, updated below)
+    let (dir, old_flag, old_handle) = {
+        let mut instances = state.instances.lock().unwrap();
+        let inst = instances
+            .iter_mut()
+            .find(|i| i.id == id)
+            .ok_or_else(|| format!("Instance not found: {}", id))?;
+        (inst.dir.clone(), inst.stop_flag.clone(), inst.thread_handle.take())
+    };
+    old_flag.store(true, Ordering::Relaxed);
+    // Wait for the old socket to be fully released (max ≈ 500ms)
+    if let Some(handle) = old_handle {
+        let _ = handle.join();
+    }
+
+    // 3. Spawn the replacement request-handling thread on the new socket
+    let stop_flag = Arc::new(AtomicBool::new(false));
+    let dir_clone = dir.clone();
+    let flag_clone = stop_flag.clone();
+    let thread_handle = match thread::Builder::new()
+        .name(format!("http-svc-{}", &id[..8]))
+        .spawn(move || {
+            while !flag_clone.load(Ordering::Relaxed) {
+                match server.recv_timeout(std::time::Duration::from_millis(500)) {
+                    Ok(Some(request)) => {
+                        handle_request(request, &dir_clone);
+                    }
+                    Ok(None) => continue,
+                    Err(e) => {
+                        eprintln!("[A7Box HttpService] Server error: {}", e);
+                        break;
+                    }
+                }
+            }
+        }) {
+        Ok(h) => h,
+        Err(e) => {
+            // Roll back: the old thread is already stopped, so drop the entry
+            state.instances.lock().unwrap().retain(|i| i.id != id);
+            return Err(format!("Failed to spawn thread: {}", e));
+        }
+    };
+
+    // 4. Update the stored instance in place (same id, new port/thread)
+    let urls = get_local_ips()
+        .iter()
+        .map(|ip| format!("http://{}:{}", ip, new_port))
+        .collect();
+    {
+        let mut instances = state.instances.lock().unwrap();
+        if let Some(inst) = instances.iter_mut().find(|i| i.id == id) {
+            inst.port = new_port;
+            inst.stop_flag = stop_flag;
+            inst.thread_handle = Some(thread_handle);
+        }
+    }
+
+    Ok(HttpInstanceInfo {
+        id: id.to_string(),
+        port: new_port,
+        urls,
+        directory: dir.to_string_lossy().to_string(),
+    })
+}
+
+/// Probe whether a port can be bound right now (bind + immediate release).
+pub fn is_port_available(port: u16) -> bool {
+    bind_exact(port).is_ok()
+}
+
 /// List all running instances
 pub fn list_instances(state: &HttpServiceState) -> Vec<HttpInstanceInfo> {
     let instances = state.instances.lock().unwrap();
@@ -176,6 +278,16 @@ fn bind_server(preferred_port: u16) -> Result<(tiny_http::Server, u16), String> 
         }
     }
     Err("Failed to bind any port".to_string())
+}
+
+/// Bind exactly to the requested port — no fallback. Used for port changes
+/// and availability probes, where silently picking a neighbouring port would
+/// violate the caller's intent.
+fn bind_exact(port: u16) -> Result<tiny_http::Server, String> {
+    let addr: SocketAddr = format!("0.0.0.0:{}", port)
+        .parse()
+        .map_err(|e| format!("Invalid address: {}", e))?;
+    Server::http(addr).map_err(|e| format!("Port {} is already in use: {}", port, e))
 }
 
 fn get_local_ips() -> Vec<String> {

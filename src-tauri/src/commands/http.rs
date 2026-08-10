@@ -63,3 +63,21 @@ pub fn http_list_servers(
 ) -> Vec<http_service::HttpInstanceInfo> {
     http_service::list_instances(state.inner())
 }
+
+/// Change the port of a running instance (exact bind, no fallback).
+/// Pre-binds the new port first, so a busy target fails without downtime.
+#[tauri::command]
+pub fn http_change_port(
+    state: tauri::State<'_, Arc<HttpServiceState>>,
+    id: String,
+    port: u16,
+) -> Result<http_service::HttpInstanceInfo, String> {
+    http_service::change_instance_port(state.inner(), &id, port)
+}
+
+/// Probe whether a port is currently free (ports held by our own instances
+/// report as occupied, since they hold real sockets).
+#[tauri::command]
+pub fn http_check_port(port: u16) -> bool {
+    http_service::is_port_available(port)
+}

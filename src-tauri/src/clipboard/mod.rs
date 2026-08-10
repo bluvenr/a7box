@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::path::Path;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter};
@@ -185,6 +185,11 @@ pub struct ClipboardManagerState {
     last_hash: Mutex<String>,
     /// Paste target snapshot taken when the popup opens
     pub paste_target: Mutex<Option<paste::PasteTarget>>,
+    /// Bumped on every start/stop. A watcher thread exits as soon as its own
+    /// generation is stale — protects against a fast pause→resume race where
+    /// the still-dying thread would see `running == true` again and a second
+    /// watcher would end up polling alongside it.
+    generation: AtomicU64,
 }
 
 impl ClipboardManagerState {
@@ -213,6 +218,7 @@ impl ClipboardManagerState {
             self_write_until: AtomicI64::new(0),
             last_hash: Mutex::new(String::new()),
             paste_target: Mutex::new(None),
+            generation: AtomicU64::new(0),
         })
     }
 
@@ -294,11 +300,15 @@ pub fn start_watcher(app: AppHandle, state: Arc<ClipboardManagerState>) {
     if state.running.swap(true, Ordering::SeqCst) {
         return; // already running
     }
-    std::thread::spawn(move || watcher_loop(app, state));
+    let gen = state.generation.fetch_add(1, Ordering::SeqCst) + 1;
+    std::thread::spawn(move || watcher_loop(app, state, gen));
 }
 
 pub fn stop_watcher(state: &ClipboardManagerState) {
     state.running.store(false, Ordering::SeqCst);
+    // Invalidate any live watcher's generation so a quick re-enable cannot
+    // be "adopted" by a thread that hasn't exited yet.
+    state.generation.fetch_add(1, Ordering::SeqCst);
 }
 
 enum Captured {
@@ -317,7 +327,8 @@ impl Captured {
     }
 }
 
-fn watcher_loop(app: AppHandle, state: Arc<ClipboardManagerState>) {
+fn watcher_loop(app: AppHandle, state: Arc<ClipboardManagerState>, gen: u64) {
+    let alive = || state.is_running() && state.generation.load(Ordering::SeqCst) == gen;
     let mut clipboard = match arboard::Clipboard::new() {
         Ok(c) => c,
         Err(e) => {
@@ -337,7 +348,7 @@ fn watcher_loop(app: AppHandle, state: Arc<ClipboardManagerState>) {
         state.set_last_hash(&current.hash());
     }
 
-    while state.is_running() {
+    while alive() {
         #[cfg(target_os = "windows")]
         {
             // Wait for an OS change event; timeout acts as a low-freq safety poll
@@ -347,7 +358,7 @@ fn watcher_loop(app: AppHandle, state: Arc<ClipboardManagerState>) {
         #[cfg(not(target_os = "windows"))]
         std::thread::sleep(Duration::from_millis(500));
 
-        if !state.is_running() {
+        if !alive() {
             break;
         }
         let Some(captured) = read_clipboard(&mut clipboard, &state) else {

@@ -97,6 +97,7 @@ pub fn run() {
         .manage(picker_session)
         .manage(capture_session)
         .manage(clipboard_manager_state)
+        .manage(tray::TrayUiState(std::sync::Mutex::new(None)))
         // Commands
         .invoke_handler(tauri::generate_handler![
             // Clipboard
@@ -164,6 +165,8 @@ pub fn run() {
             commands::http::http_start_server,
             commands::http::http_stop_server,
             commands::http::http_list_servers,
+            commands::http::http_change_port,
+            commands::http::http_check_port,
             // Tray
             commands::update_tray_language,
             commands::sync_app_language,

@@ -52,9 +52,9 @@ pub fn cm_set_module_enabled(app: AppHandle, state: CmState<'_>, enabled: bool) 
             let _ = popup.close();
         }
     }
-    // Rebuild the tray so the "Clipboard History" entry appears/disappears
-    // immediately (reuses the language-switch rebuild path)
-    crate::tray::update_tray_language(&app, crate::state::current_lang(&app));
+    // Reflect in the tray in place (label/visibility) — no icon rebuild,
+    // which would leave ghost icons in the Windows notification area
+    crate::tray::update_capture_ui(&app);
 }
 
 /// Open a file or directory with the OS default application.
@@ -334,10 +334,11 @@ pub fn toggle_clipboard_popup(app: &AppHandle, mode: Option<&str>) {
         }
         return;
     }
-    // Module disabled -> don't open (either the module switch or the user's
-    // capture master switch is off)
+    // Module disabled -> don't open. Note: capture merely paused
+    // (settings.enabled == false) intentionally still allows browsing and
+    // pasting the existing history — pausing stops recording, not usage.
     if let Some(cm) = app.try_state::<Arc<ClipboardManagerState>>() {
-        if !cm.is_module_enabled() || !cm.read_settings().enabled {
+        if !cm.is_module_enabled() {
             return;
         }
         // Record the paste target BEFORE the popup steals focus
@@ -442,14 +443,16 @@ pub fn cm_save_settings(app: AppHandle, state: CmState<'_>, settings: ClipboardS
     state.write_settings(settings)?;
     // Reflect the capture switch immediately
     if state.read_settings().enabled {
-        clipboard::start_watcher(app, state.inner().clone());
+        clipboard::start_watcher(app.clone(), state.inner().clone());
     } else {
         clipboard::stop_watcher(state.inner());
-        // Capture off -> the popup has nothing to show, close it if open
-        if let Some(popup) = app.get_webview_window(POPUP_LABEL) {
-            let _ = popup.close();
-        }
+        // NOTE: an open popup intentionally stays open — pausing stops
+        // recording, not browsing the existing history.
     }
+    // Keep the tray pause/resume label in sync with this change
+    crate::tray::update_capture_ui(&app);
+    // Notify other windows (settings UI may be open elsewhere)
+    let _ = app.emit("cm-settings-changed", ());
     Ok(())
 }
 

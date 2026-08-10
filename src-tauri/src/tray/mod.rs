@@ -13,11 +13,27 @@ use tauri::image::Image;
 /// Tray icon fixed ID for removal/rebuild
 pub const TRAY_ID: &str = "main-tray";
 
+/// Handles to the clipboard-related menu items, kept so capture state and
+/// module visibility can be updated IN PLACE. Recreating the tray icon on
+/// every toggle leaves duplicate/ghost icons in the Windows notification
+/// area (and rebuilding from a menu handler even deadlocked once) — the
+/// icon itself never needs to change for these updates.
+pub struct TrayUi {
+    pub toggle: MenuItem<Wry>,
+    pub history: MenuItem<Wry>,
+    pub menu: Menu<Wry>,
+}
+
+/// Managed state holding the live tray item handles (None until first build).
+pub struct TrayUiState(pub std::sync::Mutex<Option<TrayUi>>);
+
 /// i18n labels for tray menu items
 struct TrayLabels {
     show: &'static str,
     palette: &'static str,
     clipboard_history: &'static str,
+    clipboard_pause: &'static str,
+    clipboard_resume: &'static str,
     settings: &'static str,
     website: &'static str,
     about_author: &'static str,
@@ -32,6 +48,8 @@ fn get_labels(lang: &str) -> TrayLabels {
             show: "\u{663e}\u{793a} A7\u{5323}",                    // 显示 A7匳
             palette: "\u{547d}\u{4ee4}\u{9762}\u{677f}",            // 命令面板
             clipboard_history: "\u{526a}\u{8d34}\u{677f}\u{5386}\u{53f2}", // 剪贴板历史
+            clipboard_pause: "\u{6682}\u{505c}\u{526a}\u{8d34}\u{677f}\u{76d1}\u{542c}", // 暂停剪贴板监听
+            clipboard_resume: "\u{6062}\u{590d}\u{526a}\u{8d34}\u{677f}\u{76d1}\u{542c}", // 恢复剪贴板监听
             settings: "\u{6253}\u{5f00}\u{8bbe}\u{7f6e}",            // 打开设置
             website: "\u{4ea7}\u{54c1}\u{5b98}\u{7f51}",              // 产品官网
             about_author: "\u{5173}\u{4e8e}\u{4f5c}\u{8005}",        // 关于作者
@@ -43,6 +61,8 @@ fn get_labels(lang: &str) -> TrayLabels {
             show: "Show A7Box",
             palette: "Command Palette",
             clipboard_history: "Clipboard History",
+            clipboard_pause: "Pause Clipboard Monitoring",
+            clipboard_resume: "Resume Clipboard Monitoring",
             settings: "Open Settings",
             website: "Website",
             about_author: "About Author",
@@ -83,10 +103,26 @@ fn build_tray(app: &tauri::AppHandle<Wry>, lang: &str) -> Result<(), Box<dyn std
         .try_state::<crate::state::ShortcutRegistry>()
         .and_then(|r| r.0.lock().ok().and_then(|m| m.get("open-clipboard-popup").cloned()))
         .unwrap_or_else(|| "Alt+V".to_string());
+    // Current capture state — drives the pause/resume toggle label.
+    let capture_enabled = app
+        .try_state::<std::sync::Arc<crate::clipboard::ClipboardManagerState>>()
+        .map(|s| s.read_settings().enabled)
+        .unwrap_or(true);
     let clipboard_history = MenuItem::with_id(
         app,
         "clipboard-history",
         format!("{} ({})", labels.clipboard_history, popup_keys),
+        // Stays usable while capture is paused: browsing the existing
+        // history records nothing new (pausing stops recording, not usage).
+        true,
+        None::<&str>,
+    )?;
+    // Quick toggle for clipboard capture — label reflects the current state.
+    // Lets users pause monitoring without digging into settings (privacy need).
+    let clipboard_toggle = MenuItem::with_id(
+        app,
+        "clipboard-toggle",
+        if capture_enabled { labels.clipboard_pause } else { labels.clipboard_resume },
         true,
         None::<&str>,
     )?;
@@ -110,6 +146,7 @@ fn build_tray(app: &tauri::AppHandle<Wry>, lang: &str) -> Result<(), Box<dyn std
             &show, &sep1,
             &palette,
             &clipboard_history,
+            &clipboard_toggle,
             &sep2, &settings,
             &sep3, &website, &about_author,
             &sep4, &quit,
@@ -123,6 +160,17 @@ fn build_tray(app: &tauri::AppHandle<Wry>, lang: &str) -> Result<(), Box<dyn std
             &sep4, &quit,
         ])?
     };
+
+    // Keep handles for in-place updates (toggle label / module visibility)
+    if let Some(ui_state) = app.try_state::<TrayUiState>() {
+        if let Ok(mut g) = ui_state.0.lock() {
+            *g = Some(TrayUi {
+                toggle: clipboard_toggle.clone(),
+                history: clipboard_history.clone(),
+                menu: menu.clone(),
+            });
+        }
+    }
 
     let mut builder = TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
@@ -155,6 +203,29 @@ fn build_tray(app: &tauri::AppHandle<Wry>, lang: &str) -> Result<(), Box<dyn std
             }
             "clipboard-history" => {
                 crate::commands::clipboard_manager::toggle_clipboard_popup(app, None);
+            }
+            "clipboard-toggle" => {
+                // Quick pause/resume of clipboard capture (mirrors cm_save_settings)
+                if let Some(state) = app.try_state::<std::sync::Arc<crate::clipboard::ClipboardManagerState>>() {
+                    let mut settings = state.read_settings();
+                    settings.enabled = !settings.enabled;
+                    let now_enabled = settings.enabled;
+                    if state.write_settings(settings).is_ok() {
+                        if now_enabled {
+                            crate::clipboard::start_watcher(app.clone(), state.inner().clone());
+                        } else {
+                            crate::clipboard::stop_watcher(state.inner());
+                        }
+                        // Keep the in-app settings UI in sync (same event the
+                        // page listens to)
+                        let _ = app.emit("cm-settings-changed", ());
+                    }
+                    // Update the toggle label in place. No tray-icon rebuild:
+                    // recreating the icon leaves ghost icons in the Windows
+                    // notification area (and rebuilding from this handler
+                    // deadlocked the app before).
+                    update_capture_ui(app);
+                }
             }
             "settings" => {
                 if let Some(window) = app.get_webview_window("main") {
@@ -208,5 +279,40 @@ pub fn setup_tray(app: &tauri::App<Wry>) -> Result<(), Box<dyn std::error::Error
 pub fn update_tray_language(app: &tauri::AppHandle<Wry>, lang: &str) {
     if let Err(e) = build_tray(app, lang) {
         eprintln!("[WARN] Failed to update tray language: {}", e);
+    }
+}
+
+/// Refresh the clipboard entries of the existing tray in place (pause/resume
+/// label + module visibility). Never recreates the tray icon, so it is safe
+/// to call from anywhere — including tray-menu handlers — without ghost
+/// icons or message-loop deadlocks.
+pub fn update_capture_ui(app: &tauri::AppHandle<Wry>) {
+    let (Some(ui_state), Some(cm)) = (
+        app.try_state::<TrayUiState>(),
+        app.try_state::<std::sync::Arc<crate::clipboard::ClipboardManagerState>>(),
+    ) else {
+        return;
+    };
+    let Ok(guard) = ui_state.0.lock() else { return };
+    let Some(ui) = guard.as_ref() else { return };
+
+    let labels = get_labels(&crate::state::current_lang(app));
+    let capture_enabled = cm.read_settings().enabled;
+    let cm_enabled = cm.is_module_enabled();
+
+    let _ = ui.toggle.set_text(if capture_enabled {
+        labels.clipboard_pause
+    } else {
+        labels.clipboard_resume
+    });
+    // Show/hide both entries with the module switch. Detach-then-reinsert is
+    // idempotent and the visual equivalent of the old rebuild-without-items
+    // path — minus the icon churn that caused ghost tray icons.
+    let _ = ui.menu.remove(&ui.history);
+    let _ = ui.menu.remove(&ui.toggle);
+    if cm_enabled {
+        // [show, sep, palette, history, toggle, sep, settings, ...]
+        let _ = ui.menu.insert(&ui.history, 3);
+        let _ = ui.menu.insert(&ui.toggle, 4);
     }
 }

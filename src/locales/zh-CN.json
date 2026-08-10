@@ -858,7 +858,16 @@
         "clearHistory": "清除",
         "historyStopped": "已停止",
         "restart": "重启",
-        "restartedNewPort": "原端口已被占用，已使用新端口启动"
+        "restartedNewPort": "原端口已被占用，已使用新端口启动",
+        "startedOnDifferentPort": "指定端口 {{requested}} 被占用，已改用端口 {{port}}",
+        "changePort": "修改端口",
+        "portAvailable": "端口可用",
+        "portOccupied": "端口已被占用",
+        "portSame": "与当前端口相同",
+        "checkingPort": "正在检测端口...",
+        "portChanged": "服务端口已修改为 {{port}}",
+        "changePortFailed": "修改端口失败",
+        "apply": "应用"
       }
     },
     "p2p": {
@@ -1049,6 +1058,7 @@
           "title": "标题",
           "note": "备注",
           "triggerTime": "触发时间",
+          "advanceNotice": "提前 {{n}} 分钟提醒",
           "repeat": "重复规则",
           "createdAt": "创建时间",
           "updatedAt": "更新时间",
@@ -1078,7 +1088,11 @@
           "pastTimeError": "不能选择过去的时间",
           "invalidDate": "请输入有效的日期和时间",
           "weekdaysRequired": "请至少选择一个重复日",
-          "titleRequired": "请输入提醒标题"
+          "titleRequired": "请输入提醒标题",
+          "labelAdvance": "提前提醒",
+          "advanceNone": "不提前",
+          "advanceMinutesN": "提前 {{n}} 分钟",
+          "advanceCustom": "自定义"
         },
         "banner": {
           "dismiss": "关闭",
@@ -1096,7 +1110,9 @@
           "dueNow": "已到期",
           "overdue": "已过期 {{min}} 分钟",
           "overdueHours": "已过期 {{hr}} 小时",
-          "count": "{{current}} / {{total}}"
+          "count": "{{current}} / {{total}}",
+          "advanceSoon": "即将开始",
+          "advanceIn": "{{min}} 分钟后开始"
         },
         "section": {
           "active": "待处理",
@@ -1158,6 +1174,8 @@
         "slowest": "最慢",
         "lapHint": "点击计次记录分段用时",
         "stopwatchEmpty": "点击开始计时",
+        "lastSession": "上次记录",
+        "lastSessionNoLaps": "上次会话未记录计次",
         "units": {
           "h": "时",
           "m": "分",
@@ -1302,6 +1320,9 @@
       "description": "剪贴板历史、快捷粘贴、文本片段与自动化规则",
       "subtitle": "记录你复制的一切：历史、片段与自动化规则",
       "popupTitle": "剪贴板历史",
+      "pausedBanner": "剪贴板监听已暂停 — 新的复制不会被记录，已有历史仍可查看和使用。",
+      "pausedShort": "监听已暂停 — 新复制不会被记录",
+      "resumeCapture": "恢复监听",
       "searchPlaceholder": "搜索剪贴板历史…",
       "empty": "暂无剪贴板记录。复制点内容试试吧。",
       "loading": "加载中…",
@@ -1522,7 +1543,9 @@
         "openPopup": "打开剪贴板弹窗",
         "openPopupDesc": "打开剪贴板历史快捷弹窗",
         "pasteStack": "批量粘贴",
-        "pasteStackDesc": "将多条记录加入队列并按顺序粘贴"
+        "pasteStackDesc": "将多条记录加入队列并按顺序粘贴",
+        "toggleCapture": "暂停/恢复剪贴板监听",
+        "toggleCaptureDesc": "快速开关剪贴板捕获"
       }
     }
   },

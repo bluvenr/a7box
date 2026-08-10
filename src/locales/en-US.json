@@ -858,7 +858,16 @@
         "clearHistory": "Clear",
         "historyStopped": "Stopped",
         "restart": "Restart",
-        "restartedNewPort": "Original port was occupied, started with a new port"
+        "restartedNewPort": "Original port was occupied, started with a new port",
+        "startedOnDifferentPort": "Port {{requested}} is in use, using port {{port}} instead",
+        "changePort": "Change Port",
+        "portAvailable": "Port is available",
+        "portOccupied": "Port is already in use",
+        "portSame": "Same as current port",
+        "checkingPort": "Checking port...",
+        "portChanged": "Service port changed to {{port}}",
+        "changePortFailed": "Failed to change port",
+        "apply": "Apply"
       }
     },
     "p2p": {
@@ -1049,6 +1058,7 @@
           "title": "Title",
           "note": "Notes",
           "triggerTime": "Trigger Time",
+          "advanceNotice": "{{n}} min before",
           "repeat": "Repeat Rule",
           "createdAt": "Created",
           "updatedAt": "Updated",
@@ -1078,7 +1088,11 @@
           "pastTimeError": "Cannot select a past time",
           "invalidDate": "Please enter a valid date and time",
           "weekdaysRequired": "Please select at least one weekday",
-          "titleRequired": "Please enter a reminder title"
+          "titleRequired": "Please enter a reminder title",
+          "labelAdvance": "Advance notice",
+          "advanceNone": "None",
+          "advanceMinutesN": "{{n}} min before",
+          "advanceCustom": "Custom"
         },
         "banner": {
           "dismiss": "Dismiss",
@@ -1096,7 +1110,9 @@
           "dueNow": "Due now",
           "overdue": "{{min}} min ago",
           "overdueHours": "{{hr}} hr ago",
-          "count": "{{current}} / {{total}}"
+          "count": "{{current}} / {{total}}",
+          "advanceSoon": "Starting shortly",
+          "advanceIn": "Starts in {{min}} min"
         },
         "section": {
           "active": "Active",
@@ -1158,6 +1174,8 @@
         "slowest": "Slowest",
         "lapHint": "Press Lap to record split times",
         "stopwatchEmpty": "Press Start to begin timing",
+        "lastSession": "Last session",
+        "lastSessionNoLaps": "No laps recorded in the last session",
         "units": {
           "h": "Hours",
           "m": "Minutes",
@@ -1302,6 +1320,9 @@
       "description": "Clipboard history, quick paste, snippets and automation rules",
       "subtitle": "History, snippets and automation for everything you copy",
       "popupTitle": "Clipboard History",
+      "pausedBanner": "Clipboard monitoring is paused — new copies will not be recorded. Existing history stays available.",
+      "pausedShort": "Monitoring paused — new copies are not recorded",
+      "resumeCapture": "Resume",
       "searchPlaceholder": "Search clipboard history…",
       "empty": "No clipboard entries yet. Copy something to get started.",
       "loading": "Loading…",
@@ -1522,7 +1543,9 @@
         "openPopup": "Open Clipboard Popup",
         "openPopupDesc": "Open the quick clipboard history popup",
         "pasteStack": "Paste Stack",
-        "pasteStackDesc": "Queue multiple entries and paste them sequentially"
+        "pasteStackDesc": "Queue multiple entries and paste them sequentially",
+        "toggleCapture": "Pause/Resume Clipboard Monitoring",
+        "toggleCaptureDesc": "Quickly toggle clipboard capture on or off"
       }
     }
   },

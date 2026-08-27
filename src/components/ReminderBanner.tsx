@@ -25,13 +25,15 @@ export function ReminderBanner() {
   const minsUntil = isAdvance ? Math.max(0, Math.ceil((reminder.triggerAt - Date.now()) / 60000)) : 0
 
   const handleDone = () => {
-    handleMarkDone(reminder.id)
+    // Pass the banner's occurrence triggerAt so a stale banner (scheduler
+    // already advanced) cannot double-advance a repeat reminder.
+    handleMarkDone(reminder.id, reminder.triggerAt)
     showToast(t('modules.reminder.ui.markedDone'))
     dismissCurrent()
   }
 
   const handleSnoozeClick = () => {
-    handleSnooze(reminder.id)
+    handleSnooze(reminder.id, reminder.triggerAt)
     showToast(t('modules.reminder.ui.snoozedMsg'))
     dismissCurrent()
   }

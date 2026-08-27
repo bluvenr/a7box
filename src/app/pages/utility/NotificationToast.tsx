@@ -97,7 +97,9 @@ function ToastCard({ reminder, onRemove, t }: ToastCardProps) {
     if (isTauri()) {
       try {
         const { emit } = await import('@tauri-apps/api/event')
-        await emit('notification-toast-action', { action, reminderId: reminder.id })
+        // Include the occurrence's triggerAt so the main window can ignore
+        // actions on stale cards (scheduler already advanced to next occurrence).
+        await emit('notification-toast-action', { action, reminderId: reminder.id, triggerAt: reminder.triggerAt })
       } catch {
         return // Don't remove card — emit failed
       }
@@ -245,8 +247,14 @@ function ToastCard({ reminder, onRemove, t }: ToastCardProps) {
 export default function NotificationToast() {
   const { t } = useTranslation()
   const [reminders, setReminders] = useState<ToastReminderData[]>([])
+  /** Mirrors `reminders` for use inside the event-listener closure */
+  const remindersRef = useRef<ToastReminderData[]>([])
+  useEffect(() => { remindersRef.current = reminders }, [reminders])
   const existingIds = useRef<Set<string>>(new Set())
-  const dismissedIds = useRef<Set<string>>(new Set())
+  /** Dismissed occurrences, keyed by "<id>@<triggerAt>". Keying by occurrence
+   *  (not just id) ensures dismissing one occurrence doesn't suppress the
+   *  reminder's future occurrences while this window stays open. */
+  const dismissedKeys = useRef<Set<string>>(new Set())
   const hasReceivedRef = useRef(false)
 
   // Override background to transparent for rounded corners + shadow
@@ -279,10 +287,18 @@ export default function NotificationToast() {
         // 1. Register listener for notification data
         unlisten = await listen<ToastReminderData>('notification-toast-data', (event) => {
           const data = event.payload
-          // Skip dismissed reminders (user closed this card)
-          if (dismissedIds.current.has(data.id)) return
-          // Skip duplicates (already showing)
-          if (existingIds.current.has(data.id)) return
+          // Skip dismissed occurrences (user closed the card for THIS occurrence)
+          if (dismissedKeys.current.has(`${data.id}@${data.triggerAt}`)) return
+
+          // A new occurrence of an already-shown reminder REPLACES the stale
+          // card instead of being swallowed by dedup — otherwise a long-lived
+          // toast window would silently suppress every future occurrence.
+          const stale = remindersRef.current.find((r) => r.id === data.id && r.triggerAt !== data.triggerAt)
+          if (stale) {
+            existingIds.current.delete(stale.id)
+          } else if (existingIds.current.has(data.id)) {
+            return // same occurrence already showing
+          }
 
           // An on-time due card supersedes any still-showing advance card of
           // the same reminder (advance cards use "<id>-advance-<ts>" ids)
@@ -296,7 +312,7 @@ export default function NotificationToast() {
 
           existingIds.current.add(data.id)
           hasReceivedRef.current = true
-          setReminders((prev) => [...prev, data])
+          setReminders((prev) => [...prev.filter((r) => r.id !== data.id), data])
           playNotificationSound().catch(() => {})
         })
 
@@ -351,11 +367,14 @@ export default function NotificationToast() {
     })()
   }, [reminders.length])
 
-  // Remove a reminder (dismissed = true means user clicked X, don't show again)
+  // Remove a reminder (dismissed = true means user clicked X, don't show this occurrence again)
   const handleRemove = useCallback((id: string, dismissed: boolean) => {
-    if (dismissed) dismissedIds.current.add(id)
+    setReminders((prev) => {
+      const target = prev.find((r) => r.id === id)
+      if (dismissed && target) dismissedKeys.current.add(`${id}@${target.triggerAt}`)
+      return prev.filter((r) => r.id !== id)
+    })
     existingIds.current.delete(id)
-    setReminders((prev) => prev.filter((r) => r.id !== id))
   }, [])
 
   if (reminders.length === 0) {

@@ -195,7 +195,7 @@ export async function setupToastListeners(): Promise<() => void> {
     })
 
     // User clicked an action button in the toast
-    const unlistenAction = await listen<{ action: string; reminderId: string }>(
+    const unlistenAction = await listen<{ action: string; reminderId: string; triggerAt?: number }>(
       'notification-toast-action',
       async (event) => {
         // Advance cards use pseudo-ids ("<id>-advance-<triggerAt>") — resolve
@@ -203,9 +203,9 @@ export async function setupToastListeners(): Promise<() => void> {
         const reminderId = event.payload.reminderId.split('-advance-')[0]
         const { action } = event.payload
         if (action === 'done') {
-          handleMarkDone(reminderId)
+          handleMarkDone(reminderId, event.payload.triggerAt)
         } else if (action === 'snooze') {
-          handleSnooze(reminderId)
+          handleSnooze(reminderId, event.payload.triggerAt)
         } else if (action === 'view') {
           // Bring main window to front, then navigate to reminder page
           await bringWindowToFront()
@@ -231,17 +231,38 @@ export function setOnReminderDue(cb: OnReminderDueCallback) {
 }
 
 /** Check all pending reminders and fire notifications for due ones */
-async function checkDueReminders() {
+export async function checkDueReminders() {
   const store = useReminderStore.getState()
   const bannerStore = useReminderBannerStore.getState()
   const now = Date.now()
 
   const newDue: Reminder[] = []
 
+  // ── Recover snoozed reminders whose snooze already fired ─────────────────
+  // After the snooze card is shown (fireKey in firedSet) and the user takes
+  // no further action, revert to pending so the auto-advance pass below can
+  // move repeat reminders to their next occurrence. Without this, such
+  // reminders stay stuck in 'snoozed' (past snoozeUntil) until app restart.
+  for (const reminder of store.reminders) {
+    if (reminder.status !== 'snoozed') continue
+    if (!reminder.snoozeUntil || reminder.snoozeUntil > now) continue
+    const fireKey = `${reminder.id}-snooze-${reminder.snoozeUntil}`
+    if (!firedSet.has(fireKey)) continue // snooze card not shown yet
+    // Mark the reminder as "already notified": the occurrence was handled
+    // via the snooze card, so the due loop below must not re-fire it. The
+    // auto-advance pass consumes this entry right after.
+    firedSet.add(reminder.id)
+    store.updateStatus(reminder.id, 'pending')
+  }
+
+  // Re-fetch after the recovery mutations so the auto-advance pass sees
+  // current statuses.
+  const afterRecovery = useReminderStore.getState().reminders
+
   // ── Auto-advance repeat reminders whose occurrence was already fired ──────
   // When a repeat reminder was notified but not completed (user ignored/dismissed),
   // advance triggerAt to the next future occurrence so it fires again.
-  for (const reminder of store.reminders) {
+  for (const reminder of afterRecovery) {
     if (reminder.status !== 'pending') continue
     if (!reminder.repeat) continue
     if (!firedSet.has(reminder.id)) continue
@@ -365,8 +386,13 @@ export function clearFiredEntry(reminderId: string) {
   }
 }
 
-/** Handle "mark done" action from notification overlay */
-export function handleMarkDone(reminderId: string) {
+/** Handle "mark done" action from notification overlay.
+ *  occurrenceTriggerAt (optional): the triggerAt of the occurrence the UI was
+ *  showing. When provided and it no longer matches the reminder's current
+ *  triggerAt (the scheduler already auto-advanced to the next occurrence),
+ *  the action is a no-op — otherwise the reminder would be advanced twice,
+ *  silently skipping the next occurrence. */
+export function handleMarkDone(reminderId: string, occurrenceTriggerAt?: number) {
   const store = useReminderStore.getState()
   const reminder = store.getById(reminderId)
   if (!reminder) return
@@ -374,6 +400,8 @@ export function handleMarkDone(reminderId: string) {
   // Without this, a second call would advance a repeat reminder again,
   // silently skipping the next occurrence.
   if (reminder.status === 'completed') return
+  // Guard: stale notification card — the scheduler already moved on.
+  if (occurrenceTriggerAt !== undefined && reminder.triggerAt !== occurrenceTriggerAt) return
   // Debounce: block a second "done" within 1s — repeat reminders return to
   // 'pending' after the first done, so the completed-guard alone cannot
   // protect them from double-clicks.
@@ -403,9 +431,13 @@ export function handleMarkDone(reminderId: string) {
   }
 }
 
-/** Handle "snooze" action from notification overlay */
-export function handleSnooze(reminderId: string) {
+/** Handle "snooze" action from notification overlay.
+ *  occurrenceTriggerAt guards against stale cards, same as handleMarkDone. */
+export function handleSnooze(reminderId: string, occurrenceTriggerAt?: number) {
   const store = useReminderStore.getState()
+  const reminder = store.getById(reminderId)
+  if (!reminder) return
+  if (occurrenceTriggerAt !== undefined && reminder.triggerAt !== occurrenceTriggerAt) return
   const snoozeUntil = Date.now() + 10 * 60 * 1000 // 10 minutes
   store.updateStatus(reminderId, 'snoozed', snoozeUntil)
   clearFiredEntry(reminderId)

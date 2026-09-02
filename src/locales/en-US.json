@@ -1358,6 +1358,7 @@
         "copyCount": "Copy count",
         "sourceApp": "Source app",
         "sourceTitle": "Source window",
+        "attachedImage": "Attached image",
         "neverUsed": "Never",
         "unknown": "Unknown"
       },
@@ -1390,6 +1391,8 @@
       "pasteDegraded": "Auto-paste unavailable ({{reason}}) — copied instead",
       "popupHint": "↑↓ select · Enter paste · {{key}} copy · Esc close",
       "copyAs": "Copy as",
+      "copyAttachedImage": "Copy image",
+      "copyAttachedFailed": "Could not copy the image",
       "copyAsJson": "Formatted JSON",
       "selectAll": "Select all",
       "deleteSelected": "Delete selected",

@@ -1358,6 +1358,7 @@
         "copyCount": "复制次数",
         "sourceApp": "来源应用",
         "sourceTitle": "来源窗口",
+        "attachedImage": "附属图片",
         "neverUsed": "从未",
         "unknown": "未知"
       },
@@ -1390,6 +1391,8 @@
       "pasteDegraded": "无法自动粘贴（{{reason}}）— 已改为复制",
       "popupHint": "↑↓ 选择 · Enter 粘贴 · {{key}} 复制 · Esc 关闭",
       "copyAs": "复制为",
+      "copyAttachedImage": "复制图片",
+      "copyAttachedFailed": "无法复制图片",
       "copyAsJson": "格式化 JSON",
       "selectAll": "全选",
       "deleteSelected": "删除所选",

@@ -73,9 +73,10 @@ export function ClipCard({
           : 'border-transparent hover:border-border-base hover:bg-bg-hover/50'
       }`}
     >
-      {/* Type visual */}
+      {/* Type visual — image entries and text entries with an attached image
+          (mixed text+image capture) both show the thumbnail */}
       <div className="shrink-0 pt-0.5">
-        {clip.clipType === 'image' && clip.thumbnailPath ? (
+        {clip.thumbnailPath && (clip.clipType === 'image' || clip.attachedImagePath) ? (
           <ImagePreview fileName={clip.thumbnailPath} size={36} />
         ) : (
           <div

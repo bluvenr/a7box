@@ -67,18 +67,20 @@ export function ClipDetail({
     }
   }, [clip.id])
 
-  // Load the full-size image for image entries (content holds the file name)
+  // Load the full-size image: image entries keep the file name in content,
+  // text entries may carry an attached image (mixed text+image capture)
   useEffect(() => {
-    if (clip.clipType !== 'image') return
+    const fileName = clip.clipType === 'image' ? clip.content : clip.attachedImagePath
+    if (!fileName) return
     let cancelled = false
     setImgSrc(null)
-    void bridge.imageDataUrl(clip.content).then((url) => {
+    void bridge.imageDataUrl(fileName).then((url) => {
       if (!cancelled) setImgSrc(url)
     })
     return () => {
       cancelled = true
     }
-  }, [clip.clipType, clip.content])
+  }, [clip.clipType, clip.content, clip.attachedImagePath])
 
   const filePaths = fileClipPaths(full)
   const textPath = textClipPath(full)
@@ -130,6 +132,18 @@ export function ClipDetail({
   const handlePin = () => {
     setFull((f) => ({ ...f, isPinned: !f.isPinned }))
     onPin()
+  }
+
+  const handleCopyAttachedImage = async () => {
+    const ok = await bridge.copyAttachedImage(full.id)
+    toast(
+      ok
+        ? t('modules.clipboardManager.copiedMsg', { defaultValue: 'Copied to clipboard' })
+        : t('modules.clipboardManager.copyAttachedFailed', {
+            defaultValue: 'Could not copy the image',
+          }),
+      ok ? 'success' : 'error'
+    )
   }
 
   const actionBtn =
@@ -325,6 +339,47 @@ export function ClipDetail({
           </div>
         )}
       </div>
+
+      {/* Attached image — text entry captured together with a bitmap
+          (e.g. spreadsheet selection, browser image with URL text) */}
+      {full.clipType !== 'image' && full.attachedImagePath && (
+        <div className="mt-4">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted">
+              {t('modules.clipboardManager.detail.attachedImage', {
+                defaultValue: 'Attached image',
+              })}
+            </p>
+            <button onClick={() => void handleCopyAttachedImage()} className={ctxBtn}>
+              <Copy size={11} />
+              {t('modules.clipboardManager.copyAttachedImage', { defaultValue: 'Copy image' })}
+            </button>
+          </div>
+          {imgSrc ? (
+            <div
+              className="group/img relative inline-block cursor-zoom-in"
+              onClick={() => setZoom(true)}
+              title={t('modules.clipboardManager.viewFullSize', {
+                defaultValue: 'Click to view full size',
+              })}
+            >
+              <img
+                src={imgSrc}
+                alt=""
+                className="max-h-48 w-auto max-w-full rounded-md border border-border-subtle object-contain"
+                draggable={false}
+              />
+              <span className="absolute bottom-1.5 right-1.5 rounded bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover/img:opacity-100">
+                <Maximize2 size={11} />
+              </span>
+            </div>
+          ) : (
+            <div className="flex h-24 items-center justify-center rounded-md border border-border-subtle bg-bg-overlay text-text-disabled">
+              <ImageOff size={18} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Metadata */}
       <div className="mt-4">

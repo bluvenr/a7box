@@ -112,6 +112,18 @@ export async function copyText(text: string): Promise<void> {
   if (invoke) await invoke('cm_copy_text', { text })
 }
 
+/** Copy a text clip's attached image (mixed text+image capture). */
+export async function copyAttachedImage(id: string): Promise<boolean> {
+  const invoke = await getInvoke()
+  if (!invoke) return false
+  try {
+    await invoke('cm_copy_attached_image', { id })
+    return true
+  } catch {
+    return false
+  }
+}
+
 /** Returns 'pasted' or 'copied:<reason>' when key injection is unavailable */
 export async function pasteClip(id: string): Promise<string> {
   const invoke = await getInvoke()

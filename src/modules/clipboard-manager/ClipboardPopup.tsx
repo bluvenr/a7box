@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { ClipboardList, X, Layers, Pause } from 'lucide-react'
+import * as bridge from './bridge'
 import { useClipboardStore } from './clipboardStore'
 import { useClipboardHistory } from './hooks/useClipboardHistory'
 import { SearchBar } from './components/SearchBar'
@@ -218,6 +219,21 @@ export default function ClipboardPopup() {
       flash(t('modules.clipboardManager.copiedMsg', { defaultValue: 'Copied to clipboard' }))
     },
     [copyClip, flash, t]
+  )
+
+  /** Copy a text clip's attached image (mixed text+image capture) */
+  const handleCopyAttachedImage = useCallback(
+    async (clip: ClipEntry) => {
+      const ok = await bridge.copyAttachedImage(clip.id)
+      flash(
+        ok
+          ? t('modules.clipboardManager.copiedMsg', { defaultValue: 'Copied to clipboard' })
+          : t('modules.clipboardManager.copyAttachedFailed', {
+              defaultValue: 'Could not copy the image',
+            })
+      )
+    },
+    [flash, t]
   )
 
   const openInManager = useCallback(async (id: string) => {
@@ -591,6 +607,17 @@ export default function ClipboardPopup() {
                     }}
                   />
                 </>
+              )}
+              {ctxMenu.clip.clipType === 'text' && ctxMenu.clip.attachedImagePath && (
+                <CtxItem
+                  label={t('modules.clipboardManager.copyAttachedImage', {
+                    defaultValue: 'Copy image',
+                  })}
+                  onClick={() => {
+                    setCtxMenu(null)
+                    void handleCopyAttachedImage(ctxMenu.clip)
+                  }}
+                />
               )}
               {ctxMenu.clip.clipType === 'text' && (
                 <CtxItem

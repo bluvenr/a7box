@@ -35,6 +35,8 @@ export interface ClipEntry {
   content: string
   preview: string
   thumbnailPath?: string
+  /** Attached image of a TEXT entry (mixed text+image capture); file name in images dir */
+  attachedImagePath?: string
   sourceApp?: string
   sourceTitle?: string
   isPinned: boolean

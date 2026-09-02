@@ -219,6 +219,24 @@ pub fn cm_copy_text(state: CmState<'_>, text: String) -> Result<(), String> {
     clipboard::copy_text_to_system(state.inner(), &text)
 }
 
+/// Copy a text clip's attached image (mixed text+image capture) to the system
+/// clipboard. The default paste path still writes back the text — this is the
+/// explicit way to reuse the accompanying bitmap.
+#[tauri::command]
+pub fn cm_copy_attached_image(state: CmState<'_>, id: String) -> Result<(), String> {
+    let clip = {
+        let conn = state.db.lock().unwrap();
+        db::get_clip(&conn, &id)?.ok_or_else(|| "clip not found".to_string())?
+    };
+    let file_name = clip
+        .attached_image_path
+        .ok_or_else(|| "no attached image".to_string())?;
+    clipboard::copy_image_to_system(state.inner(), &file_name)?;
+    let conn = state.db.lock().unwrap();
+    let _ = db::touch_clip(&conn, &id, clipboard::now_ms());
+    Ok(())
+}
+
 /// Copy a clip and auto-paste it into the recorded target window.
 /// Returns "pasted" or "copied:<reason>" when the platform can't inject keys.
 #[tauri::command]

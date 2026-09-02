@@ -138,6 +138,7 @@ pub fn run() {
             commands::clipboard_manager::cm_asset_path,
             commands::clipboard_manager::cm_image_data_url,
             commands::clipboard_manager::cm_copy_text,
+            commands::clipboard_manager::cm_copy_attached_image,
             // Screenshot
             commands::screenshot::capture_full_screen,
             commands::screenshot::capture_region,

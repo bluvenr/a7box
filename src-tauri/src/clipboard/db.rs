@@ -17,6 +17,10 @@ pub struct ClipEntry {
     pub preview: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thumbnail_path: Option<String>,
+    /// Attached image that came with copied text (mixed text+image clipboard,
+    /// e.g. a spreadsheet selection). File name inside images_dir.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attached_image_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source_app: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -146,6 +150,16 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
             eprintln!("[A7Box][CM] FTS5 unavailable, search falls back to LIKE: {}", e);
         }
     }
+
+    // Migration: attached_image_path (text clips with an accompanying image).
+    // Column probe + ALTER keeps pre-existing databases upgradeable in place.
+    let has_attached: bool = conn
+        .prepare("SELECT attached_image_path FROM clips LIMIT 1")
+        .is_ok();
+    if !has_attached {
+        conn.execute_batch("ALTER TABLE clips ADD COLUMN attached_image_path TEXT;")
+            .map_err(|e| format!("migrate clips: {}", e))?;
+    }
     Ok(())
 }
 
@@ -170,15 +184,16 @@ fn row_to_clip(row: &Row<'_>) -> rusqlite::Result<ClipEntry> {
         created_at: row.get(12)?,
         last_used_at: row.get(13)?,
         size: row.get(14)?,
+        attached_image_path: row.get(15)?,
     })
 }
 
-const CLIP_COLS: &str = "id, clip_type, category, content, preview, thumbnail_path, source_app, source_title, is_pinned, is_secret, is_encrypted, copy_count, created_at, last_used_at, size";
+const CLIP_COLS: &str = "id, clip_type, category, content, preview, thumbnail_path, source_app, source_title, is_pinned, is_secret, is_encrypted, copy_count, created_at, last_used_at, size, attached_image_path";
 
 pub fn insert_clip(conn: &Connection, clip: &ClipEntry) -> Result<(), String> {
     conn.execute(
-        "INSERT INTO clips (id, clip_type, category, content, preview, thumbnail_path, source_app, source_title, is_pinned, is_secret, is_encrypted, copy_count, created_at, last_used_at, size)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+        "INSERT INTO clips (id, clip_type, category, content, preview, thumbnail_path, source_app, source_title, is_pinned, is_secret, is_encrypted, copy_count, created_at, last_used_at, size, attached_image_path)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
         params![
             clip.id,
             clip.clip_type,
@@ -195,6 +210,7 @@ pub fn insert_clip(conn: &Connection, clip: &ClipEntry) -> Result<(), String> {
             clip.created_at,
             clip.last_used_at,
             clip.size,
+            clip.attached_image_path,
         ],
     )
     .map_err(|e| format!("insert clip: {}", e))?;
@@ -434,8 +450,11 @@ pub fn enforce_limits(conn: &Connection, max_history: u64, retention_days: u64, 
     Ok(removed)
 }
 
-/// Evict oldest non-pinned image clips until total image bytes <= limit.
-/// Returns removed clips for file cleanup.
+/// Evict until total image bytes <= limit. Two phases per round:
+///   1. strip attached images from the oldest non-pinned TEXT clips (the text
+///      record survives — the image is only supplementary)
+///   2. evict the oldest non-pinned IMAGE clips entirely
+/// Returns removed clips (phase 2 only; stripped files are deleted in place).
 pub fn enforce_image_cache_limit(conn: &Connection, limit_bytes: u64, images_dir: &std::path::Path) -> Result<Vec<ClipEntry>, String> {
     let mut removed = Vec::new();
     loop {
@@ -450,7 +469,11 @@ pub fn enforce_image_cache_limit(conn: &Connection, limit_bytes: u64, images_dir
         if total <= limit_bytes {
             break;
         }
-        // Remove the oldest non-pinned image clip
+        // Phase 1: strip the oldest non-pinned attached image (keeps the text entry)
+        if strip_oldest_attached_image(conn, images_dir)? {
+            continue;
+        }
+        // Phase 2: remove the oldest non-pinned image clip
         let sql = format!("SELECT {} FROM clips WHERE clip_type = 'image' AND is_pinned = 0 ORDER BY created_at ASC LIMIT 1", CLIP_COLS);
         let oldest: Option<ClipEntry> = conn
             .query_row(&sql, [], row_to_clip)
@@ -469,6 +492,27 @@ pub fn enforce_image_cache_limit(conn: &Connection, limit_bytes: u64, images_dir
         }
     }
     Ok(removed)
+}
+
+/// Detach the attached image of the oldest non-pinned text clip.
+/// Files are deleted immediately so the caller's size loop observes progress.
+fn strip_oldest_attached_image(conn: &Connection, images_dir: &std::path::Path) -> Result<bool, String> {
+    let sql = format!(
+        "SELECT {} FROM clips WHERE attached_image_path IS NOT NULL AND is_pinned = 0 ORDER BY created_at ASC LIMIT 1",
+        CLIP_COLS
+    );
+    let clip: Option<ClipEntry> = conn
+        .query_row(&sql, [], row_to_clip)
+        .optional()
+        .map_err(|e| e.to_string())?;
+    let Some(clip) = clip else { return Ok(false) };
+    conn.execute(
+        "UPDATE clips SET attached_image_path = NULL, thumbnail_path = NULL WHERE id = ?1",
+        params![clip.id],
+    )
+    .map_err(|e| e.to_string())?;
+    crate::clipboard::remove_attached_files(images_dir, &clip);
+    Ok(true)
 }
 
 pub fn get_stats(conn: &Connection) -> Result<ClipStats, String> {

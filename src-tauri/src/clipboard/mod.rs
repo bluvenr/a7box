@@ -311,17 +311,28 @@ pub fn stop_watcher(state: &ClipboardManagerState) {
     state.generation.fetch_add(1, Ordering::SeqCst);
 }
 
+/// Raw RGBA bitmap as read from the system clipboard.
+struct RawImage {
+    bytes: Vec<u8>,
+    width: u32,
+    height: u32,
+}
+
 enum Captured {
-    Text(String),
-    Image { bytes: Vec<u8>, width: u32, height: u32 },
+    /// Text with an optional attached image (mixed clipboard, e.g. spreadsheet selection)
+    Text { text: String, attached: Option<RawImage> },
+    Image(RawImage),
     Files(Vec<String>),
 }
 
 impl Captured {
     fn hash(&self) -> String {
         match self {
-            Captured::Text(t) => hash_text(t),
-            Captured::Image { bytes, .. } => sha256_hex(bytes),
+            // Attached image does not take part in dedup — the text identity
+            // decides; repeated copies of the same text bump instead of
+            // re-storing (and re-encoding) the accompanying bitmap.
+            Captured::Text { text, .. } => hash_text(text),
+            Captured::Image(raw) => sha256_hex(&raw.bytes),
             Captured::Files(paths) => hash_text(&paths.join("\n")),
         }
     }
@@ -379,6 +390,9 @@ fn watcher_loop(app: AppHandle, state: Arc<ClipboardManagerState>, gen: u64) {
 }
 
 /// Read the current clipboard content (files > text > image priority).
+/// Text captures additionally probe for an accompanying bitmap so mixed
+/// copies (spreadsheet selections, browser images with URL text, ...) keep
+/// both parts; the image is stored as an attachment of the text entry.
 fn read_clipboard(cb: &mut arboard::Clipboard, state: &ClipboardManagerState) -> Option<Captured> {
     let settings = state.read_settings();
 
@@ -402,19 +416,38 @@ fn read_clipboard(cb: &mut arboard::Clipboard, state: &ClipboardManagerState) ->
 
     if let Ok(text) = cb.get_text() {
         if !text.trim().is_empty() {
-            return Some(Captured::Text(text));
+            let attached = if settings.capture_images {
+                cb.get_image().ok().and_then(|img| sanitize_attached(img))
+            } else {
+                None
+            };
+            return Some(Captured::Text { text, attached });
         }
     }
     if settings.capture_images {
         if let Ok(img) = cb.get_image() {
-            return Some(Captured::Image {
+            return Some(Captured::Image(RawImage {
                 bytes: img.bytes.to_vec(),
                 width: img.width as u32,
                 height: img.height as u32,
-            });
+            }));
         }
     }
     None
+}
+
+/// Attached-image guard rails: drop icon-sized bitmaps (file icons that ride
+/// along with path text on macOS/Linux) and absurdly large frames (raw RGBA
+/// memory = w*h*4, capped at 200MB to keep the watcher thread safe).
+fn sanitize_attached(img: arboard::ImageData<'_>) -> Option<RawImage> {
+    let (width, height) = (img.width as u32, img.height as u32);
+    if width < 64 || height < 64 {
+        return None;
+    }
+    if (width as u64) * (height as u64) * 4 > 200 * 1024 * 1024 {
+        return None;
+    }
+    Some(RawImage { bytes: img.bytes.to_vec(), width, height })
 }
 
 fn capture_source() -> (Option<String>, Option<String>) {
@@ -453,11 +486,11 @@ fn ingest(app: &AppHandle, state: &ClipboardManagerState, captured: Captured, ha
     let conn = &mut *state.db.lock().unwrap();
 
     match captured {
-        Captured::Text(text) => {
-            ingest_text(app, state, conn, text, hash, source_app, source_title, &settings, now)
+        Captured::Text { text, attached } => {
+            ingest_text(app, state, conn, text, attached, hash, source_app, source_title, &settings, now)
         }
-        Captured::Image { bytes, width, height } => {
-            ingest_image(app, state, conn, bytes, width, height, source_app, source_title, &settings, now)
+        Captured::Image(raw) => {
+            ingest_image(app, state, conn, raw.bytes, raw.width, raw.height, source_app, source_title, &settings, now)
         }
         Captured::Files(paths) => {
             ingest_files(app, conn, paths, source_app, source_title, now)
@@ -471,6 +504,7 @@ fn ingest_text(
     state: &ClipboardManagerState,
     conn: &Connection,
     text: String,
+    attached: Option<RawImage>,
     hash: String,
     source_app: Option<String>,
     source_title: Option<String>,
@@ -526,13 +560,33 @@ fn ingest_text(
         content.clone()
     };
 
+    let id = uuid::Uuid::new_v4().to_string();
+
+    // Attached image (mixed text+image copy). Skipped for secrets: the
+    // accompanying bitmap may contain the same sensitive data and attached
+    // images are NOT encrypted at rest. Oversized/failed encodes degrade
+    // silently — the text entry is still stored without attachment.
+    let mut attached_image_path: Option<String> = None;
+    let mut attached_thumb_path: Option<String> = None;
+    let mut attached_size: i64 = 0;
+    if let Some(raw) = attached {
+        if !is_secret {
+            if let Some(stored) = save_attached_image(state, &id, raw, settings) {
+                attached_image_path = Some(stored.file_name);
+                attached_thumb_path = Some(stored.thumb_name);
+                attached_size = stored.png_len as i64;
+            }
+        }
+    }
+
     let clip = ClipEntry {
-        id: uuid::Uuid::new_v4().to_string(),
+        id,
         clip_type: "text".into(),
         category,
         content: stored,
         preview,
-        thumbnail_path: None,
+        thumbnail_path: attached_thumb_path,
+        attached_image_path,
         source_app,
         source_title,
         is_pinned: false,
@@ -541,7 +595,7 @@ fn ingest_text(
         copy_count: 0,
         created_at: now,
         last_used_at: None,
-        size: content.len() as i64,
+        size: content.len() as i64 + attached_size,
     };
     if let Err(e) = db::insert_clip(conn, &clip) {
         eprintln!("[ClipboardManager] insert failed: {}", e);
@@ -557,6 +611,7 @@ fn ingest_text(
             content: extra_content.clone(),
             preview: extra_preview,
             thumbnail_path: None,
+            attached_image_path: None,
             source_app: clip.source_app.clone(),
             source_title: clip.source_title.clone(),
             is_pinned: false,
@@ -578,6 +633,42 @@ fn ingest_text(
         EVENT_HISTORY_CHANGED,
         serde_json::json!({"action": "added", "id": clip.id, "clipType": clip.clip_type}),
     );
+}
+
+/// Encode and persist the attached image of a text clip.
+/// Returns the stored file names + encoded size, or None to degrade silently
+/// (oversized beyond `max_image_bytes`, encode failure, disk error).
+struct StoredAttached {
+    file_name: String,
+    thumb_name: String,
+    png_len: usize,
+}
+
+fn save_attached_image(
+    state: &ClipboardManagerState,
+    id: &str,
+    raw: RawImage,
+    settings: &ClipboardSettings,
+) -> Option<StoredAttached> {
+    let rgba = image::RgbaImage::from_raw(raw.width, raw.height, raw.bytes)?;
+    let full = image::DynamicImage::ImageRgba8(rgba);
+    let mut png: Vec<u8> = Vec::new();
+    full.write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
+        .ok()?;
+    if png.len() as u64 > settings.max_image_bytes {
+        return None;
+    }
+    let thumb = full.thumbnail(200, 150);
+    let mut thumb_png: Vec<u8> = Vec::new();
+    thumb
+        .write_to(&mut std::io::Cursor::new(&mut thumb_png), image::ImageFormat::Png)
+        .ok()?;
+
+    let file_name = format!("{}.png", id);
+    let thumb_name = format!("{}_thumb.png", id);
+    std::fs::write(state.images_dir.join(&file_name), &png).ok()?;
+    let _ = std::fs::write(state.images_dir.join(&thumb_name), &thumb_png);
+    Some(StoredAttached { file_name, thumb_name, png_len: png.len() })
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -633,6 +724,7 @@ fn ingest_image(
         content: file_name,
         preview: format!("{}×{} image", width, height),
         thumbnail_path: Some(thumb_name),
+        attached_image_path: None,
         source_app,
         source_title,
         is_pinned: false,
@@ -671,6 +763,7 @@ fn ingest_files(
         content: content.clone(),
         preview: truncate_chars(paths.first().map(|s| s.as_str()).unwrap_or(""), PREVIEW_CHARS),
         thumbnail_path: None,
+        attached_image_path: None,
         source_app,
         source_title,
         is_pinned: false,
@@ -708,11 +801,24 @@ fn cleanup_after_insert(state: &ClipboardManagerState, conn: &Connection, settin
 }
 
 /// Delete the image/thumbnail files belonging to a clip (used on delete/clear).
+/// Handles both full image entries and attached images of text entries.
 pub fn remove_clip_files(images_dir: &Path, clip: &ClipEntry) {
-    if clip.clip_type != "image" {
+    if clip.clip_type == "image" {
+        let _ = std::fs::remove_file(images_dir.join(&clip.content));
+        if let Some(thumb) = &clip.thumbnail_path {
+            let _ = std::fs::remove_file(images_dir.join(thumb));
+        }
         return;
     }
-    let _ = std::fs::remove_file(images_dir.join(&clip.content));
+    remove_attached_files(images_dir, clip);
+}
+
+/// Delete a text clip's attached image + its thumbnail (also used by the
+/// image-cache eviction when stripping attachments from old entries).
+pub fn remove_attached_files(images_dir: &Path, clip: &ClipEntry) {
+    if let Some(attached) = &clip.attached_image_path {
+        let _ = std::fs::remove_file(images_dir.join(attached));
+    }
     if let Some(thumb) = &clip.thumbnail_path {
         let _ = std::fs::remove_file(images_dir.join(thumb));
     }

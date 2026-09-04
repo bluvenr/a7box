@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { Bell, CheckCircle, Clock, Eye, X } from 'lucide-react'
 import { useReminderBannerStore } from '../modules/reminder/notificationBridge'
 import { handleMarkDone, handleSnooze } from '../modules/reminder/notificationBridge'
+import { useNowTick } from '../shared/hooks'
 import { useToast } from './Toast'
 
 export function ReminderBanner() {
@@ -16,13 +17,15 @@ export function ReminderBanner() {
   const showToast = useToast()
   const current = useReminderBannerStore((s) => s.current)
   const dismissCurrent = useReminderBannerStore((s) => s.dismissCurrent)
+  // Heartbeat: refresh the advance countdown ("starts in X min") every 15s
+  const now = useNowTick(15_000)
 
   if (!current) return null
 
   const { reminder, isAdvance } = current
 
   // Advance heads-up: countdown text instead of the due-time prefix
-  const minsUntil = isAdvance ? Math.max(0, Math.ceil((reminder.triggerAt - Date.now()) / 60000)) : 0
+  const minsUntil = isAdvance ? Math.max(0, Math.ceil((reminder.triggerAt - now) / 60000)) : 0
 
   const handleDone = () => {
     // Pass the banner's occurrence triggerAt so a stale banner (scheduler

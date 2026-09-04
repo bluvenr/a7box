@@ -16,6 +16,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Bell, CheckCircle, Clock, Eye, X } from 'lucide-react'
 import { isTauri } from '../../../shared/utils'
+import { useNowTick } from '../../../shared/hooks'
 
 export interface ToastReminderData {
   id: string
@@ -80,11 +81,14 @@ async function playNotificationSound() {
 
 interface ToastCardProps {
   reminder: ToastReminderData
+  /** Heartbeat timestamp from the parent's useNowTick — keeps relative-time
+   *  labels fresh and avoids calling Date.now() during render. */
+  now: number
   onRemove: (id: string, dismissed: boolean) => void
   t: (k: string, options?: any) => any
 }
 
-function ToastCard({ reminder, onRemove, t }: ToastCardProps) {
+function ToastCard({ reminder, now, onRemove, t }: ToastCardProps) {
   const [confirming, setConfirming] = useState<'done' | 'snooze' | null>(null)
 
   const handleAction = async (action: 'done' | 'snooze' | 'view' | 'dismiss') => {
@@ -115,7 +119,6 @@ function ToastCard({ reminder, onRemove, t }: ToastCardProps) {
   }
 
   // Calculate relative time
-  const now = Date.now()
   const diffMs = now - reminder.triggerAt
   const diffMin = Math.floor(diffMs / 60000)
   const isOverdue = !reminder.isAdvance && (reminder.isOverdue || diffMs > 0)
@@ -246,6 +249,10 @@ function ToastCard({ reminder, onRemove, t }: ToastCardProps) {
 
 export default function NotificationToast() {
   const { t } = useTranslation()
+  // Heartbeat: re-render all cards every 15s so relative-time labels
+  // ("overdue X min", "starts in X min") stay fresh instead of freezing
+  // at the moment the card appeared.
+  const now = useNowTick(15_000)
   const [reminders, setReminders] = useState<ToastReminderData[]>([])
   /** Mirrors `reminders` for use inside the event-listener closure */
   const remindersRef = useRef<ToastReminderData[]>([])
@@ -387,6 +394,7 @@ export default function NotificationToast() {
         <ToastCard
           key={reminder.id}
           reminder={reminder}
+          now={now}
           onRemove={handleRemove}
           t={t}
         />

@@ -581,6 +581,26 @@
         "inWindowShortcuts": "Alt+E 编码 · Alt+D 解码"
       }
     },
+    "urlCodec": {
+      "name": "URL 编解码",
+      "description": "URL 编码、解码与参数解析",
+      "commands": { "open": "URL 编解码", "openDesc": "URL 编码/解码与解析" },
+      "ui": {
+        "encode": "编码",
+        "decode": "解码",
+        "typeComponent": "Component",
+        "typeFull": "Full URL",
+        "swap": "交换输入输出",
+        "inputPlaceholderEncode": "输入要编码的文本...",
+        "inputPlaceholderDecode": "输入要解码的 URL 编码字符串，如 %E4%BD%A0%E5%A5%BD",
+        "outputPlaceholder": "结果将显示在这里",
+        "decodeError": "解码失败 — 无效的 URL 编码字符串",
+        "parserTitle": "URL 解析器",
+        "parserPlaceholder": "粘贴完整 URL，如 https://example.com/path?key=value",
+        "parseError": "无法解析 — 请输入有效的 URL（包含 http:// 或 https://）",
+        "queryParams": "查询参数"
+      }
+    },
     "timestampConverter": {
       "name": "时间戳转换器",
       "description": "Unix 时间戳与可读日期互转",

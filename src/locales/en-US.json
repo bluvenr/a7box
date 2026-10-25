@@ -581,6 +581,26 @@
         "inWindowShortcuts": "Alt+E Encode · Alt+D Decode"
       }
     },
+    "urlCodec": {
+      "name": "URL Codec",
+      "description": "URL encode, decode and query parameter parsing",
+      "commands": { "open": "URL Codec", "openDesc": "URL encode/decode and parse" },
+      "ui": {
+        "encode": "Encode",
+        "decode": "Decode",
+        "typeComponent": "Component",
+        "typeFull": "Full URL",
+        "swap": "Swap input/output",
+        "inputPlaceholderEncode": "Enter text to encode...",
+        "inputPlaceholderDecode": "Enter URL-encoded string to decode, e.g. %E4%BD%A0%E5%A5%BD",
+        "outputPlaceholder": "Result will appear here",
+        "decodeError": "Decode failed — invalid URL-encoded string",
+        "parserTitle": "URL Parser",
+        "parserPlaceholder": "Paste a full URL, e.g. https://example.com/path?key=value",
+        "parseError": "Cannot parse — enter a valid URL (including http:// or https://)",
+        "queryParams": "Query Parameters"
+      }
+    },
     "timestampConverter": {
       "name": "Timestamp Converter",
       "description": "Convert between unix timestamps and human-readable dates",

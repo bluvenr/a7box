@@ -10,7 +10,7 @@ const I18N = {
   en: {
     // Meta
     'page.title': 'A7Box — Your Tactical Efficiency Weapon on Desktop',
-    'page.description': 'A 100% local, cross-platform developer toolbox — 22 built-in tools. ~10MB, no cloud. Built with Tauri 2 + React 19.',
+    'page.description': 'A 100% local, cross-platform developer toolbox — 23 built-in tools. ~10MB, no cloud. Built with Tauri 2 + React 19.',
 
     // Nav
     'nav.features': 'Features',
@@ -24,7 +24,7 @@ const I18N = {
     'hero.title1': 'Your Tactical',
     'hero.title2': 'Efficiency Weapon',
     'hero.title3': 'on Desktop',
-    'hero.subtitle': 'An all-in-one developer toolbox that runs <strong>100% locally</strong> — 22 built-in tools in a ~10MB app. No cloud. No tracking. No account required.',
+    'hero.subtitle': 'An all-in-one developer toolbox that runs <strong>100% locally</strong> — 23 built-in tools in a ~10MB app. No cloud. No tracking. No account required.',
     'hero.download': 'Download Now',
     'hero.github': 'View on GitHub',
     'hero.available': 'Available for:',
@@ -65,7 +65,7 @@ const I18N = {
 
     // Tools
     'tools.tag': 'Toolbox',
-    'tools.title': '22 Tools, One Box',
+    'tools.title': '23 Tools, One Box',
     'tools.desc': 'Accessible via sidebar, command palette (Ctrl+K), or global shortcuts.',
 
     // Comparison
@@ -99,7 +99,7 @@ const I18N = {
 
     // Download
     'download.title': 'Ready to Deploy?',
-    'download.desc': 'Download A7Box — 22 tools, ~10MB, no cloud, no account. Just install and use.',
+    'download.desc': 'Download A7Box — 23 tools, ~10MB, no cloud, no account. Just install and use.',
     'download.win': 'Download for Windows',
     'download.mac': 'Download for macOS',
     'download.linux': 'Download for Linux',
@@ -121,7 +121,7 @@ const I18N = {
   zh: {
     // Meta
     'page.title': 'A7Box — 桌面端战术效率武器',
-    'page.description': '100% 本地运行的跨平台开发者工具箱，内置 22 款工具，~10MB 安装包，无云端依赖。基于 Tauri 2 + React 19 构建。',
+    'page.description': '100% 本地运行的跨平台开发者工具箱，内置 23 款工具，~10MB 安装包，无云端依赖。基于 Tauri 2 + React 19 构建。',
 
     // Nav
     'nav.features': '特性',
@@ -135,7 +135,7 @@ const I18N = {
     'hero.title1': '你的桌面端战术',
     'hero.title2': '效率武器',
     'hero.title3': '即刻就绪',
-    'hero.subtitle': '一款 <strong>100% 本地运行</strong> 的全功能开发者工具箱 —— 22 款内置工具，~10MB 安装包。不联网、不追踪、不需要账号。',
+    'hero.subtitle': '一款 <strong>100% 本地运行</strong> 的全功能开发者工具箱 —— 23 款内置工具，~10MB 安装包。不联网、不追踪、不需要账号。',
     'hero.download': '立即下载',
     'hero.github': '在 GitHub 查看',
     'hero.available': '支持平台：',
@@ -176,7 +176,7 @@ const I18N = {
 
     // Tools
     'tools.tag': '工具箱',
-    'tools.title': '22 款工具，一个盒子',
+    'tools.title': '23 款工具，一个盒子',
     'tools.desc': '支持侧边栏、命令面板（Ctrl+K）和自定义全局快捷键三种方式调用。',
 
     // Comparison
@@ -210,7 +210,7 @@ const I18N = {
 
     // Download
     'download.title': '准备好了吗？',
-    'download.desc': '下载 A7Box —— 22 款工具，~10MB，无云端，无账号。安装即用。',
+    'download.desc': '下载 A7Box —— 23 款工具，~10MB，无云端，无账号。安装即用。',
     'download.win': '下载 Windows 版',
     'download.mac': '下载 macOS 版',
     'download.linux': '下载 Linux 版',
@@ -245,6 +245,8 @@ const TOOL_ICONS = {
   diff: `<svg viewBox="0 0 24 24" ${S}><rect x="2" y="3" width="8" height="18" rx="1"/><rect x="14" y="3" width="8" height="18" rx="1"/><path d="M6 9v6"/><path d="M3 12h6"/><path d="M18 9v6"/></svg>`,
 
   base64: `<svg viewBox="0 0 24 24" ${S}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
+
+  url: `<svg viewBox="0 0 24 24" ${S}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
 
   hash: `<svg viewBox="0 0 24 24" ${S}><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>`,
 
@@ -295,6 +297,7 @@ const TOOLS_I18N = {
     ]},
     { category: 'Text & Encoding', tools: [
       { icon: 'base64', name: 'Base64 Tool', desc: 'Encode and decode text & files' },
+      { icon: 'url', name: 'URL Codec', desc: 'URL encode/decode & query parsing' },
       { icon: 'hash', name: 'Hash Generator', desc: 'MD5, SHA-1, SHA-256, SHA-512' },
       { icon: 'jwt', name: 'JWT Decoder', desc: 'Inspect headers and payloads' },
       { icon: 'uuid', name: 'UUID Generator', desc: 'UUID v4, NanoID, unique IDs' },
@@ -331,6 +334,7 @@ const TOOLS_I18N = {
     ]},
     { category: '文本与编码', tools: [
       { icon: 'base64', name: 'Base64 工具', desc: '文本和文件的编解码' },
+      { icon: 'url', name: 'URL 编解码', desc: 'URL 编码/解码与参数解析' },
       { icon: 'hash', name: '哈希生成', desc: 'MD5、SHA-1、SHA-256、SHA-512' },
       { icon: 'jwt', name: 'JWT 解码', desc: '查看 Header 和 Payload' },
       { icon: 'uuid', name: 'UUID 生成器', desc: 'UUID v4、NanoID、唯一标识' },

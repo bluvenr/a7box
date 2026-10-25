@@ -43,7 +43,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 | Problem | A7Box Solution |
 |---------|---------------|
 | Searching the web for "JSON formatter online" and pasting sensitive data into someone else's server | Built-in JSON formatter — runs locally, your data never leaves |
-| Installing 10 separate apps for 10 different tasks | 22 tools in one ~10MB app |
+| Installing 10 separate apps for 10 different tasks | 23 tools in one ~10MB app |
 | Taking a screenshot, opening Paint, annotating, saving, then sharing | Region capture → 5 annotation tools → pin to screen → session history, all in one flow |
 | Using Electron-based toolboxes that eat 200MB+ RAM | Tauri + Rust backend — ~10MB installer, minimal memory footprint |
 | Copying JSON/code, then opening a separate tool to format it | Clipboard quick actions — copy, press shortcut, floating window pops up ready |
@@ -66,7 +66,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 
 ## 🧰 Tools
 
-22 built-in tools, accessible via sidebar, command palette (`Ctrl+K`), or customizable global shortcuts.
+23 built-in tools, accessible via sidebar, command palette (`Ctrl+K`), or customizable global shortcuts.
 
 **Developer Essentials**
 
@@ -82,6 +82,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 | Tool | Description |
 |------|-------------|
 | **Base64 Tool** | Encode and decode Base64 text and files |
+| **URL Codec** | URL encode/decode and query parameter parsing |
 | **Hash Generator** | Generate MD5, SHA-1, SHA-256, SHA-512 hashes |
 | **JWT Decoder** | Decode and inspect JWT token headers and payloads |
 | **UUID Generator** | Generate UUID v4, NanoID, and unique identifiers |
@@ -94,7 +95,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 | **Screenshot** | Region capture with annotation, inline editing, pin preview, and session history |
 | **Color Tool** | Screen color picker, format converter, and palette generator |
 | **Image Compress** | Browser-side image compression with quality/size control |
-| **Image Convert** | Convert between PNG, JPG, and WebP formats |
+| **Image Convert** | Convert between PNG, JPG, WebP and ICO formats |
 | **Image Watermark** | Add text, logo or timestamp watermarks with tiling, rotation & batch export |
 | **QR Code** | Generate QR codes from text/URL and decode from images |
 

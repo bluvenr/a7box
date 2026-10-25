@@ -13,7 +13,7 @@ export const jsonFormatterModule: A7Module = {
     description: 'Auto-format or compress JSON data with syntax validation',
     descriptionI18n: 'modules.jsonFormatter.description',
     icon: Braces,
-    category: 'text',
+    category: 'dev',
     tags: ['json', 'format', 'compress', 'beautify', 'validate'],
     version: '1.0.0',
     enabledByDefault: true,

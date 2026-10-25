@@ -36,12 +36,12 @@ export interface A7ModuleMeta {
 
 /** Module categories */
 export type ModuleCategory =
-  | 'text'      // Text tools (JSON, Markdown, Code minify)
-  | 'image'     // Image tools (Compress, Convert, QR code)
+  | 'text'      // Text tools (Markdown, Text diff, QR code)
+  | 'image'     // Image tools (Compress, Convert, Watermark)
   | 'screen'    // Screen tools (Screenshot, GIF, Screen record)
-  | 'network'   // Network tools (LAN transfer, HTTP server, Code share)
-  | 'dev'       // Dev tools (MCP, AI)
-  | 'misc'      // Other
+  | 'network'   // Network tools (HTTP server, LAN/P2P transfer)
+  | 'dev'       // Dev tools (JSON, Code minify, Regex, Base64, URL, JWT, Hash, UUID, Timestamp, Color)
+  | 'misc'      // Other (Clipboard, Reminder, Timer, System info)
 
 /** Command definition */
 export interface A7Command {

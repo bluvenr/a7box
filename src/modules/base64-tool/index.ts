@@ -12,7 +12,7 @@ export const base64ToolModule: A7Module = {
     description: 'Encode and decode Base64 text, and convert files to/from Base64',
     descriptionI18n: 'modules.base64Tool.description',
     icon: Binary,
-    category: 'text',
+    category: 'dev',
     tags: ['base64', 'encode', 'decode', 'binary', 'text', 'file'],
     version: '1.0.0',
     enabledByDefault: true,

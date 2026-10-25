@@ -3,16 +3,8 @@
  */
 
 // Text tools
-import { jsonFormatterModule } from './json-formatter'
 import { qrCodeModule } from './qr-code'
 import { markdownPreviewModule } from './markdown-preview'
-import { codeMinifyModule } from './code-minify'
-import { hashGeneratorModule } from './hash-generator'
-import { base64ToolModule } from './base64-tool'
-import { timestampConverterModule } from './timestamp-converter'
-import { uuidGeneratorModule } from './uuid-generator'
-import { jwtDecoderModule } from './jwt-decoder'
-import { regexTesterModule } from './regex-tester'
 import { textDiffModule } from './text-diff'
 // Image tools
 import { imageCompressModule } from './image-compress'
@@ -24,6 +16,15 @@ import { screenshotModule } from './screenshot'
 import { httpServerModule } from './http-server'
 import { p2pTransferModule } from './p2p-transfer'
 // Dev tools
+import { jsonFormatterModule } from './json-formatter'
+import { codeMinifyModule } from './code-minify'
+import { regexTesterModule } from './regex-tester'
+import { base64ToolModule } from './base64-tool'
+import { urlCodecModule } from './url-codec'
+import { jwtDecoderModule } from './jwt-decoder'
+import { hashGeneratorModule } from './hash-generator'
+import { uuidGeneratorModule } from './uuid-generator'
+import { timestampConverterModule } from './timestamp-converter'
 import { colorToolModule } from './color-tool'
 // Other (clipboard-manager first as the flagship utility)
 import { clipboardManagerModule } from './clipboard-manager'
@@ -40,24 +41,31 @@ import type { A7Module } from '../core/types'
  * list stays coherent.
  */
 export const allModules: A7Module[] = [
-  jsonFormatterModule,
+  // Text tools
   qrCodeModule,
   markdownPreviewModule,
-  codeMinifyModule,
-  hashGeneratorModule,
-  base64ToolModule,
-  timestampConverterModule,
-  uuidGeneratorModule,
-  jwtDecoderModule,
-  regexTesterModule,
   textDiffModule,
+  // Image tools
   imageCompressModule,
   imageConvertModule,
   imageWatermarkModule,
+  // Screen tools
   screenshotModule,
+  // Network tools
   httpServerModule,
   p2pTransferModule,
+  // Dev tools
+  jsonFormatterModule,
+  codeMinifyModule,
+  regexTesterModule,
+  base64ToolModule,
+  urlCodecModule,
+  jwtDecoderModule,
+  hashGeneratorModule,
+  uuidGeneratorModule,
+  timestampConverterModule,
   colorToolModule,
+  // Other
   clipboardManagerModule,
   reminderModule,
   timerModule,
@@ -66,16 +74,8 @@ export const allModules: A7Module[] = [
 
 /** Export modules for registry */
 export {
-  jsonFormatterModule,
   qrCodeModule,
   markdownPreviewModule,
-  codeMinifyModule,
-  hashGeneratorModule,
-  base64ToolModule,
-  timestampConverterModule,
-  uuidGeneratorModule,
-  jwtDecoderModule,
-  regexTesterModule,
   textDiffModule,
   imageCompressModule,
   imageConvertModule,
@@ -83,6 +83,15 @@ export {
   screenshotModule,
   httpServerModule,
   p2pTransferModule,
+  jsonFormatterModule,
+  codeMinifyModule,
+  regexTesterModule,
+  base64ToolModule,
+  urlCodecModule,
+  jwtDecoderModule,
+  hashGeneratorModule,
+  uuidGeneratorModule,
+  timestampConverterModule,
   colorToolModule,
   clipboardManagerModule,
   reminderModule,

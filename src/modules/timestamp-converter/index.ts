@@ -12,7 +12,7 @@ export const timestampConverterModule: A7Module = {
     description: 'Convert between Unix timestamps and human-readable dates',
     descriptionI18n: 'modules.timestampConverter.description',
     icon: CalendarClock,
-    category: 'text',
+    category: 'dev',
     tags: ['timestamp', 'unix', 'epoch', 'date', 'time', 'convert'],
     version: '1.0.0',
     enabledByDefault: true,

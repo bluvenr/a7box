@@ -12,7 +12,7 @@ export const uuidGeneratorModule: A7Module = {
     description: 'Generate UUID v4, NanoID, and unique identifiers',
     descriptionI18n: 'modules.uuidGenerator.description',
     icon: Binary,
-    category: 'text',
+    category: 'dev',
     tags: ['uuid', 'nanoid', 'id', 'unique', 'random', 'guid'],
     version: '1.0.0',
     enabledByDefault: true,

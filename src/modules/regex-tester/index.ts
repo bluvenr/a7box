@@ -12,7 +12,7 @@ export const regexTesterModule: A7Module = {
     description: 'Test and debug regular expressions with live matching',
     descriptionI18n: 'modules.regexTester.description',
     icon: Regex,
-    category: 'text',
+    category: 'dev',
     tags: ['regex', 'regexp', 'pattern', 'match', 'test'],
     version: '1.0.0',
     enabledByDefault: true,

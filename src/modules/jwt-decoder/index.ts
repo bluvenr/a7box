@@ -12,7 +12,7 @@ export const jwtDecoderModule: A7Module = {
     description: 'Decode and inspect JWT tokens',
     descriptionI18n: 'modules.jwtDecoder.description',
     icon: KeyRound,
-    category: 'text',
+    category: 'dev',
     tags: ['jwt', 'token', 'decode', 'auth', 'bearer'],
     version: '1.0.0',
     enabledByDefault: true,

@@ -12,7 +12,7 @@ export const hashGeneratorModule: A7Module = {
     description: 'Generate MD5, SHA-1, SHA-256, SHA-512 hashes from text or files',
     descriptionI18n: 'modules.hashGenerator.description',
     icon: Fingerprint,
-    category: 'text',
+    category: 'dev',
     tags: ['hash', 'md5', 'sha256', 'sha512', 'checksum', 'digest'],
     version: '1.0.0',
     enabledByDefault: true,

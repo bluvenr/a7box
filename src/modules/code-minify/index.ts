@@ -13,7 +13,7 @@ export const codeMinifyModule: A7Module = {
     description: 'Minify or beautify JavaScript, TypeScript, CSS, HTML and JSON code',
     descriptionI18n: 'modules.codeMinify.description',
     icon: Minimize2,
-    category: 'text',
+    category: 'dev',
     tags: ['code', 'minify', 'beautify', 'compress', 'format', 'javascript', 'typescript', 'css', 'html', 'json'],
     version: '1.0.0',
     enabledByDefault: true,

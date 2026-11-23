@@ -298,7 +298,7 @@ h1 .logo { width: 28px; height: 28px; }
     <div class="upload-zone" id="upload-zone">
       <div class="upload-icon">📤</div>
       <div class="upload-text" id="upload-text"></div>
-      <div class="upload-target" id="upload-target"></div>
+      <div class="upload-target" id="upload-target" hidden></div>
     </div>
     <input type="file" id="file-input" multiple style="display:none">
 
@@ -632,8 +632,12 @@ fileInput.addEventListener('change', () => {
 });
 
 function updateTarget() {
-  document.getElementById('upload-target').innerHTML =
-    t('targetDir') + ' <b>' + escapeHtml(currentPath || t('root')) + '</b>';
+  const el = document.getElementById('upload-target');
+  // Only hint when inside a subdirectory; root uploads need no explanation.
+  el.hidden = !currentPath;
+  el.innerHTML = currentPath
+    ? t('targetDir') + ' <b>' + escapeHtml(currentPath) + '</b>'
+    : '';
 }
 
 function addFiles(fileList) {

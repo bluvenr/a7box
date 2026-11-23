@@ -38,6 +38,7 @@ export interface A7ModuleMeta {
 export type ModuleCategory =
   | 'text'      // Text tools (Markdown, Text diff, QR code)
   | 'image'     // Image tools (Compress, Convert, Watermark)
+  | 'file'      // File tools (PDF toolkit)
   | 'screen'    // Screen tools (Screenshot, GIF, Screen record)
   | 'network'   // Network tools (HTTP server, LAN/P2P transfer)
   | 'dev'       // Dev tools (JSON, Code minify, Regex, Base64, URL, JWT, Hash, UUID, Timestamp, Color)
@@ -166,6 +167,7 @@ export interface CategoryMeta {
 export const CATEGORIES: CategoryMeta[] = [
   { id: 'text', name: 'Text Tools', nameI18n: 'categories.text', icon: null as unknown as LucideIcon },
   { id: 'image', name: 'Image Tools', nameI18n: 'categories.image', icon: null as unknown as LucideIcon },
+  { id: 'file', name: 'File Tools', nameI18n: 'categories.file', icon: null as unknown as LucideIcon },
   { id: 'screen', name: 'Screen Tools', nameI18n: 'categories.screen', icon: null as unknown as LucideIcon },
   { id: 'network', name: 'Network Tools', nameI18n: 'categories.network', icon: null as unknown as LucideIcon },
   { id: 'dev', name: 'Dev Tools', nameI18n: 'categories.dev', icon: null as unknown as LucideIcon },

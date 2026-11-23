@@ -10,7 +10,7 @@ const I18N = {
   en: {
     // Meta
     'page.title': 'A7Box — Your Tactical Efficiency Weapon on Desktop',
-    'page.description': 'A 100% local, cross-platform developer toolbox — 23 built-in tools. ~10MB, no cloud. Built with Tauri 2 + React 19.',
+    'page.description': 'A 100% local, cross-platform developer toolbox — 24 built-in tools. ~10MB, no cloud. Built with Tauri 2 + React 19.',
 
     // Nav
     'nav.features': 'Features',
@@ -24,7 +24,7 @@ const I18N = {
     'hero.title1': 'Your Tactical',
     'hero.title2': 'Efficiency Weapon',
     'hero.title3': 'on Desktop',
-    'hero.subtitle': 'An all-in-one developer toolbox that runs <strong>100% locally</strong> — 23 built-in tools in a ~10MB app. No cloud. No tracking. No account required.',
+    'hero.subtitle': 'An all-in-one developer toolbox that runs <strong>100% locally</strong> — 24 built-in tools in a ~10MB app. No cloud. No tracking. No account required.',
     'hero.download': 'Download Now',
     'hero.github': 'View on GitHub',
     'hero.available': 'Available for:',
@@ -65,7 +65,7 @@ const I18N = {
 
     // Tools
     'tools.tag': 'Toolbox',
-    'tools.title': '23 Tools, One Box',
+    'tools.title': '24 Tools, One Box',
     'tools.desc': 'Accessible via sidebar, command palette (Ctrl+K), or global shortcuts.',
 
     // Comparison
@@ -99,7 +99,7 @@ const I18N = {
 
     // Download
     'download.title': 'Ready to Deploy?',
-    'download.desc': 'Download A7Box — 23 tools, ~10MB, no cloud, no account. Just install and use.',
+    'download.desc': 'Download A7Box — 24 tools, ~10MB, no cloud, no account. Just install and use.',
     'download.win': 'Download for Windows',
     'download.mac': 'Download for macOS',
     'download.linux': 'Download for Linux',
@@ -121,7 +121,7 @@ const I18N = {
   zh: {
     // Meta
     'page.title': 'A7Box — 桌面端战术效率武器',
-    'page.description': '100% 本地运行的跨平台开发者工具箱，内置 23 款工具，~10MB 安装包，无云端依赖。基于 Tauri 2 + React 19 构建。',
+    'page.description': '100% 本地运行的跨平台开发者工具箱，内置 24 款工具，~10MB 安装包，无云端依赖。基于 Tauri 2 + React 19 构建。',
 
     // Nav
     'nav.features': '特性',
@@ -135,7 +135,7 @@ const I18N = {
     'hero.title1': '你的桌面端战术',
     'hero.title2': '效率武器',
     'hero.title3': '即刻就绪',
-    'hero.subtitle': '一款 <strong>100% 本地运行</strong> 的全功能开发者工具箱 —— 23 款内置工具，~10MB 安装包。不联网、不追踪、不需要账号。',
+    'hero.subtitle': '一款 <strong>100% 本地运行</strong> 的全功能开发者工具箱 —— 24 款内置工具，~10MB 安装包。不联网、不追踪、不需要账号。',
     'hero.download': '立即下载',
     'hero.github': '在 GitHub 查看',
     'hero.available': '支持平台：',
@@ -176,7 +176,7 @@ const I18N = {
 
     // Tools
     'tools.tag': '工具箱',
-    'tools.title': '23 款工具，一个盒子',
+    'tools.title': '24 款工具，一个盒子',
     'tools.desc': '支持侧边栏、命令面板（Ctrl+K）和自定义全局快捷键三种方式调用。',
 
     // Comparison
@@ -210,7 +210,7 @@ const I18N = {
 
     // Download
     'download.title': '准备好了吗？',
-    'download.desc': '下载 A7Box —— 23 款工具，~10MB，无云端，无账号。安装即用。',
+    'download.desc': '下载 A7Box —— 24 款工具，~10MB，无云端，无账号。安装即用。',
     'download.win': '下载 Windows 版',
     'download.mac': '下载 macOS 版',
     'download.linux': '下载 Linux 版',
@@ -270,6 +270,8 @@ const TOOL_ICONS = {
 
   markdown: `<svg viewBox="0 0 24 24" ${S}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8v8l3-3 3 3V8"/><path d="m17 12-2 2 2 2"/></svg>`,
 
+  pdf: `<svg viewBox="0 0 24 24" ${S}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
+
   reminder: `<svg viewBox="0 0 24 24" ${S}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`,
 
   timer: `<svg viewBox="0 0 24 24" ${S}><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/><path d="M12 5V3"/><path d="M10 2h4"/></svg>`,
@@ -313,6 +315,7 @@ const TOOLS_I18N = {
     ]},
     { category: 'Content & Documents', tools: [
       { icon: 'markdown', name: 'Markdown Editor', desc: 'Live preview, KaTeX, Mermaid, HTML export' },
+      { icon: 'pdf', name: 'PDF Toolkit', desc: 'PDF ↔ images, merge, split & page manager' },
     ]},
     { category: 'Productivity', tools: [
       { icon: 'reminder', name: 'Reminder', desc: 'Natural language, scheduled notifications' },
@@ -350,6 +353,7 @@ const TOOLS_I18N = {
     ]},
     { category: '内容与文档', tools: [
       { icon: 'markdown', name: 'Markdown 编辑器', desc: '实时预览、KaTeX、Mermaid、HTML 导出' },
+      { icon: 'pdf', name: 'PDF 工具箱', desc: 'PDF ↔ 图片、合并、拆分与页面管理' },
     ]},
     { category: '效率', tools: [
       { icon: 'reminder', name: '事项提醒', desc: '自然语言输入，定时通知' },

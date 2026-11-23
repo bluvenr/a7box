@@ -43,7 +43,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 | Problem | A7Box Solution |
 |---------|---------------|
 | Searching the web for "JSON formatter online" and pasting sensitive data into someone else's server | Built-in JSON formatter — runs locally, your data never leaves |
-| Installing 10 separate apps for 10 different tasks | 23 tools in one ~10MB app |
+| Installing 10 separate apps for 10 different tasks | 24 tools in one ~10MB app |
 | Taking a screenshot, opening Paint, annotating, saving, then sharing | Region capture → 5 annotation tools → pin to screen → session history, all in one flow |
 | Using Electron-based toolboxes that eat 200MB+ RAM | Tauri + Rust backend — ~10MB installer, minimal memory footprint |
 | Copying JSON/code, then opening a separate tool to format it | Clipboard quick actions — copy, press shortcut, floating window pops up ready |
@@ -66,7 +66,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 
 ## 🧰 Tools
 
-23 built-in tools, accessible via sidebar, command palette (`Ctrl+K`), or customizable global shortcuts.
+24 built-in tools, accessible via sidebar, command palette (`Ctrl+K`), or customizable global shortcuts.
 
 **Developer Essentials**
 
@@ -104,6 +104,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 | Tool | Description |
 |------|-------------|
 | **Markdown Editor** | Live preview, syntax highlighting, KaTeX math, Mermaid diagrams, HTML export |
+| **PDF Toolkit** | Convert PDF to images, images to PDF, merge, split, and reorder/rotate/delete pages — fully local |
 
 **Productivity**
 

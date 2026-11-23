@@ -127,7 +127,7 @@ export default function ToPdfPanel() {
             <input type="number" min="0" max="200" value={margin} onChange={(e) => setMargin(Math.max(0, parseInt(e.target.value) || 0))} className="w-16 rounded border border-border-base bg-bg-base px-2 py-1 text-xs text-text-primary focus:border-border-focus focus:outline-none" />
             <span className="text-xs text-text-muted">pt</span>
           </div>
-          <span className="text-[11px] text-text-muted">{t('modules.pdfToolkit.ui.statsCount', { defaultValue: '{{count}} images', count: items.length })}</span>
+          <span className="text-[11px] text-text-muted">{t('modules.pdfToolkit.ui.statsImages', { defaultValue: '{{count}} images', count: items.length })}</span>
           <div className="flex-1" />
           <div className="flex items-center gap-2">
             <button onClick={buildPdf} disabled={busy} className="flex cursor-pointer items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50">

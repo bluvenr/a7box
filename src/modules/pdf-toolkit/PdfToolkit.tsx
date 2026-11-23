@@ -4,7 +4,7 @@
  * Heavy pdf.js / pdf-lib dependencies are code-split inside each panel's engine.
  */
 
-import { lazy, Suspense, useState, useCallback } from 'react'
+import { lazy, Suspense, useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { FileText, Image as ImageIcon, Combine, LayoutGrid } from 'lucide-react'
@@ -35,6 +35,13 @@ export default function PdfToolkit() {
     const q = searchParams.get('tab')
     return isTabId(q) ? q : 'to-image'
   })
+
+  // Sync deep links (?tab=) even when the page is kept alive by CachedOutlet
+  // (the useState initializer only runs on first mount).
+  const tabParam = searchParams.get('tab')
+  useEffect(() => {
+    setTab(isTabId(tabParam) ? tabParam : 'to-image')
+  }, [tabParam])
 
   const switchTab = useCallback((next: TabId) => {
     setTab(next)

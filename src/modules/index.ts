@@ -10,6 +10,8 @@ import { textDiffModule } from './text-diff'
 import { imageCompressModule } from './image-compress'
 import { imageConvertModule } from './image-convert'
 import { imageWatermarkModule } from './image-watermark'
+// File tools
+import { pdfToolkitModule } from './pdf-toolkit'
 // Screen tools
 import { screenshotModule } from './screenshot'
 // Network tools
@@ -49,6 +51,8 @@ export const allModules: A7Module[] = [
   imageCompressModule,
   imageConvertModule,
   imageWatermarkModule,
+  // File tools
+  pdfToolkitModule,
   // Screen tools
   screenshotModule,
   // Network tools
@@ -80,6 +84,7 @@ export {
   imageCompressModule,
   imageConvertModule,
   imageWatermarkModule,
+  pdfToolkitModule,
   screenshotModule,
   httpServerModule,
   p2pTransferModule,

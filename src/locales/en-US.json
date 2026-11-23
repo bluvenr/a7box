@@ -56,6 +56,7 @@
   "categories": {
     "text": "Text Tools",
     "image": "Image Tools",
+    "file": "File Tools",
     "screen": "Screen Tools",
     "network": "Network Tools",
     "dev": "Dev Tools",

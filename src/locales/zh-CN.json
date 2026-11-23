@@ -56,6 +56,7 @@
   "categories": {
     "text": "文本工具",
     "image": "图片工具",
+    "file": "文件处理",
     "screen": "屏幕工具",
     "network": "网络工具",
     "dev": "开发工具",

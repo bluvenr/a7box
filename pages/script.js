@@ -373,7 +373,7 @@ const COMPARE_FEATURES_EN = [
   'Cross-platform (Win/Mac/Linux)', '100% local, no cloud', 'Lightweight (<15MB)',
   'Clipboard → floating window', 'Clipboard history manager', 'Screenshot workflow', 'Screen color picker',
   'Spotlight command palette', 'LAN file transfer', 'Local web server',
-  'Reminder & notifications', 'Timer & desktop widgets', 'Global shortcuts', 'Works offline',
+  'Reminder & notifications', 'Timer & desktop widgets', 'PDF toolkit', 'Global shortcuts', 'Works offline',
   'Desktop native app', 'Auto update', 'i18n (EN/ZH)', 'Open source (MIT)',
 ];
 
@@ -381,7 +381,7 @@ const COMPARE_FEATURES_ZH = [
   '跨平台 (Win/Mac/Linux)', '100% 本地，无云端', '轻量 (<15MB)',
   '剪贴板 → 浮窗', '剪贴板历史管理', '截图工作流', '屏幕取色器',
   'Spotlight 命令面板', '局域网文件传输', '本地 Web 服务',
-  '事项提醒', '计时器与桌面浮窗', '全局快捷键', '离线可用',
+  '事项提醒', '计时器与桌面浮窗', 'PDF 工具箱', '全局快捷键', '离线可用',
   '桌面原生应用', '自动更新', '国际化 (中/英)', '开源 (MIT)',
 ];
 
@@ -398,6 +398,7 @@ const COMPARE_VALUES = [
   [true, false, false, false, false, false],
   [true, false, false, false, false, false],
   [true, false, false, false, false, false],
+  [true, false, false, '—', false, '✓ (plugin)'],
   [true, false, false, true, true, true],
   [true, true, false, true, true, true],
   [true, true, 'Web', true, true, true],

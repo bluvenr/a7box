@@ -138,6 +138,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 | Local web server | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Reminder & notifications | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Timer & desktop widgets | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| PDF toolkit | ✓ | ✗ | ✗ | — | ✗ | ✓ (plugin) |
 | Global shortcuts | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ |
 | Works offline | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ |
 | Desktop native app | ✓ | ✓ | ✗ (Web) | ✓ | ✓ | ✓ |

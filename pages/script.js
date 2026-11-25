@@ -323,7 +323,7 @@ const TOOLS_I18N = {
       { icon: 'clipboard', name: 'Clipboard Manager', desc: 'Encrypted history, quick paste, Paste Stack, snippets & rules' },
     ]},
     { category: 'Network', tools: [
-      { icon: 'webservice', name: 'Web Service', desc: 'Serve any directory over LAN' },
+      { icon: 'webservice', name: 'Web Service', desc: 'Serve any directory over LAN — concurrent uploads with progress' },
       { icon: 'lantransfer', name: 'LAN Transfer', desc: 'P2P file transfer between devices' },
       { icon: 'sysinfo', name: 'System Info', desc: 'CPU, memory, network, storage, display & battery' },
     ]},
@@ -361,7 +361,7 @@ const TOOLS_I18N = {
       { icon: 'clipboard', name: '剪贴板管理', desc: '加密历史、快捷粘贴、批量粘贴、片段与规则' },
     ]},
     { category: '网络', tools: [
-      { icon: 'webservice', name: 'Web 服务', desc: '将本地目录变为局域网网站' },
+      { icon: 'webservice', name: 'Web 服务', desc: '目录一键变局域网网站，多文件并发上传' },
       { icon: 'lantransfer', name: '局域网传输', desc: '设备间 P2P 文件传输' },
       { icon: 'sysinfo', name: '系统信息', desc: 'CPU、内存、网络、存储、显示器与电池' },
     ]},

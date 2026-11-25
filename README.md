@@ -118,7 +118,7 @@ In an era where every app wants your data, A7Box respects a simple principle: **
 
 | Tool | Description |
 |------|-------------|
-| **Web Service** | Instantly serve any local directory over LAN with file upload support |
+| **Web Service** | Instantly serve any local directory over LAN with concurrent multi-file uploads and live progress |
 | **LAN Transfer** | Peer-to-peer file transfer between A7Box devices on the same network |
 | **System Info** | Real-time CPU, memory, temperature, network & WiFi, multi-disk storage, multi-monitor display, battery and device diagnostics |
 
@@ -243,7 +243,7 @@ src/
 ├── components/           # Shared UI (Dialog, Toast, TitleBar, etc.)
 ├── core/                 # Core systems (command palette, i18n, shortcuts, theme, updater)
 ├── locales/              # i18n translations (en-US, zh-CN)
-├── modules/              # 22 tool modules (each self-contained)
+├── modules/              # 24 tool modules (each self-contained)
 ├── shared/               # Shared hooks, utils, components
 └── styles/               # Global CSS
 
